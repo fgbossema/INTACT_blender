@@ -1,1 +1,1 @@
-# BDENTAL_Windows
+# IntACT plugin for windows

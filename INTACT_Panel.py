@@ -158,6 +158,26 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                     row.alignment = "CENTER"
                     row.scale_y = 2
                     row.operator("intact.volume_render", icon="IMPORT")
+
+            if INTACT_Props.DataType == "TIFF stack":
+
+                row = layout.row()
+                split = row.split()
+                col = split.column()
+                col.label(text="TIFF Directory :")
+                col = split.column()
+                col.prop(INTACT_Props, "UserTiffDir", text="")
+
+                if INTACT_Props.UserTiffDir:
+
+                    Box = layout.box()
+                    # Box.alert = True
+                    row = Box.row()
+                    row.alignment = "CENTER"
+                    row.scale_y = 2
+                    row.operator("intact.volume_render", icon="IMPORT")
+
+
             if INTACT_Props.DataType == "3D Image File":
 
                 row = layout.row()
@@ -175,6 +195,7 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                     row.alignment = "CENTER"
                     row.scale_y = 2
                     row.operator("intact.volume_render", icon="IMPORT")
+
         if context.object:
             if context.object.name.startswith("IT") and context.object.name.endswith(
                 "CTVolume"
