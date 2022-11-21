@@ -79,7 +79,7 @@ class INTACT_PT_MainPanel(bpy.types.Panel):
 
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text=f"Designed and developed by Francien Bossema & Paul van Laar.")
+        row.label(text=f"Designed and developed by Paul van Laar & Francien Bossema.")
         
         row = box.row()
         row.alignment = "LEFT"
