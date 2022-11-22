@@ -471,7 +471,299 @@ def Load_Dicom_funtion(context, q):
         return DcmInfo
     ####### End Load_Dicom_fuction ##############
 
+def Load_Tiff_function(context, q):
 
+    ################################################################################################
+    start = Tcounter()
+    ################################################################################################
+    INTACT_Props = context.scene.INTACT_Props
+    UserProjectDir = AbsPath(INTACT_Props.UserProjectDir)
+    UserTiffDir = AbsPath(INTACT_Props.UserTiffDir)
+
+    ################################################################################################
+
+    if not exists(UserProjectDir):
+
+        message = ["The Selected Project Directory Path is not valid ! "]
+        ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+        return {"CANCELLED"}
+
+    elif not exists(UserTiffDir):
+
+        message = [" The Selected Tiff Directory Path is not valid ! "]
+        ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+        return {"CANCELLED"}
+
+    elif not os.listdir(UserTiffDir):
+        message = ["No valid TIFF Stack found in DICOM Folder ! "]
+        ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+        return {"CANCELLED"}
+
+    else:
+        # Get Preffix and save file :
+        TiffInfoDict = eval(INTACT_Props.TiffInfo)
+        Preffixs = list(TiffInfoDict.keys())
+
+        for i in range(1, 100):
+            Preffix = f"IT{i:03}"
+            if not Preffix in Preffixs:
+                break
+
+        Split = split(UserProjectDir)
+        ProjectName = Split[-1] or Split[-2]
+        BlendFile = f"{ProjectName}_CT-SCAN.blend"
+        Blendpath = join(UserProjectDir, BlendFile)
+
+        if not exists(Blendpath) or bpy.context.blend_data.filepath == Blendpath:
+            bpy.ops.wm.save_as_mainfile(filepath=Blendpath)
+        else:
+            bpy.ops.wm.save_mainfile()
+
+        # Start Reading Dicom data :
+        ######################################################################################
+        #Series_reader = sitk.ImageSeriesReader()
+        #MaxSerie, MaxCount = GetMaxSerie(UserTiffDir)
+        #DcmSerie = Series_reader.GetGDCMSeriesFileNames(UserTiffDir, MaxSerie)
+        
+        TiffSerie = os.listdir(UserTiffDir)
+        MaxCount = len(TiffSerie)
+        ##################################### debug_02 ###################################
+        debug_01 = Tcounter()
+        message = f"MaxSerie Count : {MaxCount} (Time : {round(debug_01-start,2)} secondes)"
+        print(message)
+  
+        ####################################################################################
+        print(UserTiffDir)
+        # Get StudyInfo :
+        reader = sitk.ImageFileReader()
+        reader.SetImageIO('TIFFImageIO')
+        reader.SetFileName(TiffSerie[0])
+        reader.LoadPrivateTagsOn()
+        #reader.ReadImageInformation()
+        #TiffSerie = [UserTiffDir + '/' + s for s in TiffSerie]
+        TiffSerie = [os.path.join(UserTiffDir,s) for s in TiffSerie]
+        
+        Image3D = sitk.ReadImage(TiffSerie, imageIO='TIFFImageIO')
+
+        # Get Dicom Info : 
+        Sp = Spacing = Image3D.GetSpacing()
+        Sz = Size = Image3D.GetSize()
+		
+        Dims = Dimensions = Image3D.GetDimension()
+        Origin = Image3D.GetOrigin()
+        Direction = Image3D.GetDirection()
+        minmax = sitk.MinimumMaximumImageFilter()
+        minmax.Execute(Image3D)
+        Wmax = minmax.GetMaximum()
+        Wmin = minmax.GetMinimum()
+		
+
+        # calculate Informations :
+        D = Direction
+        O = Origin
+        DirectionMatrix_4x4 = Matrix(
+            (
+                (D[0], D[1], D[2], 0.0),
+                (D[3], D[4], D[5], 0.0),
+                (D[6], D[7], D[8], 0.0),
+                (0.0, 0.0, 0.0, 1.0),
+            )
+        )
+
+        TransMatrix_4x4 = Matrix(
+            (
+                (1.0, 0.0, 0.0, O[0]),
+                (0.0, 1.0, 0.0, O[1]),
+                (0.0, 0.0, 1.0, O[2]),
+                (0.0, 0.0, 0.0, 1.0),
+            )
+        )
+
+        VtkTransform_4x4 = TransMatrix_4x4 @ DirectionMatrix_4x4
+        P0 = Image3D.TransformContinuousIndexToPhysicalPoint((0, 0, 0))
+        P_diagonal = Image3D.TransformContinuousIndexToPhysicalPoint(
+            (Sz[0] - 1, Sz[1] - 1, Sz[2] - 1)
+        )
+        VCenter = (Vector(P0) + Vector(P_diagonal)) * 0.5
+
+        C = VCenter
+
+        TransformMatrix = Matrix(
+            (
+                (D[0], D[1], D[2], C[0]),
+                (D[3], D[4], D[5], C[1]),
+                (D[6], D[7], D[8], C[2]),
+                (0.0, 0.0, 0.0, 1.0),
+            )
+        )
+
+        # Set DcmInfo : #where do these numbers all come from? Wmin, Wmax defined in INTACT_Panel
+
+        DcmInfo = {
+            "UserProjectDir": RelPath(UserProjectDir),
+            "Preffix": Preffix,
+            "RenderSz": Sz,
+            "RenderSp": Sp,
+            "PixelType": Image3D.GetPixelIDTypeAsString(),
+            "Wmin": Wmin,
+            "Wmax": Wmax,
+            "Size": Sz,
+            "Dims": Dims,
+            "Spacing": Sp,
+            "Origin": Origin,
+            "Direction": Direction,
+            "TransformMatrix": TransformMatrix,
+            "DirectionMatrix_4x4": DirectionMatrix_4x4,
+            "TransMatrix_4x4": TransMatrix_4x4,
+            "VtkTransform_4x4": VtkTransform_4x4,
+            "VolumeCenter": VCenter,
+        }
+        print('Wmin, Wmax', Wmin, Wmax)
+        tags = {
+            "StudyDate": "0008|0020",
+            "PatientName": "0010|0010",
+            "PatientID": "0010|0020",
+            "BirthDate": "0010|0030",
+            "WinCenter": "0028|1050",
+            "WinWidth": "0028|1051",
+        }
+        # for k, tag in tags.items():
+
+            # if tag in reader.GetMetaDataKeys():#current problem
+                # v = reader.GetMetaData(tag) 
+
+            # else:
+                # v = ""
+
+            # DcmInfo[k] = v
+            # Image3D.SetMetaData(tag, v)
+
+        ###################################### debug_02 ##################################
+        debug_02 = Tcounter()
+        message = f"DcmInfo {Preffix} set (Time : {debug_02-debug_01} secondes)"
+        print(Origin, Direction)
+        # q.put("Dicom Info extracted...")
+        ##################################################################################
+
+        #######################################################################################
+        # Add directories :
+        SlicesDir = join(UserProjectDir, "Slices")
+        if not exists(SlicesDir):
+            os.makedirs(SlicesDir)
+        DcmInfo["SlicesDir"] = RelPath(SlicesDir)
+
+        PngDir = join(UserProjectDir, "PNG")
+        if not exists(PngDir):
+            os.makedirs(PngDir)
+
+        Nrrd255Path = join(UserProjectDir, f"{Preffix}_Image3D255.nrrd")
+
+        DcmInfo["Nrrd255Path"] = RelPath(Nrrd255Path)
+
+        #######################################################################################
+        # set IntensityWindowing  :
+        Image3D_255 = sitk.Cast(
+            sitk.IntensityWindowing(
+                Image3D,
+                windowMinimum=Wmin,
+                windowMaximum=Wmax,
+                outputMinimum=0.0,
+                outputMaximum=255.0,
+            ),
+            sitk.sitkUInt8,
+        )
+
+        
+        # Convert Dicom to nrrd file :
+        # sitk.WriteImage(Image3D, NrrdHuPath)
+        sitk.WriteImage(Image3D_255, Nrrd255Path)
+
+        ################################## debug_03 ######################################
+        debug_03 = Tcounter()
+        message = f"Nrrd255 Export done!  (Time : {debug_03-debug_02} secondes)"
+        print(message)
+        # q.put("nrrd 3D image file saved...")
+        ##################################################################################
+
+        #############################################################################################
+        # MultiThreading PNG Writer:
+        #########################################################################################
+        def Image3DToPNG(i, slices, PngDir, Preffix):
+            img_Slice = slices[i]
+            img_Name = f"{Preffix}_img{i:04}.png"
+            image_path = join(PngDir, img_Name)
+            cv2.imwrite(image_path, img_Slice)
+            image = bpy.data.images.load(image_path)
+            image.pack()
+            # print(f"{img_Name} was processed...")
+
+        #########################################################################################
+        # Get slices list :
+        MaxSp = max(Vector(Sp))
+        if MaxSp < 0.25:
+            SampleRatio = round(MaxSp / 0.25, 2)
+            Image3D_255 = ResizeImage(sitkImage=Image3D_255, Ratio=SampleRatio)
+            DcmInfo["RenderSz"] = Image3D_255.GetSize()
+            DcmInfo["RenderSp"] = Image3D_255.GetSpacing()
+
+        Array = sitk.GetArrayFromImage(Image3D_255)
+        slices = [np.flipud(Array[i, :, :]) for i in range(Array.shape[0])]
+        # slices = [Image3D_255[:, :, i] for i in range(Image3D_255.GetDepth())]
+
+        threads = [
+            threading.Thread(
+                target=Image3DToPNG,
+                args=[i, slices, PngDir, Preffix],
+                daemon=True,
+            )
+            for i in range(len(slices))
+        ]
+
+        for t in threads:
+            t.start()
+
+        for t in threads:
+            t.join()
+
+        # os.removedirs(PngDir)
+        shutil.rmtree(PngDir)
+        DcmInfo["CT_Loaded"] = True
+        # Set DcmInfo property :
+        DcmInfoDict = eval(INTACT_Props.DcmInfo)
+        DcmInfoDict[Preffix] = DcmInfo
+        INTACT_Props.DcmInfo = str(DcmInfoDict)
+        INTACT_Props.UserProjectDir = RelPath(INTACT_Props.UserProjectDir)
+        bpy.ops.wm.save_mainfile() 
+        		
+        # #################################### debug_04 ####################################
+        # debug_04 = Tcounter()
+        # message = (
+        #     f"PNG images exported (Time : {debug_04-debug_03} secondes)"
+        # )
+        # print(message)
+        # # q.put("PNG images saved...")
+        # ##################################################################################
+
+        # #################################### debug_05 ####################################
+        # debug_05 = Tcounter()
+        # message = f"{Preffix}_CT-SCAN.blend saved (Time = {debug_05-debug_04} secondes)"
+        # print(message)
+        # q.put("Blender project saved...")
+        ##################################################################################
+
+        #############################################################################################
+        finish = Tcounter()
+        message = f"Data Loaded in {finish-start} secondes"
+        print(message)
+        # q.put(message)
+        #############################################################################################
+        message = ["DICOM loaded successfully. "]
+        ShowMessageBox(message=message, icon="COLORSET_03_VEC")
+
+        return DcmInfo
+    ####### End Load_Tiff_function ##############
+    
+    
 #######################################################################################
 # INTACT CT Scan 3DImage File Load :
 
@@ -777,6 +1069,8 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
         DataType = INTACT_Props.DataType
         if DataType == "DICOM Series":
             DcmInfo = Load_Dicom_funtion(context, self.q)
+        if DataType == "TIFF Stack":
+            DcmInfo = Load_Tiff_function(context, self.q)
         if DataType == "3D Image File":
             DcmInfo = Load_3DImage_function(context, self.q)
 

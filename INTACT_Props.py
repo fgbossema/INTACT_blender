@@ -120,6 +120,13 @@ class INTACT_Props(bpy.types.PropertyGroup):
         description="DICOM Directory Path",
         subtype="DIR_PATH",
     )
+    
+    UserTiffDir: StringProperty(
+        name="TIFF Path",
+        default="",
+        description="TIFF Directory Path",
+        subtype="DIR_PATH",
+    )
 
     UserImageFile: StringProperty(
         name="User 3D Image File Path",
@@ -130,7 +137,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
 
     #####################
 
-    Data_Types = ["DICOM Series", "3D Image File", ""]
+    Data_Types = ["DICOM Series", "TIFF Stack", "3D Image File", ""]
     items = []
     for i in range(len(Data_Types)):
         item = (str(Data_Types[i]), str(Data_Types[i]), str(""), int(i))
@@ -144,6 +151,12 @@ class INTACT_Props(bpy.types.PropertyGroup):
         name="(str) DicomInfo",
         default="{'Deffault': None}",
         description="Dicom series files list",
+    )
+    
+    TiffInfo: StringProperty(
+        name="(str) TiffInfo",
+        default="{'Deffault': None}",
+        description="Tiff stack files list",
     )
     #######################
 

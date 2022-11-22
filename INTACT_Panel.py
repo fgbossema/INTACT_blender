@@ -159,7 +159,7 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                     row.scale_y = 2
                     row.operator("intact.volume_render", icon="IMPORT")
 
-            if INTACT_Props.DataType == "TIFF stack":
+            if INTACT_Props.DataType == "TIFF Stack":
 
                 row = layout.row()
                 split = row.split()
