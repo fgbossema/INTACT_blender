@@ -239,15 +239,15 @@ class INTACT_Props(bpy.types.PropertyGroup):
 
     #######################
 
-    Treshold: IntProperty(
+    Treshold: FloatProperty( #Make this a float?
         name="Treshold",
         description="Volume Treshold",
-        default=600,
-        min=-400,
-        max=3000,
-        soft_min=-400,
-        soft_max=3000,
-        step=1,
+        default=0.04,
+        min=0,
+        max=1,
+        soft_min=0,
+        soft_max=1,
+        step=0.01,
         update=TresholdUpdateFunction,
     )
     Progress_Bar: FloatProperty(
