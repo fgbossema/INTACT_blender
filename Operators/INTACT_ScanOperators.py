@@ -270,6 +270,7 @@ def Load_Dicom_funtion(context, q):
         # calculate Informations :
         D = Direction
         O = Origin
+        print(Origin, Sp)
         DirectionMatrix_4x4 = Matrix(
             (
                 (D[0], D[1], D[2], 0.0),
@@ -556,11 +557,23 @@ def Load_Tiff_function(context, q):
         minmax.Execute(Image3D)
         Wmax = minmax.GetMaximum()
         Wmin = minmax.GetMinimum()
-		
+        fact = []    
+        fact.append(4000/Wmax)
+        fact.append(abs(2000/Wmin))
+        mult_factor = min(fact)
+        multiply = sitk.MultiplyImageFilter()
+        Image3D = multiply.Execute(Image3D, mult_factor)
+        
+        #Re-evaluate Wmin and Wmax after scaling
+        minmax = sitk.MinimumMaximumImageFilter()
+        minmax.Execute(Image3D)
+        Wmax = minmax.GetMaximum()
+        Wmin = minmax.GetMinimum()
 
         # calculate Informations :
         D = Direction
         O = Origin
+        print(Origin, Sp)
         DirectionMatrix_4x4 = Matrix(
             (
                 (D[0], D[1], D[2], 0.0),
@@ -1067,10 +1080,10 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
         INTACT_Props = context.scene.INTACT_Props
 
         DataType = INTACT_Props.DataType
-        if DataType == "DICOM Series":
-            DcmInfo = Load_Dicom_funtion(context, self.q)
         if DataType == "TIFF Stack":
             DcmInfo = Load_Tiff_function(context, self.q)
+        if DataType == "DICOM Series":
+            DcmInfo = Load_Dicom_funtion(context, self.q)
         if DataType == "3D Image File":
             DcmInfo = Load_3DImage_function(context, self.q)
 

@@ -194,8 +194,8 @@ class INTACT_Props(bpy.types.PropertyGroup):
     )
     #######################
 
-    Wmin: FloatProperty()
-    Wmax: FloatProperty()
+    Wmin: IntProperty()
+    Wmax: IntProperty()
 
     #######################
     # Thres1TissueMode = BoolProperty(description="Thres1Tissue Mode ", default=False)
@@ -238,17 +238,17 @@ class INTACT_Props(bpy.types.PropertyGroup):
         )
 
     #######################
-    # Treshold: IntProperty(
-        # name="Treshold",
-        # description="Volume Treshold",
-        # default=600,
-        # min=-400,
-        # max=3000,
-        # soft_min=-400,
-        # soft_max=3000,
-        # step=1,
-        # update=TresholdUpdateFunction,
-    # )
+    Treshold: IntProperty(
+        name="Treshold",
+        description="Volume Treshold",
+        default=600,
+        min=-400,
+        max=3000,
+        soft_min=-400,
+        soft_max=3000,
+        step=1,
+        update=TresholdUpdateFunction,
+    )
     
     # INTACT_Props = context.scene.INTACT_Props
     # DcmInfo = 
@@ -261,18 +261,18 @@ class INTACT_Props(bpy.types.PropertyGroup):
             # Wmin = DcmInfo["Wmin"]
             # Wmax = DcmInfo["Wmax"]
             
-    Treshold: FloatProperty(
-        name="Treshold",
-        description="Volume Treshold",
-        default=0.05,
-        min=0.0,
-        max= 0.07,
-        soft_min=0.0,
-        soft_max= 0.07,
-        precision = 4,
-        step=0.01,
-        update=TresholdUpdateFunction,
-    )
+    # Treshold: FloatProperty(
+        # name="Treshold",
+        # description="Volume Treshold",
+        # default=0.05,
+        # min=0.0,
+        # max= 0.07,
+        # soft_min=0.0,
+        # soft_max= 0.07,
+        # precision = 4,
+        # step=0.01,
+        # update=TresholdUpdateFunction,
+    # )
     Progress_Bar: FloatProperty(
         name="Progress_Bar",
         description="Progress_Bar",
