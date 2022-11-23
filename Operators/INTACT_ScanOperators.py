@@ -272,7 +272,7 @@ def Load_Dicom_funtion(context, q):
         D = (1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
         Direction = D
         O = Origin
-        print('direction', D, 'dimensions', Dims)
+
         DirectionMatrix_4x4 = Matrix(
             (
                 (D[0], D[1], D[2], 0.0),
@@ -308,7 +308,7 @@ def Load_Dicom_funtion(context, q):
                 (0.0, 0.0, 0.0, 1.0),
             )
         )
-        print('C', C, 'transform matrix', TransformMatrix)
+
         # Set DcmInfo :
 
         DcmInfo = {
@@ -616,7 +616,7 @@ def Load_Tiff_function(context, q):
                 (0.0, 0.0, 0.0, 1.0),
             )
         )
-        print('C', C, 'transform matrix', TransformMatrix)
+
         # Set DcmInfo : #where do these numbers all come from? Wmin, Wmax defined in INTACT_Panel
 
         DcmInfo = {
@@ -638,7 +638,7 @@ def Load_Tiff_function(context, q):
             "VtkTransform_4x4": VtkTransform_4x4,
             "VolumeCenter": VCenter,
         }
-        print('Wmin, Wmax', Wmin, Wmax)
+
         tags = {
             "StudyDate": "0008|0020",
             "PatientName": "0010|0010",
@@ -661,7 +661,7 @@ def Load_Tiff_function(context, q):
         ###################################### debug_02 ##################################
         debug_02 = Tcounter()
         message = f"DcmInfo {Preffix} set (Time : {debug_02-debug_01} secondes)"
-        print(Origin, Direction)
+
         # q.put("Dicom Info extracted...")
         ##################################################################################
 
