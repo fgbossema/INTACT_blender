@@ -268,9 +268,11 @@ def Load_Dicom_funtion(context, q):
 		
 
         # calculate Informations :
-        D = Direction
+        #D = Direction
+        D = (1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
+        Direction = D
         O = Origin
-        print(Origin, Sp)
+        print('direction', D, 'dimensions', Dims)
         DirectionMatrix_4x4 = Matrix(
             (
                 (D[0], D[1], D[2], 0.0),
@@ -296,7 +298,7 @@ def Load_Dicom_funtion(context, q):
         )
         VCenter = (Vector(P0) + Vector(P_diagonal)) * 0.5
 
-        C = VCenter
+        C = C = (0.0,0.0,0.0)
 
         TransformMatrix = Matrix(
             (
@@ -306,7 +308,7 @@ def Load_Dicom_funtion(context, q):
                 (0.0, 0.0, 0.0, 1.0),
             )
         )
-
+        print('C', C, 'transform matrix', TransformMatrix)
         # Set DcmInfo :
 
         DcmInfo = {
@@ -502,8 +504,8 @@ def Load_Tiff_function(context, q):
 
     else:
         # Get Preffix and save file :
-        TiffInfoDict = eval(INTACT_Props.TiffInfo)
-        Preffixs = list(TiffInfoDict.keys())
+        DcmInfoDict = eval(INTACT_Props.DcmInfo)
+        Preffixs = list(DcmInfoDict.keys())
 
         for i in range(1, 100):
             Preffix = f"IT{i:03}"
@@ -546,13 +548,17 @@ def Load_Tiff_function(context, q):
         
         Image3D = sitk.ReadImage(TiffSerie, imageIO='TIFFImageIO')
 
-        # Get Dicom Info : 
-        Sp = Spacing = Image3D.GetSpacing()
+        # Get Info : 
+        Sp = Spacing = (INTACT_Props.Resolution, INTACT_Props.Resolution, INTACT_Props.Resolution)
         Sz = Size = Image3D.GetSize()
 		
         Dims = Dimensions = Image3D.GetDimension()
-        Origin = Image3D.GetOrigin()
-        Direction = Image3D.GetDirection()
+        #Origin = Image3D.GetOrigin()
+        #Direction = Image3D.GetDirection()
+        
+        Origin = (-(Sz[0]-1)/2*Sp[0], (Sz[1]-1)/2*Sp[1], (Sz[2]-1)/2*Sp[2])
+        
+        
         minmax = sitk.MinimumMaximumImageFilter()
         minmax.Execute(Image3D)
         Wmax = minmax.GetMaximum()
@@ -571,9 +577,10 @@ def Load_Tiff_function(context, q):
         Wmin = minmax.GetMinimum()
 
         # calculate Informations :
-        D = Direction
+        D = (1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
         O = Origin
-        print(Origin, Sp)
+        Direction = D
+        
         DirectionMatrix_4x4 = Matrix(
             (
                 (D[0], D[1], D[2], 0.0),
@@ -599,7 +606,7 @@ def Load_Tiff_function(context, q):
         )
         VCenter = (Vector(P0) + Vector(P_diagonal)) * 0.5
 
-        C = VCenter
+        C = (0.0,0.0,0.0)
 
         TransformMatrix = Matrix(
             (
@@ -609,7 +616,7 @@ def Load_Tiff_function(context, q):
                 (0.0, 0.0, 0.0, 1.0),
             )
         )
-
+        print('C', C, 'transform matrix', TransformMatrix)
         # Set DcmInfo : #where do these numbers all come from? Wmin, Wmax defined in INTACT_Panel
 
         DcmInfo = {

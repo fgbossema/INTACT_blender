@@ -149,6 +149,14 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                 col.label(text="TIFF Directory :")
                 col = split.column()
                 col.prop(INTACT_Props, "UserTiffDir", text="")
+                
+                #input for resolution
+                row = layout.row()
+                split = row.split()
+                col = split.column()
+                col.label(text="Resolution (voxel size in mm) :")
+                col = split.column()                
+                col.prop(INTACT_Props, "Resolution", text = "")
 
                 if INTACT_Props.UserTiffDir:
 
@@ -199,8 +207,7 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
             if context.object.name.startswith("IT") and context.object.name.endswith(
                 "CTVolume"
             ):
-                
-                               
+                                               
                 row = layout.row()
                 row.operator("intact.reset_ctvolume_position")
                 row = layout.row()

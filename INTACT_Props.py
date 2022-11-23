@@ -196,6 +196,11 @@ class INTACT_Props(bpy.types.PropertyGroup):
 
     Wmin: IntProperty()
     Wmax: IntProperty()
+    Resolution: FloatProperty(
+        name="Resolution",
+        default=1.0,
+        description="Voxel resolution in mm",
+        precision = 4)
 
     #######################
     # Thres1TissueMode = BoolProperty(description="Thres1Tissue Mode ", default=False)
@@ -238,6 +243,8 @@ class INTACT_Props(bpy.types.PropertyGroup):
         )
 
     #######################
+       
+    
     Treshold: IntProperty(
         name="Treshold",
         description="Volume Treshold",
