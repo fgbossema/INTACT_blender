@@ -28,7 +28,7 @@ yellow_icon = "COLORSET_09_VEC"
 yellow_point = "KEYTYPE_KEYFRAME_VEC"
 blue_point = "KEYTYPE_BREAKDOWN_VEC"
 
-Wmin, Wmax = -400, 3000
+Wmin, Wmax = -400, 3000 #Hier worden Wmin en Wmax gedefinieerd!!
 
 
 class INTACT_PT_MainPanel(bpy.types.Panel):
@@ -140,25 +140,7 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
             col.label(text="Scan Data Type :")
             col = split.column()
             col.prop(INTACT_Props, "DataType", text="")
-
-            if INTACT_Props.DataType == "DICOM Series":
-
-                row = layout.row()
-                split = row.split()
-                col = split.column()
-                col.label(text="DICOM Directory :")
-                col = split.column()
-                col.prop(INTACT_Props, "UserDcmDir", text="")
-
-                if INTACT_Props.UserDcmDir:
-
-                    Box = layout.box()
-                    # Box.alert = True
-                    row = Box.row()
-                    row.alignment = "CENTER"
-                    row.scale_y = 2
-                    row.operator("intact.volume_render", icon="IMPORT")
-
+            
             if INTACT_Props.DataType == "TIFF Stack":
 
                 row = layout.row()
@@ -176,7 +158,24 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                     row.alignment = "CENTER"
                     row.scale_y = 2
                     row.operator("intact.volume_render", icon="IMPORT")
+                    
+            if INTACT_Props.DataType == "DICOM Series":
 
+                row = layout.row()
+                split = row.split()
+                col = split.column()
+                col.label(text="DICOM Directory :")
+                col = split.column()
+                col.prop(INTACT_Props, "UserDcmDir", text="")
+
+                if INTACT_Props.UserDcmDir:
+
+                    Box = layout.box()
+                    # Box.alert = True
+                    row = Box.row()
+                    row.alignment = "CENTER"
+                    row.scale_y = 2
+                    row.operator("intact.volume_render", icon="IMPORT")
 
             if INTACT_Props.DataType == "3D Image File":
 
@@ -200,13 +199,15 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
             if context.object.name.startswith("IT") and context.object.name.endswith(
                 "CTVolume"
             ):
+                
+                               
                 row = layout.row()
                 row.operator("intact.reset_ctvolume_position")
                 row = layout.row()
                 row.label(text=f"Threshold {Wmin} to {Wmax} HU :")
                 row = layout.row()
                 row.prop(INTACT_Props, "Treshold", text="THRESHOLD", slider=True)
-
+                   
                 layout.separator()
 
                 row = layout.row()

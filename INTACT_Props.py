@@ -137,13 +137,13 @@ class INTACT_Props(bpy.types.PropertyGroup):
 
     #####################
 
-    Data_Types = ["DICOM Series", "TIFF Stack", "3D Image File", ""]
+    Data_Types = ["TIFF Stack", "DICOM Series", "3D Image File", ""]
     items = []
     for i in range(len(Data_Types)):
         item = (str(Data_Types[i]), str(Data_Types[i]), str(""), int(i))
         items.append(item)
 
-    DataType: EnumProperty(items=items, description="Data type", default="DICOM Series")
+    DataType: EnumProperty(items=items, description="Data type", default="TIFF Stack")
 
     #######################
 
@@ -194,8 +194,8 @@ class INTACT_Props(bpy.types.PropertyGroup):
     )
     #######################
 
-    Wmin: IntProperty()
-    Wmax: IntProperty()
+    Wmin: FloatProperty()
+    Wmax: FloatProperty()
 
     #######################
     # Thres1TissueMode = BoolProperty(description="Thres1Tissue Mode ", default=False)
@@ -238,15 +238,38 @@ class INTACT_Props(bpy.types.PropertyGroup):
         )
 
     #######################
-
-    Treshold: FloatProperty( #Make this a float?
+    # Treshold: IntProperty(
+        # name="Treshold",
+        # description="Volume Treshold",
+        # default=600,
+        # min=-400,
+        # max=3000,
+        # soft_min=-400,
+        # soft_max=3000,
+        # step=1,
+        # update=TresholdUpdateFunction,
+    # )
+    
+    # INTACT_Props = context.scene.INTACT_Props
+    # DcmInfo = 
+    #eval(bpy.context.scene.INTACT_Props.DcmInfo)["Wmin"]
+            # Wmin = DcmInfo["Wmin"]
+            # Wmax = DcmInfo["Wmax"]
+            
+    # INTACT_Props = context.scene.INTACT_Props
+    # DcmInfo = eval(INTACT_Props.DcmInfo)
+            # Wmin = DcmInfo["Wmin"]
+            # Wmax = DcmInfo["Wmax"]
+            
+    Treshold: FloatProperty(
         name="Treshold",
         description="Volume Treshold",
-        default=0.04,
-        min=0,
-        max=1,
-        soft_min=0,
-        soft_max=1,
+        default=0.05,
+        min=0.0,
+        max= 0.07,
+        soft_min=0.0,
+        soft_max= 0.07,
+        precision = 4,
         step=0.01,
         update=TresholdUpdateFunction,
     )
