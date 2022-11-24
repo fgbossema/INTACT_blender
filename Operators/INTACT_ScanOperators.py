@@ -1544,7 +1544,7 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
         SegmentStlPath = join(UserProjectDir, f"{Segment}_SEGMENTATION.stl")
 
         # Convert Hu treshold value to 0-255 UINT8 :
-        Treshold255 = HuTo255(Hu=SegmentTreshold, Wmin=Wmin, Wmax=Wmax)
+        Treshold255 = HuTo255(Hu=SegmentTreshold, Wmin=DcmInfo["Wmin"], Wmax=DcmInfo["Wmax"])
         if Treshold255 == 0:
             Treshold255 = 1
         elif Treshold255 == 255:
