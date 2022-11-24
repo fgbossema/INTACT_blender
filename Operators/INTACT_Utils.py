@@ -700,7 +700,7 @@ def Scene_Settings():
     # scene shading lights
 
     # 3DView Shading Methode : in {'WIREFRAME', 'SOLID', 'MATERIAL', 'RENDERED'}
-    space3D.shading.type = "MATERIAL"
+    space3D.shading.type = "RENDERED"
 
     # 'Material' Shading Light method :
     space3D.shading.use_scene_lights = True

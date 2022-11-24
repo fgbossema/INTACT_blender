@@ -269,9 +269,9 @@ def Load_Dicom_funtion(context, q):
 
         # calculate Informations :
         #D = Direction
-        D = (1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
-        Direction = D
+        D = (1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0)
         O = Origin
+        Direction = D
 
         DirectionMatrix_4x4 = Matrix(
             (
@@ -298,7 +298,9 @@ def Load_Dicom_funtion(context, q):
         )
         VCenter = (Vector(P0) + Vector(P_diagonal)) * 0.5
 
-        C = C = (0.0,0.0,0.0)
+        #C = (0.0,0.0,0.0)
+        #VCenter = C
+        C = VCenter
 
         TransformMatrix = Matrix(
             (
@@ -306,9 +308,7 @@ def Load_Dicom_funtion(context, q):
                 (D[3], D[4], D[5], C[1]),
                 (D[6], D[7], D[8], C[2]),
                 (0.0, 0.0, 0.0, 1.0),
-            )
-        )
-
+            ))
         # Set DcmInfo :
 
         DcmInfo = {
@@ -330,7 +330,7 @@ def Load_Dicom_funtion(context, q):
             "VtkTransform_4x4": VtkTransform_4x4,
             "VolumeCenter": VCenter,
         }
-
+        print(DcmInfo)
         tags = {
             "StudyDate": "0008|0020",
             "PatientName": "0010|0010",
@@ -371,7 +371,12 @@ def Load_Dicom_funtion(context, q):
         Nrrd255Path = join(UserProjectDir, f"{Preffix}_Image3D255.nrrd")
 
         DcmInfo["Nrrd255Path"] = RelPath(Nrrd255Path)
-
+         
+        ###Set info in Image3D metadata:
+        Image3D.SetSpacing(Sp)
+        Image3D.SetDirection(D)
+        Image3D.SetOrigin(O)
+        
         #######################################################################################
         # set IntensityWindowing  :
         Image3D_255 = sitk.Cast(
@@ -577,7 +582,8 @@ def Load_Tiff_function(context, q):
         Wmin = minmax.GetMinimum()
 
         # calculate Informations :
-        D = (1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
+        #D = (1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0)
+        D = (1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0)
         O = Origin
         Direction = D
         
@@ -607,6 +613,7 @@ def Load_Tiff_function(context, q):
         VCenter = (Vector(P0) + Vector(P_diagonal)) * 0.5
 
         C = (0.0,0.0,0.0)
+        VCenter = C
 
         TransformMatrix = Matrix(
             (
@@ -638,7 +645,7 @@ def Load_Tiff_function(context, q):
             "VtkTransform_4x4": VtkTransform_4x4,
             "VolumeCenter": VCenter,
         }
-
+        print(DcmInfo)
         tags = {
             "StudyDate": "0008|0020",
             "PatientName": "0010|0010",
@@ -679,6 +686,11 @@ def Load_Tiff_function(context, q):
         Nrrd255Path = join(UserProjectDir, f"{Preffix}_Image3D255.nrrd")
 
         DcmInfo["Nrrd255Path"] = RelPath(Nrrd255Path)
+        
+        ###Set info in Image3D metadata:
+        Image3D.SetSpacing(Sp)
+        Image3D.SetDirection(D)
+        Image3D.SetOrigin(O)
 
         #######################################################################################
         # set IntensityWindowing  :
@@ -692,6 +704,7 @@ def Load_Tiff_function(context, q):
             ),
             sitk.sitkUInt8,
         )
+        
 
         
         # Convert Dicom to nrrd file :
@@ -719,12 +732,12 @@ def Load_Tiff_function(context, q):
 
         #########################################################################################
         # Get slices list :
-        MaxSp = max(Vector(Sp))
-        if MaxSp < 0.25:
-            SampleRatio = round(MaxSp / 0.25, 2)
-            Image3D_255 = ResizeImage(sitkImage=Image3D_255, Ratio=SampleRatio)
-            DcmInfo["RenderSz"] = Image3D_255.GetSize()
-            DcmInfo["RenderSp"] = Image3D_255.GetSpacing()
+        # MaxSp = max(Vector(Sp))
+        # if MaxSp < 0.25:
+            # SampleRatio = round(MaxSp / 0.25, 2)
+            # Image3D_255 = ResizeImage(sitkImage=Image3D_255, Ratio=SampleRatio)
+            # DcmInfo["RenderSz"] = Image3D_255.GetSize()
+            # DcmInfo["RenderSp"] = Image3D_255.GetSpacing()
 
         Array = sitk.GetArrayFromImage(Image3D_255)
         slices = [np.flipud(Array[i, :, :]) for i in range(Array.shape[0])]
@@ -949,7 +962,7 @@ def Load_3DImage_function(context, q):
             "VtkTransform_4x4": VtkTransform_4x4,
             "VolumeCenter": VCenter,
         }
-
+        print(DcmInfo)
         tags = {
             "StudyDate": "0008|0020",
             "PatientName": "0010|0010",
@@ -984,6 +997,10 @@ def Load_3DImage_function(context, q):
         Nrrd255Path = join(UserProjectDir, f"{Preffix}_Image3D255.nrrd")
 
         DcmInfo["Nrrd255Path"] = RelPath(Nrrd255Path)
+        ###Set info in Image3D metadata:
+        Image3D.SetSpacing(Sp)
+        Image3D.SetDirection(D)
+        Image3D.SetOrigin(O)
 
         if INTACT_nrrd:
             Image3D_255 = Image3D
@@ -1518,7 +1535,7 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
         )
 
         VtkMatrix = list(np.array(VtkMatrix_4x4).ravel())
-
+        print(self.DcmInfo)
         SmoothIterations = SmthIter = 5
         Thikness = 1
 
@@ -1581,6 +1598,7 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
             mesh=SmoothedMesh,
             Matrix=VtkMatrix,
         )
+        print(VtkMatrix)
         self.step5 = Tcounter()
         self.TimingDict["Mesh Orientation"] = self.step5 - self.step4
         print(f"{Segment} Mesh Orientation Finished")
@@ -1687,7 +1705,9 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
 
                         Image3D = sitk.ReadImage(self.Nrrd255Path)
                         # Sz = Image3D.GetSize()
-                        Sp = Image3D.GetSpacing()
+                        #Sp = Image3D.GetSpacing()
+                        Sp = self.DcmInfo["Spacing"]
+                        print('Resolution', Sp)
                         MaxSp = max(Vector(Sp))
                         if MaxSp < 0.3:
                             SampleRatio = round(MaxSp / 0.3, 2)
