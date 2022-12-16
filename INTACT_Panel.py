@@ -448,7 +448,7 @@ class OBJECT_PT_IntACT_Panel(bpy.types.Panel):
         layout.label(text="Operators:")
         layout.operator("intact.camera_setup")
         layout.operator("intact.animation_path")
-        layout.operator("intact.slices_tracking")
+        layout.operator("intact.slices_tracking2")
         layout.operator("intact.no_slices_tracking")
         layout.operator("intact.slices_update")
         

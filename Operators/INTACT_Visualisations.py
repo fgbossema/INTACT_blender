@@ -511,6 +511,7 @@ class Cropping_Cube_Drivers(bpy.types.Operator):
         print("\nTranslation and Rotation of cropping cube pairs are linked.")
         return {'FINISHED'}
 
+
 class Slices_Tracking(bpy.types.Operator):
     """
     These 6 blocks of code link the location and rotation of the axial slice to that of the X-cropping cube.
@@ -673,6 +674,172 @@ class Slices_Tracking(bpy.types.Operator):
         var1.type = 'TRANSFORMS'
         var1.targets[0].transform_type = 'ROT_Z'
         var1.targets[0].id = bpy.data.objects["Crop 3D_Z"]
+        axirotz.driver.expression = "var1"
+        return {'FINISHED'}
+        
+class Slices_Tracking2(bpy.types.Operator):
+    """
+    These 6 blocks of code link the location and rotation of the axial slice to that of the X-cropping cube.
+    """
+    bl_idname = "intact.slices_tracking2"
+    bl_label = "Slices Tracking"
+    
+    def execute(self, context):
+        saglocx = bpy.data.objects["Crop 3D_X"].driver_add("location", 0) 
+        var1 = saglocx.driver.variables.new()
+        var1.name = "var1"
+        var1.type = 'TRANSFORMS'
+        var1.targets[0].transform_type = 'LOC_X'
+        var1.targets[0].id = bpy.data.objects["3_IT001_SAGITAL_SLICE"]
+        x = bpy.data.objects["Crop 3D_X"].dimensions[0]
+        x = 0.5 * x  - 2
+        saglocx.driver.expression = "var1 - " + str(x)
+        
+        saglocy = bpy.data.objects["Crop 3D_X"].driver_add("location", 1) 
+        var1 = saglocy.driver.variables.new()
+        var1.name = "var1"
+        var1.type = 'TRANSFORMS'
+        var1.targets[0].transform_type = 'LOC_Y'
+        var1.targets[0].id = bpy.data.objects["3_IT001_SAGITAL_SLICE"]
+        saglocy.driver.expression = "var1"
+        
+        saglocz = bpy.data.objects["Crop 3D_X"].driver_add("location", 2) 
+        var1 = saglocz.driver.variables.new()
+        var1.name = "var1"
+        var1.type = 'TRANSFORMS'
+        var1.targets[0].transform_type = 'LOC_Z'
+        var1.targets[0].id = bpy.data.objects["3_IT001_SAGITAL_SLICE"]
+        saglocz.driver.expression = "var1"
+        
+        sagrotx = bpy.data.objects["Crop 3D_X"].driver_add("rotation_euler", 0) 
+        var1 = sagrotx.driver.variables.new()
+        var1.name = "var1"
+        var1.type = 'TRANSFORMS'
+        var1.targets[0].transform_type = 'ROT_X'
+        var1.targets[0].id = bpy.data.objects["3_IT001_SAGITAL_SLICE"]
+        sagrotx.driver.expression = "var1 + 1.5708"
+        
+        sagroty = bpy.data.objects["Crop 3D_X"].driver_add("rotation_euler", 1) 
+        var1 = sagroty.driver.variables.new()
+        var1.name = "var1"
+        var1.type = 'TRANSFORMS'
+        var1.targets[0].transform_type = 'ROT_Y'
+        var1.targets[0].id = bpy.data.objects["3_IT001_SAGITAL_SLICE"]
+        sagroty.driver.expression = "var1"
+        
+        sagrotz = bpy.data.objects["Crop 3D_X"].driver_add("rotation_euler", 2) 
+        var1 = sagrotz.driver.variables.new()
+        var1.name = "var1"
+        var1.type = 'TRANSFORMS'
+        var1.targets[0].transform_type = 'ROT_Z'
+        var1.targets[0].id = bpy.data.objects["3_IT001_SAGITAL_SLICE"]
+        sagrotz.driver.expression = "var1 - 1.5708"    
+        
+        """
+        These 6 blocks of code link the location and rotation of the coronal slice to that of the Y-cropping cube.
+        """
+        corlocx = bpy.data.objects["Crop 3D_Y"].driver_add("location", 0) 
+        var1 = corlocx.driver.variables.new()
+        var1.name = "var1"
+        var1.type = 'TRANSFORMS'
+        var1.targets[0].transform_type = 'LOC_X'
+        var1.targets[0].id = bpy.data.objects["2_IT001_CORONAL_SLICE"]
+        corlocx.driver.expression = "var1"
+        
+        corlocy = bpy.data.objects["Crop 3D_Y"].driver_add("location", 1) 
+        var1 = corlocy.driver.variables.new()
+        var1.name = "var1"
+        var1.type = 'TRANSFORMS'
+        var1.targets[0].transform_type = 'LOC_Y'
+        var1.targets[0].id = bpy.data.objects["2_IT001_CORONAL_SLICE"]
+        y = bpy.data.objects["Crop 3D_Y"].dimensions[1]
+        y = -(0.5 * y - 2)
+        corlocy.driver.expression = "var1 -" + str(y)
+    
+        corlocz = bpy.data.objects["Crop 3D_Y"].driver_add("location", 2) 
+        var1 = corlocz.driver.variables.new()
+        var1.name = "var1"
+        var1.type = 'TRANSFORMS'
+        var1.targets[0].transform_type = 'LOC_Z'
+        var1.targets[0].id = bpy.data.objects["2_IT001_CORONAL_SLICE"]
+        corlocz.driver.expression = "var1"
+        
+        
+        corrotx = bpy.data.objects["Crop 3D_Y"].driver_add("rotation_euler", 0) 
+        var1 = corrotx.driver.variables.new()
+        var1.name = "var1"
+        var1.type = 'TRANSFORMS'
+        var1.targets[0].transform_type = 'ROT_X'
+        var1.targets[0].id = bpy.data.objects["2_IT001_CORONAL_SLICE"]
+        corrotx.driver.expression = "var1 + 1.5708"
+        
+        corroty = bpy.data.objects["Crop 3D_Y"].driver_add("rotation_euler", 1) 
+        var1 = corroty.driver.variables.new()
+        var1.name = "var1"
+        var1.type = 'TRANSFORMS'
+        var1.targets[0].transform_type = 'ROT_Y'
+        var1.targets[0].id = bpy.data.objects["2_IT001_CORONAL_SLICE"]
+        corroty.driver.expression = "var1"
+        
+        corrotz = bpy.data.objects["Crop 3D_Y"].driver_add("rotation_euler", 2) 
+        var1 = corrotz.driver.variables.new()
+        var1.name = "var1"
+        var1.type = 'TRANSFORMS'
+        var1.targets[0].transform_type = 'ROT_Z'
+        var1.targets[0].id = bpy.data.objects["2_IT001_CORONAL_SLICE"]
+        corrotz.driver.expression = "var1"
+            
+        """
+        These 6 blocks of code link the location and rotation of the sagital slice to that of the Z-cropping cube.
+        """
+        axilocx = bpy.data.objects["Crop 3D_Z"].driver_add("location", 0)
+        var1 = axilocx.driver.variables.new()
+        var1.name = "var1"
+        var1.type = 'TRANSFORMS'
+        var1.targets[0].transform_type = 'LOC_X'
+        var1.targets[0].id = bpy.data.objects["1_IT001_AXIAL_SLICE"]
+        axilocx.driver.expression = "var1"
+        
+        axilocy = bpy.data.objects["Crop 3D_Z"].driver_add("location", 1)
+        var1 = axilocy.driver.variables.new()
+        var1.name = "var1"
+        var1.type = 'TRANSFORMS'
+        var1.targets[0].transform_type = 'LOC_Y'
+        var1.targets[0].id = bpy.data.objects["1_IT001_AXIAL_SLICE"]
+        axilocy.driver.expression = "var1"
+               
+        axilocz = bpy.data.objects["Crop 3D_Z"].driver_add("location", 2)
+        var1 = axilocz.driver.variables.new()
+        var1.name = "var1"
+        var1.type = 'TRANSFORMS'
+        var1.targets[0].transform_type = 'LOC_Z'
+        var1.targets[0].id = bpy.data.objects["1_IT001_AXIAL_SLICE"]
+        z = bpy.data.objects["Crop 3D_Z"].dimensions[2]
+        z = (0.5 * z - 1)
+        axilocz.driver.expression = "var1 - " + str(z)
+        
+        axirotx = bpy.data.objects["Crop 3D_Z"].driver_add("rotation_euler", 0) 
+        var1 = axirotx.driver.variables.new()
+        var1.name = "var1"
+        var1.type = 'TRANSFORMS'
+        var1.targets[0].transform_type = 'ROT_X'
+        var1.targets[0].id = bpy.data.objects["1_IT001_AXIAL_SLICE"]
+        axirotx.driver.expression = "var1"
+        
+        axiroty = bpy.data.objects["Crop 3D_Z"].driver_add("rotation_euler", 1) 
+        var1 = axiroty.driver.variables.new()
+        var1.name = "var1"
+        var1.type = 'TRANSFORMS'
+        var1.targets[0].transform_type = 'ROT_Y'
+        var1.targets[0].id = bpy.data.objects["1_IT001_AXIAL_SLICE"]
+        axiroty.driver.expression = "var1"
+        
+        axirotz = bpy.data.objects["Crop 3D_Z"].driver_add("rotation_euler", 2) 
+        var1 = axirotz.driver.variables.new()
+        var1.name = "var1"
+        var1.type = 'TRANSFORMS'
+        var1.targets[0].transform_type = 'ROT_Z'
+        var1.targets[0].id = bpy.data.objects["1_IT001_AXIAL_SLICE"]
         axirotz.driver.expression = "var1"
         return {'FINISHED'}
     
@@ -885,47 +1052,47 @@ class Debug_2(bpy.types.Operator):
 #          Panel in Side UI
 #---------------------------------------------------------------------------
 
-class OBJECT_PT_IntACT_Panel(bpy.types.Panel):
-    """Creates a Panel in the scene context of the properties editor"""
-    bl_category = "IntACT_Visualisation"
-    bl_label = "IntACT CT/3D Visualisation"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_context = "objectmode"
+# class OBJECT_PT_IntACT_Panel(bpy.types.Panel):
+    # """Creates a Panel in the scene context of the properties editor"""
+    # bl_category = "IntACT_Visualisation"
+    # bl_label = "IntACT CT/3D Visualisation"
+    # bl_space_type = "VIEW_3D"
+    # bl_region_type = "UI"
+    # bl_context = "objectmode"
     
-    def draw(self, context):
-        layout = self.layout
-        row = layout.row()
-        scene = context.scene
-        mytool = scene.my_tool
+    # def draw(self, context):
+        # layout = self.layout
+        # row = layout.row()
+        # scene = context.scene
+        # mytool = scene.my_tool
         
-        layout.label(text="Tool Setup:")
-        layout.operator("intact.init_setup")
-        layout.operator("intact.object_selection")
-        layout.operator("intact.cropping_cube_creation")
-        layout.operator("intact.cropping_cube_boolean")
-        layout.operator("intact.cropping_cube_drivers")
+        # layout.label(text="Tool Setup:")
+        # layout.operator("intact.init_setup")
+        # layout.operator("intact.object_selection")
+        # layout.operator("intact.cropping_cube_creation")
+        # layout.operator("intact.cropping_cube_boolean")
+        # layout.operator("intact.cropping_cube_drivers")
         
-        layout.label(text="Operators:")
-        layout.operator("intact.camera_setup")
-        layout.operator("intact.animation_path")
-        layout.operator("intact.slices_tracking")
-        layout.operator("intact.no_slices_tracking")
-        layout.operator("intact.slices_update")
+        # layout.label(text="Operators:")
+        # layout.operator("intact.camera_setup")
+        # layout.operator("intact.animation_path")
+        # layout.operator("intact.slices_tracking2")
+        # layout.operator("intact.no_slices_tracking")
+        # layout.operator("intact.slices_update")
         
-        layout.label(text="Visibilities:")
-        layout.prop(mytool, "ct_vis")
-        layout.prop(mytool, "surf_vis")
-        layout.prop(mytool, "axi_vis")
-        layout.prop(mytool, "cor_vis")
-        layout.prop(mytool, "sag_vis")
-        layout.prop(mytool, "seg_vis")
-        layout.operator("intact.update_visibilities")
+        # layout.label(text="Visibilities:")
+        # layout.prop(mytool, "ct_vis")
+        # layout.prop(mytool, "surf_vis")
+        # layout.prop(mytool, "axi_vis")
+        # layout.prop(mytool, "cor_vis")
+        # layout.prop(mytool, "sag_vis")
+        # layout.prop(mytool, "seg_vis")
+        # layout.operator("intact.update_visibilities")
         
-        layout.label(text="Debugging:")
-        layout.operator("intact.switch_boolean_solver")
-        layout.operator("intact.debug_1")
-        layout.operator("intact.debug_2")
+        # layout.label(text="Debugging:")
+        # layout.operator("intact.switch_boolean_solver")
+        # layout.operator("intact.debug_1")
+        # layout.operator("intact.debug_2")
         
 #---------------------------------------------------------------------------
 #          Registration
@@ -938,7 +1105,7 @@ classes = [
     Cropping_Cube_Creation,
     Cropping_Cube_Boolean,
     Cropping_Cube_Drivers,
-    Slices_Tracking,
+    Slices_Tracking2,
     No_Slices_Tracking,
     Slices_Update,
     Camera_Setup,
