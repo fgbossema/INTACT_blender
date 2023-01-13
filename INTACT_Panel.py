@@ -113,7 +113,7 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"  # blender 2.7 and lower = TOOLS
     bl_category = "INTACT"
-    bl_label = "SCAN VIEWER"
+    bl_label = "CT SCAN LOAD"
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
@@ -248,6 +248,39 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                 col = split.column()
                 col.operator("intact.multiview")
 
+class INTACT_PT_SurfacePanel(bpy.types.Panel):
+    """ INTACT Scan Panel"""
+
+    bl_idname = "INTACT_PT_SurfacePanel"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"  # blender 2.7 and lower = TOOLS
+    bl_category = "INTACT"
+    bl_label = "SURFACE SCAN LOAD"
+    bl_options = {"DEFAULT_CLOSED"}
+    
+    def draw(self, context):
+
+       INTACT_Props = context.scene.INTACT_Props
+       GroupNodeName = INTACT_Props.GroupNodeName
+       VGS = bpy.data.node_groups.get(GroupNodeName)
+        # Draw Addon UI :
+       layout = self.layout
+
+       row = layout.row()
+       split = row.split()
+       col = split.column()
+       col.label(text="Surface scan directory (.obj file) :")
+       col = split.column()
+       col.prop(INTACT_Props, "UserObjDir", text="")
+        
+       if INTACT_Props.UserObjDir:
+           Box = layout.box()
+           row = Box.row()
+           row.alignment = "CENTER"
+           row.scale_y = 2
+           row.operator("intact.obj_render", icon="IMPORT")
+        
+        
 
 class INTACT_PT_Measurements(bpy.types.Panel):
     """ INTACT_FULL Scan Panel"""
@@ -474,7 +507,7 @@ class OBJECT_PT_IntACT_Panel(bpy.types.Panel):
 classes = [
     INTACT_PT_MainPanel,
     INTACT_PT_ScanPanel,
-    INTACT_PT_Measurements,
+    INTACT_PT_SurfacePanel,
     INTACT_PT_MeshesTools_Panel,
     OBJECT_PT_ICP_panel,
     OBJECT_PT_IntACT_Panel

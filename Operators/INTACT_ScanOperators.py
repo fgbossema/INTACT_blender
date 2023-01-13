@@ -228,7 +228,7 @@ def Load_Dicom_funtion(context, q):
 
         Split = split(UserProjectDir)
         ProjectName = Split[-1] or Split[-2]
-        BlendFile = f"{ProjectName}_CT-SCAN.blend"
+        BlendFile = f"{ProjectName}_INTACT.blend"
         Blendpath = join(UserProjectDir, BlendFile)
 
         if not exists(Blendpath) or bpy.context.blend_data.filepath == Blendpath:
@@ -587,7 +587,7 @@ def Load_Tiff_function(context, q):
         O = Origin
         Direction = D
         
-        DirectionMatrix_4x4 = Matrix(
+        DirectionMatrix_4x4 = Matrix(intact.addslices
             (
                 (D[0], D[1], D[2], 0.0),
                 (D[3], D[4], D[5], 0.0),
@@ -1089,7 +1089,7 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
     """ Volume Render """
 
     bl_idname = "intact.volume_render"
-    bl_label = "LOAD SCAN"
+    bl_label = "LOAD CT SCAN"
 
     q = Queue()
 
@@ -1179,6 +1179,49 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
         print(f"Finished (Time : {Finish-Start}")
 
         return {"FINISHED"}
+
+class INTACT_OT_Surface_Render(bpy.types.Operator):
+    """ Surface scan Render """
+
+    bl_idname = "intact.obj_render"
+    bl_label = "LOAD SURFACE SCAN"
+
+    q = Queue()
+
+    def execute(self, context):
+
+        Start = Tcounter()
+        print("Data Loading START...")
+
+        global ShadersBlendFile
+        global GpShader
+
+        INTACT_Props = context.scene.INTACT_Props
+
+        #UserProjectDir = AbsPath(INTACT_Props.UserProjectDir)
+        UserOBjDir = AbsPath(INTACT_Props.UserObjDir)
+        print("\n##########################\n")
+        print("Loading Surface scan...")
+        
+        imported_object = bpy.ops.import_scene.obj(filepath=UserOBjDir, filter_glob="*.obj;*.mtl")
+        obj_object = bpy.context.selected_objects[0] 
+        obj_object.name = "IT_surface_" + obj_object.name
+        print('Imported name: ', obj_object.name)
+        
+     
+
+        #INTACT_Props.Surface_Rendered = True
+        bpy.context.scene.unit_settings.scale_length = 0.001
+        bpy.context.scene.unit_settings.length_unit = "MILLIMETERS"
+        bpy.ops.view3d.view_selected(use_all_regions=False)
+        bpy.ops.wm.save_mainfile()
+
+        Finish = Tcounter()
+
+        print(f"Finished (Time : {Finish-Start}")
+
+        return {"FINISHED"}
+
 
 
 class INTACT_OT_TresholdUpdate(bpy.types.Operator):
@@ -2488,6 +2531,7 @@ class INTACT_OT_AddReferencePlanes(bpy.types.Operator):
 classes = [
     INTACT_OT_Template,
     INTACT_OT_Volume_Render,
+    INTACT_OT_Surface_Render,
     INTACT_OT_ResetCtVolumePosition,
     INTACT_OT_TresholdUpdate,
     INTACT_OT_AddSlices,

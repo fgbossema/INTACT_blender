@@ -134,6 +134,13 @@ class INTACT_Props(bpy.types.PropertyGroup):
         description="User Image File Path",
         subtype="FILE_PATH",
     )
+    
+    UserObjDir: StringProperty(
+        name="OBJ Path",
+        default="",
+        description="OBJ Directory Path",
+        subtype="FILE_PATH",
+    )
 
     #####################
 
