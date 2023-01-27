@@ -598,9 +598,9 @@ class OBJECT_PT_IntACT_Panel(bpy.types.Panel):
         layout.operator("intact.debug_2")
         
         
-        
+        layout.label(text="Slices and 3D view in one screen:")
         row = layout.row()
-        col.operator("intact.multiview")       
+        row.operator("intact.multiview")       
         
         
 #################################################################################################
