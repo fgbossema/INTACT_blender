@@ -156,7 +156,7 @@ def make_directory(Root, DirName):
     if not DirName in os.listdir(Root):
         os.mkdir(DirPath)
     return DirPath
-
+    
 
 ################################
 # Copy DcmSerie To ProjDir function :

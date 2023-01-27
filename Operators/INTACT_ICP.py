@@ -278,7 +278,7 @@ class OBJECT_OT_initialAlignment_operator(bpy.types.Operator):
 class OBJECT_OT_ICP_operator(bpy.types.Operator):
     """Start iterative closest point registration (first selected object = moving, last selected object = fixed)"""
     bl_idname = "object.icp"
-    bl_label = "Perform ICP"
+    bl_label = "Perform Registration"
     bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod

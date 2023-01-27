@@ -257,6 +257,8 @@ def Load_Dicom_funtion(context, q):
         reader.ReadImageInformation()
 
         Image3D = sitk.ReadImage(DcmSerie, imageIO='GDCMImageIO')
+        
+
 
         # Get Dicom Info :
         Sp = Spacing = Image3D.GetSpacing()
@@ -563,17 +565,27 @@ def Load_Tiff_function(context, q):
         
         Origin = (-(Sz[0]-1)/2*Sp[0], (Sz[1]-1)/2*Sp[1], (Sz[2]-1)/2*Sp[2])
         
-        
+        Image3D = sitk.Cast(Image3D, sitk.sitkFloat32)
         minmax = sitk.MinimumMaximumImageFilter()
         minmax.Execute(Image3D)
         Wmax = minmax.GetMaximum()
         Wmin = minmax.GetMinimum()
-        fact = []    
-        fact.append(4000/Wmax)
-        fact.append(abs(2000/Wmin))
-        mult_factor = min(fact)
-        multiply = sitk.MultiplyImageFilter()
-        Image3D = multiply.Execute(Image3D, mult_factor)
+        print(Wmin, Wmax)
+        #if not (Wmin == 0.0 and Wmax == 255.0):
+        if not (Wmin == 0.0) :
+            fact = []    
+            fact.append(4000/Wmax)
+            fact.append(abs(2000/Wmin))
+            mult_factor = min(fact)
+            multiply = sitk.MultiplyImageFilter()
+            Image3D = multiply.Execute(Image3D, mult_factor)
+        else: 
+            mult_factor = 4000/Wmax
+            multiply = sitk.MultiplyImageFilter()
+            Image3D = multiply.Execute(Image3D, mult_factor)
+            
+            
+            
         
         #Re-evaluate Wmin and Wmax after scaling
         minmax = sitk.MinimumMaximumImageFilter()
@@ -587,7 +599,7 @@ def Load_Tiff_function(context, q):
         O = Origin
         Direction = D
         
-        DirectionMatrix_4x4 = Matrix(intact.addslices
+        DirectionMatrix_4x4 = Matrix(
             (
                 (D[0], D[1], D[2], 0.0),
                 (D[3], D[4], D[5], 0.0),
@@ -765,7 +777,7 @@ def Load_Tiff_function(context, q):
         DcmInfoDict = eval(INTACT_Props.DcmInfo)
         DcmInfoDict[Preffix] = DcmInfo
         INTACT_Props.DcmInfo = str(DcmInfoDict)
-        INTACT_Props.UserProjectDir = RelPath(INTACT_Props.UserProjectDir)
+        #INTACT_Props.UserProjectDir = RelPath(INTACT_Props.UserProjectDir)
         bpy.ops.wm.save_mainfile() 
         		
         # #################################### debug_04 ####################################
@@ -1199,11 +1211,12 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         INTACT_Props = context.scene.INTACT_Props
 
         #UserProjectDir = AbsPath(INTACT_Props.UserProjectDir)
-        UserOBjDir = AbsPath(INTACT_Props.UserObjDir)
+        UserObjDir = AbsPath(INTACT_Props.UserObjDir)
+        print(UserObjDir)
         print("\n##########################\n")
         print("Loading Surface scan...")
         
-        imported_object = bpy.ops.import_scene.obj(filepath=UserOBjDir, filter_glob="*.obj;*.mtl")
+        imported_object = bpy.ops.import_scene.obj(filepath=AbsPath(UserObjDir), filter_glob="*.obj;*.mtl")
         obj_object = bpy.context.selected_objects[0] 
         obj_object.name = "IT_surface_" + obj_object.name
         print('Imported name: ', obj_object.name)
