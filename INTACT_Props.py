@@ -98,9 +98,7 @@ def text_underline_toggle(self, context):
             bpy.ops.object.mode_set(mode=mode)
             
 def make_path_absolute(key):
-    """ Prevent Blender's relative paths of doom """
-
-    # This can be a collection property or addon preferences
+    """ Prevent Blender's relative paths """
     props = bpy.context.scene.INTACT_Props
     sane_path = lambda p: os.path.abspath(bpy.path.abspath(p))
     if key in props and props[key].startswith('//'):

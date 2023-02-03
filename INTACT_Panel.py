@@ -294,20 +294,25 @@ class INTACT_PT_SurfacePanel(bpy.types.Panel):
        VGS = bpy.data.node_groups.get(GroupNodeName)
         # Draw Addon UI :
        layout = self.layout
-
-       row = layout.row()
-       split = row.split()
-       col = split.column()
-       col.label(text="Surface scan directory (.obj file) :")
-       col = split.column()
-       col.prop(INTACT_Props, "UserObjDir", text="")
+       if not INTACT_Props.UserProjectDir:
+           row = layout.row()
+           row.alignment = "LEFT"
+           row.label(text=f"Please specify a project directory in the INTACT panel.")
+           
+       if INTACT_Props.UserProjectDir:
+           row = layout.row()
+           split = row.split()
+           col = split.column()
+           col.label(text="Surface scan directory (.obj file) :")
+           col = split.column()
+           col.prop(INTACT_Props, "UserObjDir", text="")
         
-       if INTACT_Props.UserObjDir:
-           Box = layout.box()
-           row = Box.row()
-           row.alignment = "CENTER"
-           row.scale_y = 2
-           row.operator("intact.obj_render", icon="IMPORT")
+           if INTACT_Props.UserObjDir:
+               Box = layout.box()
+               row = Box.row()
+               row.alignment = "CENTER"
+               row.scale_y = 2
+               row.operator("intact.obj_render", icon="IMPORT")
         
         
 
@@ -547,7 +552,7 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
         layout = self.layout
         row = layout.row()
         scene = context.scene
-        mytool = scene.my_tool
+        #mytool = scene.my_tool
         
         
         layout.label(text="CT slices generator:")
@@ -583,14 +588,14 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
         layout.operator("intact.no_slices_tracking")
         layout.operator("intact.slices_update")
         
-        layout.label(text="Visibilities:")
-        layout.prop(mytool, "ct_vis")
-        layout.prop(mytool, "surf_vis")
-        layout.prop(mytool, "axi_vis")
-        layout.prop(mytool, "cor_vis")
-        layout.prop(mytool, "sag_vis")
-        layout.prop(mytool, "seg_vis")
-        layout.operator("intact.update_visibilities")
+        # layout.label(text="Visibilities:")
+        # layout.prop(mytool, "ct_vis")
+        # layout.prop(mytool, "surf_vis")
+        # layout.prop(mytool, "axi_vis")
+        # layout.prop(mytool, "cor_vis")
+        # layout.prop(mytool, "sag_vis")
+        # layout.prop(mytool, "seg_vis")
+        # layout.operator("intact.update_visibilities")
         
         layout.label(text="Debugging:")
         layout.operator("intact.switch_boolean_solver")
