@@ -128,7 +128,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
     UserDcmDir: StringProperty(
         name="DICOM Path",
         default="",
-        update = lambda s,c: make_path_absolute('UserDcmDir')
+        update = lambda s,c: make_path_absolute('UserDcmDir'),
         description="DICOM Directory Path",
         subtype="DIR_PATH",
     )
@@ -136,7 +136,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
     UserTiffDir: StringProperty(
         name="TIFF Path",
         default="",
-        update = lambda s,c: make_path_absolute('UserTiffDir')
+        update = lambda s,c: make_path_absolute('UserTiffDir'),
         description="TIFF Directory Path",
         subtype="DIR_PATH",
     )
@@ -144,7 +144,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
     UserImageFile: StringProperty(
         name="User 3D Image File Path",
         default="",
-        update = lambda s,c: make_path_absolute('UserImageFile')
+        update = lambda s,c: make_path_absolute('UserImageFile'),
         description="User Image File Path",
         subtype="FILE_PATH",
     )

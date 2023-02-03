@@ -534,7 +534,7 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
         layout.operator("object.icpexport")
         layout.operator("object.icpset")
 
-class OBJECT_PT_IntACT_Panel(bpy.types.Panel):
+class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
     """Creates a Panel in the scene context of the properties editor"""
     bl_category = "INTACT"
     bl_label = "VISUALISATION"
@@ -612,7 +612,7 @@ classes = [
     INTACT_PT_ScanPanel, 
     INTACT_PT_SurfacePanel,  
     OBJECT_PT_ICP_panel,
-    OBJECT_PT_IntACT_Panel
+    OBJECT_PT_Visualisation_Panel
     ]
 
 
