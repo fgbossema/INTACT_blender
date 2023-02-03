@@ -529,11 +529,9 @@ def Load_Tiff_function(context, q):
         else:
             bpy.ops.wm.save_mainfile()
 
-        # Start Reading Dicom data :
+        # Start Reading Tiff data :
         ######################################################################################
-        #Series_reader = sitk.ImageSeriesReader()
-        #MaxSerie, MaxCount = GetMaxSerie(UserTiffDir)
-        #DcmSerie = Series_reader.GetGDCMSeriesFileNames(UserTiffDir, MaxSerie)
+
         
         TiffSerie = os.listdir(UserTiffDir)
         MaxCount = len(TiffSerie)
@@ -639,7 +637,7 @@ def Load_Tiff_function(context, q):
         # Set DcmInfo : #where do these numbers all come from? Wmin, Wmax defined in INTACT_Panel
 
         DcmInfo = {
-            "UserProjectDir": RelPath(UserProjectDir),
+            "UserProjectDir": UserProjectDir,
             "Preffix": Preffix,
             "RenderSz": Sz,
             "RenderSp": Sp,
@@ -689,7 +687,7 @@ def Load_Tiff_function(context, q):
         SlicesDir = join(UserProjectDir, "Slices")
         if not exists(SlicesDir):
             os.makedirs(SlicesDir)
-        DcmInfo["SlicesDir"] = RelPath(SlicesDir)
+        DcmInfo["SlicesDir"] = SlicesDir
 
         PngDir = join(UserProjectDir, "PNG")
         if not exists(PngDir):
@@ -697,7 +695,7 @@ def Load_Tiff_function(context, q):
 
         Nrrd255Path = join(UserProjectDir, f"{Preffix}_Image3D255.nrrd")
 
-        DcmInfo["Nrrd255Path"] = RelPath(Nrrd255Path)
+        DcmInfo["Nrrd255Path"] = Nrrd255Path
         
         ###Set info in Image3D metadata:
         Image3D.SetSpacing(Sp)
@@ -1211,12 +1209,13 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         INTACT_Props = context.scene.INTACT_Props
 
         #UserProjectDir = AbsPath(INTACT_Props.UserProjectDir)
-        UserObjDir = AbsPath(INTACT_Props.UserObjDir)
-        print(UserObjDir)
+        UserObjDir = INTACT_Props.UserObjDir
+       
         print("\n##########################\n")
         print("Loading Surface scan...")
         
-        imported_object = bpy.ops.import_scene.obj(filepath=AbsPath(UserObjDir), filter_glob="*.obj;*.mtl")
+        
+        imported_object = bpy.ops.import_scene.obj(filepath=UserObjDir, filter_glob="*.obj;*.mtl")
         obj_object = bpy.context.selected_objects[0] 
         obj_object.name = "IT_surface_" + obj_object.name
         print('Imported name: ', obj_object.name)

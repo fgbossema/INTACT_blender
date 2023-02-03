@@ -1,5 +1,6 @@
 import bpy
 from os.path import abspath
+import os
 
 from bpy.props import (
     StringProperty,
@@ -95,6 +96,16 @@ def text_underline_toggle(self, context):
             bpy.ops.font.select_all()
             bpy.ops.font.style_toggle(style="UNDERLINE")
             bpy.ops.object.mode_set(mode=mode)
+            
+def make_path_absolute(key):
+    """ Prevent Blender's relative paths of doom """
+
+    # This can be a collection property or addon preferences
+    props = bpy.context.scene.INTACT_Props
+    sane_path = lambda p: os.path.abspath(bpy.path.abspath(p))
+    if key in props and props[key].startswith('//'):
+        props[key] = sane_path(props[key]) 
+
 
 
 class INTACT_Props(bpy.types.PropertyGroup):
@@ -117,6 +128,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
     UserDcmDir: StringProperty(
         name="DICOM Path",
         default="",
+        update = lambda s,c: make_path_absolute('UserDcmDir')
         description="DICOM Directory Path",
         subtype="DIR_PATH",
     )
@@ -124,6 +136,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
     UserTiffDir: StringProperty(
         name="TIFF Path",
         default="",
+        update = lambda s,c: make_path_absolute('UserTiffDir')
         description="TIFF Directory Path",
         subtype="DIR_PATH",
     )
@@ -131,17 +144,23 @@ class INTACT_Props(bpy.types.PropertyGroup):
     UserImageFile: StringProperty(
         name="User 3D Image File Path",
         default="",
+        update = lambda s,c: make_path_absolute('UserImageFile')
         description="User Image File Path",
         subtype="FILE_PATH",
     )
     
     UserObjDir: StringProperty(
         name="OBJ Path",
+        update = lambda s,c: make_path_absolute('UserObjDir'),
         default="",
         description="OBJ Directory Path",
         subtype="FILE_PATH",
     )
-
+    
+    # my_filepath: StringProperty(
+        # name = 'Absolute filepath',
+        # update = lambda s,c: make_path_absolute('my_filepath'),
+        # subtype = 'FILE_PATH')
     #####################
 
     Data_Types = ["TIFF Stack", "DICOM Series", "3D Image File", ""]
