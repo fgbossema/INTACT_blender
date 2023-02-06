@@ -1217,7 +1217,8 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         
         imported_object = bpy.ops.import_scene.obj(filepath=UserObjDir, filter_glob="*.obj;*.mtl")
         obj_object = bpy.context.selected_objects[0] 
-        obj_object.name = "IT_surface_" + obj_object.name
+        obj_object.name = "IT_Surface_" + obj_object.name
+        bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name='Surface_Mesh')
         print('Imported name: ', obj_object.name)
         
      
@@ -1693,7 +1694,6 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
                 return {"CANCELLED"}
 
             else:
-
                 self.Thres1 = INTACT_Props.Thres1Bool
                 self.Thres2 = INTACT_Props.Thres2Bool
                 self.Thres3 = INTACT_Props.Thres3Bool
