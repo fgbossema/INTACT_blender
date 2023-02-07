@@ -1614,11 +1614,12 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
         Mesh = ExtractedMesh
 
         polysCount = Mesh.GetNumberOfPolys()
-        polysLimit = 800000
+        polysLimit = 800000 #43000000
 
         self.step2 = Tcounter()
         self.TimingDict["Mesh Extraction Time"] = self.step2 - self.step1
         print(f"{Segment} Mesh Extraction Finished")
+        print("number of polys", polysCount)
         ############### step 3 : mesh Reduction... #########################
         if polysCount > polysLimit:
 

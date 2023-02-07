@@ -482,6 +482,8 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
             ):
                                                
                 row = layout.row()
+                row.label(text=f"In case the CT volume has been moved, please reset it's position:")
+                row = layout.row()
                 row.operator("intact.reset_ctvolume_position")
                 row = layout.row()
                 row.label(text=f"Please choose a threshold for the CT mesh generation:")
@@ -491,13 +493,13 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
                 layout.separator()
 
                 row = layout.row()
-                row.label(text="Input the chosen threshold below, choose a colour for the mesh, check the box and run segmentation:")
+                row.label(text="Choose threshold and colour for mesh. Then run segmentation:")
 
                 Box = layout.box()
                 row = Box.row()
                 row.prop(INTACT_Props, "Treshold", text="Threshold")
                 row.prop(INTACT_Props, "Thres1SegmentColor", text="")
-                row.prop(INTACT_Props, "Thres1Bool", text="")
+                #row.prop(INTACT_Props, "Thres1Bool", text="")
                 # row = Box.row()
                 # row.prop(INTACT_Props, "Thres2Treshold", text="Threshold 2")
                 # row.prop(INTACT_Props, "Thres2SegmentColor", text="")
@@ -515,7 +517,8 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
 
         
         #rough alignment panel
-        layout.label(text = "Initial Alignment by placing landmarks")
+        layout.label(text = "Please move the surface scan to roughly align with the CT mesh. This can be done manually or using landmarks below.")
+        layout.label(text = "Initial Alignment by placing landmarks. Place min. 4 landmarks on CT mesh, press enter, then place them on approx. the same location on surface mesh and press enter.")
         layout.operator("object.placelandmarks")
         layout.operator("object.deletelandmarks")
         layout.operator("object.initialalignment")

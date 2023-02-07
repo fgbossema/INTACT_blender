@@ -346,7 +346,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
         soft_max=3000,
         step=1,
     )
-    Thres1Bool: BoolProperty(description="", default=False)
+    Thres1Bool: BoolProperty(description="", default=True)
     Thres2Bool: BoolProperty(description="", default=False)
     Thres3Bool: BoolProperty(description="", default=False)
 
