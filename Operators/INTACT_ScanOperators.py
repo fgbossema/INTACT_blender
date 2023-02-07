@@ -257,8 +257,6 @@ def Load_Dicom_funtion(context, q):
         reader.ReadImageInformation()
 
         Image3D = sitk.ReadImage(DcmSerie, imageIO='GDCMImageIO')
-        
-
 
         # Get Dicom Info :
         Sp = Spacing = Image3D.GetSpacing()
@@ -529,9 +527,11 @@ def Load_Tiff_function(context, q):
         else:
             bpy.ops.wm.save_mainfile()
 
-        # Start Reading Tiff data :
+        # Start Reading Dicom data :
         ######################################################################################
-
+        #Series_reader = sitk.ImageSeriesReader()
+        #MaxSerie, MaxCount = GetMaxSerie(UserTiffDir)
+        #DcmSerie = Series_reader.GetGDCMSeriesFileNames(UserTiffDir, MaxSerie)
         
         TiffSerie = os.listdir(UserTiffDir)
         MaxCount = len(TiffSerie)
@@ -563,27 +563,17 @@ def Load_Tiff_function(context, q):
         
         Origin = (-(Sz[0]-1)/2*Sp[0], (Sz[1]-1)/2*Sp[1], (Sz[2]-1)/2*Sp[2])
         
-        Image3D = sitk.Cast(Image3D, sitk.sitkFloat32)
+        
         minmax = sitk.MinimumMaximumImageFilter()
         minmax.Execute(Image3D)
         Wmax = minmax.GetMaximum()
         Wmin = minmax.GetMinimum()
-        print(Wmin, Wmax)
-        #if not (Wmin == 0.0 and Wmax == 255.0):
-        if not (Wmin == 0.0) :
-            fact = []    
-            fact.append(4000/Wmax)
-            fact.append(abs(2000/Wmin))
-            mult_factor = min(fact)
-            multiply = sitk.MultiplyImageFilter()
-            Image3D = multiply.Execute(Image3D, mult_factor)
-        else: 
-            mult_factor = 4000/Wmax
-            multiply = sitk.MultiplyImageFilter()
-            Image3D = multiply.Execute(Image3D, mult_factor)
-            
-            
-            
+        fact = []    
+        fact.append(4000/Wmax)
+        fact.append(abs(2000/Wmin))
+        mult_factor = min(fact)
+        multiply = sitk.MultiplyImageFilter()
+        Image3D = multiply.Execute(Image3D, mult_factor)
         
         #Re-evaluate Wmin and Wmax after scaling
         minmax = sitk.MinimumMaximumImageFilter()
@@ -597,7 +587,7 @@ def Load_Tiff_function(context, q):
         O = Origin
         Direction = D
         
-        DirectionMatrix_4x4 = Matrix(
+        DirectionMatrix_4x4 = Matrix(intact.addslices
             (
                 (D[0], D[1], D[2], 0.0),
                 (D[3], D[4], D[5], 0.0),
@@ -637,7 +627,7 @@ def Load_Tiff_function(context, q):
         # Set DcmInfo : #where do these numbers all come from? Wmin, Wmax defined in INTACT_Panel
 
         DcmInfo = {
-            "UserProjectDir": UserProjectDir,
+            "UserProjectDir": RelPath(UserProjectDir),
             "Preffix": Preffix,
             "RenderSz": Sz,
             "RenderSp": Sp,
@@ -687,7 +677,7 @@ def Load_Tiff_function(context, q):
         SlicesDir = join(UserProjectDir, "Slices")
         if not exists(SlicesDir):
             os.makedirs(SlicesDir)
-        DcmInfo["SlicesDir"] = SlicesDir
+        DcmInfo["SlicesDir"] = RelPath(SlicesDir)
 
         PngDir = join(UserProjectDir, "PNG")
         if not exists(PngDir):
@@ -695,7 +685,7 @@ def Load_Tiff_function(context, q):
 
         Nrrd255Path = join(UserProjectDir, f"{Preffix}_Image3D255.nrrd")
 
-        DcmInfo["Nrrd255Path"] = Nrrd255Path
+        DcmInfo["Nrrd255Path"] = RelPath(Nrrd255Path)
         
         ###Set info in Image3D metadata:
         Image3D.SetSpacing(Sp)
@@ -775,7 +765,7 @@ def Load_Tiff_function(context, q):
         DcmInfoDict = eval(INTACT_Props.DcmInfo)
         DcmInfoDict[Preffix] = DcmInfo
         INTACT_Props.DcmInfo = str(DcmInfoDict)
-        #INTACT_Props.UserProjectDir = RelPath(INTACT_Props.UserProjectDir)
+        INTACT_Props.UserProjectDir = RelPath(INTACT_Props.UserProjectDir)
         bpy.ops.wm.save_mainfile() 
         		
         # #################################### debug_04 ####################################
@@ -1209,16 +1199,13 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         INTACT_Props = context.scene.INTACT_Props
 
         #UserProjectDir = AbsPath(INTACT_Props.UserProjectDir)
-        UserObjDir = INTACT_Props.UserObjDir
-       
+        UserOBjDir = AbsPath(INTACT_Props.UserObjDir)
         print("\n##########################\n")
         print("Loading Surface scan...")
         
-        
-        imported_object = bpy.ops.import_scene.obj(filepath=UserObjDir, filter_glob="*.obj;*.mtl")
+        imported_object = bpy.ops.import_scene.obj(filepath=UserOBjDir, filter_glob="*.obj;*.mtl")
         obj_object = bpy.context.selected_objects[0] 
-        obj_object.name = "IT_Surface_" + obj_object.name
-        bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name='Surface_Mesh')
+        obj_object.name = "IT_surface_" + obj_object.name
         print('Imported name: ', obj_object.name)
         
      
@@ -1614,12 +1601,11 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
         Mesh = ExtractedMesh
 
         polysCount = Mesh.GetNumberOfPolys()
-        polysLimit = 800000 #43000000
+        polysLimit = 800000
 
         self.step2 = Tcounter()
         self.TimingDict["Mesh Extraction Time"] = self.step2 - self.step1
         print(f"{Segment} Mesh Extraction Finished")
-        print("number of polys", polysCount)
         ############### step 3 : mesh Reduction... #########################
         if polysCount > polysLimit:
 
@@ -1695,6 +1681,7 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
                 return {"CANCELLED"}
 
             else:
+
                 self.Thres1 = INTACT_Props.Thres1Bool
                 self.Thres2 = INTACT_Props.Thres2Bool
                 self.Thres3 = INTACT_Props.Thres3Bool
