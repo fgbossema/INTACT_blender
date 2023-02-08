@@ -1111,7 +1111,7 @@ classes = [
     Camera_Setup,
     Animation_Path,
     Switch_Boolean_Solver,
-    Update_Visibilities,
+    #Update_Visibilities,
     Debug_1,
     Debug_2]#,
     #OBJECT_PT_IntACT_Panel

@@ -225,7 +225,7 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                 row = layout.row()
                 row.label(text=f"Threshold {Wmin} to {Wmax} HU :")
                 row = layout.row()
-                row.prop(INTACT_Props, "Treshold", text="THRESHOLD", slider=True)
+                row.prop(INTACT_Props, "Thres1Treshold", text="THRESHOLD", slider=True)
                    
                 layout.separator()
 
@@ -234,7 +234,7 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
 
                 Box = layout.box()
                 row = Box.row()
-                row.prop(INTACT_Props, "Thres1Treshold", text="Threshold 1")
+                #row.prop(INTACT_Props, "Thres1Treshold", text="Threshold 1")
                 row.prop(INTACT_Props, "Thres1SegmentColor", text="")
                 #row.prop(INTACT_Props, "Thres1Bool", text="")
                 # row = Box.row()
@@ -481,7 +481,7 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
         layout = self.layout
         row = layout.row()
         scene = context.scene
-        mytool = scene.my_tool
+        #mytool = scene.my_tool
         
         layout.label(text="Tool Setup:")
         layout.operator("intact.init_setup")
