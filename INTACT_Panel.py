@@ -139,9 +139,10 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
         # col.label(text="Project Directory :")
         # col = split.column()
         # col.prop(INTACT_Props, "UserProjectDir", text="")
-        
+             
         if not INTACT_Props.UserProjectDir:
-            layout.row()
+            row = layout.row()
+            row.alignment = "LEFT"
             row.label(text = "Please select working directory in INTACT panel")
             
         if INTACT_Props.UserProjectDir:
@@ -215,41 +216,42 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                     row.scale_y = 2
                     row.operator("intact.volume_render", icon="IMPORT")
 
-        if context.object:
-            if context.object.name.startswith("IT") and context.object.name.endswith(
-                "CTVolume"
-            ):
+        # if context.object:
+            # if context.object.name.startswith("IT") and context.object.name.endswith(
+                # "CTVolume"
+            # ):
                                                
-                row = layout.row()
-                row.operator("intact.reset_ctvolume_position")
-                row = layout.row()
-                row.label(text=f"Threshold {Wmin} to {Wmax} HU :")
-                row = layout.row()
-                row.prop(INTACT_Props, "Thres1Treshold", text="THRESHOLD", slider=True)
+                # row = layout.row()
+                # row.operator("intact.reset_ctvolume_position")
+                # row = layout.row()
+                # row.label(text=f"Threshold {Wmin} to {Wmax} HU :")
+                # row = layout.row()
+                # row.prop(INTACT_Props, "Thres1Treshold", text="THRESHOLD", slider=True)
                    
-                layout.separator()
+                # layout.separator()
 
-                row = layout.row()
-                row.label(text="Segments :")
+                # row = layout.row()
+                # row.label(text="Segments :")
 
-                Box = layout.box()
-                row = Box.row()
-                #row.prop(INTACT_Props, "Thres1Treshold", text="Threshold 1")
-                row.prop(INTACT_Props, "Thres1SegmentColor", text="")
-                #row.prop(INTACT_Props, "Thres1Bool", text="")
+                # Box = layout.box()
                 # row = Box.row()
-                # row.prop(INTACT_Props, "Thres2Treshold", text="Threshold 2")
-                # row.prop(INTACT_Props, "Thres2SegmentColor", text="")
-                # row.prop(INTACT_Props, "Thres2Bool", text="")
+                # #row.prop(INTACT_Props, "Thres1Treshold", text="Threshold 1")
+                # row.prop(INTACT_Props, "Thres1SegmentColor", text="")
+                # #row.prop(INTACT_Props, "Thres1Bool", text="")
+                # # row = Box.row()
+                # # row.prop(INTACT_Props, "Thres2Treshold", text="Threshold 2")
+                # # row.prop(INTACT_Props, "Thres2SegmentColor", text="")
+                # # row.prop(INTACT_Props, "Thres2Bool", text="")
 
+                # # row = Box.row()
+                # # row.prop(INTACT_Props, "Thres3Treshold", text="Threshold 3")
+                # # row.prop(INTACT_Props, "Thres3SegmentColor", text="")
+                # # row.prop(INTACT_Props, "Thres3Bool", text="")
+
+                # Box = layout.box()
                 # row = Box.row()
-                # row.prop(INTACT_Props, "Thres3Treshold", text="Threshold 3")
-                # row.prop(INTACT_Props, "Thres3SegmentColor", text="")
-                # row.prop(INTACT_Props, "Thres3Bool", text="")
-
-                Box = layout.box()
-                row = Box.row()
-                row.operator("intact.multitresh_segment")
+                # row.operator("intact.multitresh_segment")
+                
             if context.object.name.startswith("IT") and context.object.name.endswith(
                 ("CTVolume", "SEGMENTATION")
             ):
@@ -436,8 +438,52 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
-        #readme panel
         layout = self.layout
+        INTACT_Props = context.scene.INTACT_Props
+        GroupNodeName = INTACT_Props.GroupNodeName
+        VGS = bpy.data.node_groups.get(GroupNodeName)
+        
+        if context.object:
+            if context.object.name.startswith("IT") and context.object.name.endswith(
+                "CTVolume"
+            ):
+                                                             
+                row = layout.row()
+                row.operator("intact.reset_ctvolume_position")
+                row = layout.row()
+                row.label(text=f"Threshold {Wmin} to {Wmax} HU :")
+                row = layout.row()
+                row.prop(INTACT_Props, "Thres1Treshold", text="THRESHOLD", slider=True)
+                   
+                layout.separator()
+
+                row = layout.row()
+                row.label(text="Segments :")
+
+                Box = layout.box()
+                row = Box.row()
+                #row.prop(INTACT_Props, "Thres1Treshold", text="Threshold 1")
+                row.prop(INTACT_Props, "Thres1SegmentColor", text="")
+                #row.prop(INTACT_Props, "Thres1Bool", text="")
+                # row = Box.row()
+                # row.prop(INTACT_Props, "Thres2Treshold", text="Threshold 2")
+                # row.prop(INTACT_Props, "Thres2SegmentColor", text="")
+                # row.prop(INTACT_Props, "Thres2Bool", text="")
+
+                # row = Box.row()
+                # row.prop(INTACT_Props, "Thres3Treshold", text="Threshold 3")
+                # row.prop(INTACT_Props, "Thres3SegmentColor", text="")
+                # row.prop(INTACT_Props, "Thres3Bool", text="")
+
+                Box = layout.box()
+                row = Box.row()
+                row.operator("intact.multitresh_segment")
+            else: 
+                row = layout.row()
+                row.label(text="Please select CT volume.")
+                
+        #readme panel
+        
         row = layout.row()
         row.alignment = "RIGHT"
         row.scale_x = 2

@@ -15,7 +15,7 @@ from bpy.props import (
 def TresholdUpdateFunction(self, context):
     INTACT_Props = context.scene.INTACT_Props
     GpShader = INTACT_Props.GroupNodeName
-    Treshold = INTACT_Props.Treshold
+    Treshold = INTACT_Props.Thres1Treshold
 
     CtVolumeList = [
         obj
