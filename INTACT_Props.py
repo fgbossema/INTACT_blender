@@ -269,41 +269,19 @@ class INTACT_Props(bpy.types.PropertyGroup):
     #######################
        
     
-    Treshold: IntProperty(
-        name="Treshold",
-        description="Volume Treshold",
-        default=600,
-        min=-400,
-        max=3000,
-        soft_min=-400,
-        soft_max=3000,
-        step=1,
-        update=TresholdUpdateFunction,
-    )
-    
-    # INTACT_Props = context.scene.INTACT_Props
-    # DcmInfo = 
-    #eval(bpy.context.scene.INTACT_Props.DcmInfo)["Wmin"]
-            # Wmin = DcmInfo["Wmin"]
-            # Wmax = DcmInfo["Wmax"]
-            
-    # INTACT_Props = context.scene.INTACT_Props
-    # DcmInfo = eval(INTACT_Props.DcmInfo)
-            # Wmin = DcmInfo["Wmin"]
-            # Wmax = DcmInfo["Wmax"]
-            
-    # Treshold: FloatProperty(
+    # Treshold: IntProperty(
         # name="Treshold",
         # description="Volume Treshold",
-        # default=0.05,
-        # min=0.0,
-        # max= 0.07,
-        # soft_min=0.0,
-        # soft_max= 0.07,
-        # precision = 4,
-        # step=0.01,
+        # default=600,
+        # min=-400,
+        # max=3000,
+        # soft_min=-400,
+        # soft_max=3000,
+        # step=1,
         # update=TresholdUpdateFunction,
     # )
+    
+    
     Progress_Bar: FloatProperty(
         name="Progress_Bar",
         description="Progress_Bar",
@@ -319,12 +297,13 @@ class INTACT_Props(bpy.types.PropertyGroup):
     Thres1Treshold: IntProperty(
         name="Threshold 1",
         description="Threshold 1",
-        default=0,
+        default=300,
         min=-400,
         max=3000,
         soft_min=-400,
         soft_max=3000,
         step=1,
+        update=TresholdUpdateFunction,
     )
     Thres2Treshold: IntProperty(
         name="Threshold 2",
