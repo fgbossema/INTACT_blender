@@ -991,28 +991,28 @@ class Switch_Boolean_Solver(bpy.types.Operator):
             
         return {'FINISHED'}
     
-class Update_Visibilities(bpy.types.Operator):
-    bl_label = "Update Visibilities"
-    bl_idname = "intact.update_visibilities"
+# class Update_Visibilities(bpy.types.Operator):
+    # bl_label = "Update Visibilities"
+    # bl_idname = "intact.update_visibilities"
     
-    def execute(self, context):
-        scene = context.scene
-        mytool = scene.my_tool
+    # def execute(self, context):
+        # scene = context.scene
+        # mytool = scene.my_tool
         
-        CT_Vol.hide_viewport = not mytool.ct_vis
-        CT_Vol.hide_render = not mytool.ct_vis
-        Surf_3D.hide_viewport = not mytool.surf_vis
-        Surf_3D.hide_render = not mytool.surf_vis
-        Axial_Slice.hide_viewport = not mytool.axi_vis
-        Axial_Slice.hide_render = not mytool.axi_vis
-        Coronal_Slice.hide_viewport = not mytool.cor_vis
-        Coronal_Slice.hide_render = not mytool.cor_vis
-        Sagital_Slice.hide_viewport = not mytool.sag_vis
-        Sagital_Slice.hide_render = not mytool.sag_vis
-        Seg.hide_viewport = not mytool.seg_vis
-        Seg.hide_render = not mytool.seg_vis
+        # CT_Vol.hide_viewport = not mytool.ct_vis
+        # CT_Vol.hide_render = not mytool.ct_vis
+        # Surf_3D.hide_viewport = not mytool.surf_vis
+        # Surf_3D.hide_render = not mytool.surf_vis
+        # Axial_Slice.hide_viewport = not mytool.axi_vis
+        # Axial_Slice.hide_render = not mytool.axi_vis
+        # Coronal_Slice.hide_viewport = not mytool.cor_vis
+        # Coronal_Slice.hide_render = not mytool.cor_vis
+        # Sagital_Slice.hide_viewport = not mytool.sag_vis
+        # Sagital_Slice.hide_render = not mytool.sag_vis
+        # Seg.hide_viewport = not mytool.seg_vis
+        # Seg.hide_render = not mytool.seg_vis
         
-        return {'FINISHED'}
+        # return {'FINISHED'}
 
 class Debug_1(bpy.types.Operator):
     """

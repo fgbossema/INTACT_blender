@@ -139,7 +139,11 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
         # col.label(text="Project Directory :")
         # col = split.column()
         # col.prop(INTACT_Props, "UserProjectDir", text="")
-
+        
+        if not INTACT_Props.UserProjectDir:
+            layout.row()
+            row.label(text = "Please select working directory in INTACT panel")
+            
         if INTACT_Props.UserProjectDir:
 
             row = layout.row()
@@ -232,16 +236,16 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                 row = Box.row()
                 row.prop(INTACT_Props, "Thres1Treshold", text="Threshold 1")
                 row.prop(INTACT_Props, "Thres1SegmentColor", text="")
-                row.prop(INTACT_Props, "Thres1Bool", text="")
-                row = Box.row()
-                row.prop(INTACT_Props, "Thres2Treshold", text="Threshold 2")
-                row.prop(INTACT_Props, "Thres2SegmentColor", text="")
-                row.prop(INTACT_Props, "Thres2Bool", text="")
+                #row.prop(INTACT_Props, "Thres1Bool", text="")
+                # row = Box.row()
+                # row.prop(INTACT_Props, "Thres2Treshold", text="Threshold 2")
+                # row.prop(INTACT_Props, "Thres2SegmentColor", text="")
+                # row.prop(INTACT_Props, "Thres2Bool", text="")
 
-                row = Box.row()
-                row.prop(INTACT_Props, "Thres3Treshold", text="Threshold 3")
-                row.prop(INTACT_Props, "Thres3SegmentColor", text="")
-                row.prop(INTACT_Props, "Thres3Bool", text="")
+                # row = Box.row()
+                # row.prop(INTACT_Props, "Thres3Treshold", text="Threshold 3")
+                # row.prop(INTACT_Props, "Thres3SegmentColor", text="")
+                # row.prop(INTACT_Props, "Thres3Bool", text="")
 
                 Box = layout.box()
                 row = Box.row()
@@ -464,7 +468,7 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
         layout.operator("object.icpexport")
         layout.operator("object.icpset")
 
-class OBJECT_PT_IntACT_Panel(bpy.types.Panel):
+class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
     """Creates a Panel in the scene context of the properties editor"""
     bl_category = "INTACT"
     bl_label = "VISUALISATION"
@@ -493,14 +497,14 @@ class OBJECT_PT_IntACT_Panel(bpy.types.Panel):
         layout.operator("intact.no_slices_tracking")
         layout.operator("intact.slices_update")
         
-        layout.label(text="Visibilities:")
-        layout.prop(mytool, "ct_vis")
-        layout.prop(mytool, "surf_vis")
-        layout.prop(mytool, "axi_vis")
-        layout.prop(mytool, "cor_vis")
-        layout.prop(mytool, "sag_vis")
-        layout.prop(mytool, "seg_vis")
-        layout.operator("intact.update_visibilities")
+        # layout.label(text="Visibilities:")
+        # layout.prop(mytool, "ct_vis")
+        # layout.prop(mytool, "surf_vis")
+        # layout.prop(mytool, "axi_vis")
+        # layout.prop(mytool, "cor_vis")
+        # layout.prop(mytool, "sag_vis")
+        # layout.prop(mytool, "seg_vis")
+        # layout.operator("intact.update_visibilities")
         
         layout.label(text="Debugging:")
         layout.operator("intact.switch_boolean_solver")
@@ -516,9 +520,9 @@ classes = [
     INTACT_PT_MainPanel,
     INTACT_PT_ScanPanel,
     INTACT_PT_SurfacePanel,
-    INTACT_PT_MeshesTools_Panel,
+    #INTACT_PT_MeshesTools_Panel,
     OBJECT_PT_ICP_panel,
-    OBJECT_PT_IntACT_Panel
+    OBJECT_PT_Visualisation_Panel
     ]
 
 
