@@ -172,7 +172,6 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                 col.prop(INTACT_Props, "Resolution", text = "")
 
                 if INTACT_Props.UserTiffDir:
-
                     Box = layout.box()
                     # Box.alert = True
                     row = Box.row()
@@ -216,17 +215,15 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                     row.scale_y = 2
                     row.operator("intact.volume_render", icon="IMPORT")
 
-        # if context.object:
-            # if context.object.name.startswith("IT") and context.object.name.endswith(
-                # "CTVolume"
-            # ):
+        if context.object:
+            if context.object.name.startswith("IT") and context.object.name.endswith(
+                "CTVolume"
+            ):
                                                
-                # row = layout.row()
-                # row.operator("intact.reset_ctvolume_position")
-                # row = layout.row()
-                # row.label(text=f"Threshold {Wmin} to {Wmax} HU :")
-                # row = layout.row()
-                # row.prop(INTACT_Props, "Thres1Treshold", text="THRESHOLD", slider=True)
+                row = layout.row()
+                row.label(text=f"Threshold {Wmin} to {Wmax} HU :")
+                row = layout.row()
+                row.prop(INTACT_Props, "Thres1Treshold", text="THRESHOLD", slider=True)
                    
                 # layout.separator()
 
@@ -252,15 +249,7 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                 # row = Box.row()
                 # row.operator("intact.multitresh_segment")
                 
-            if context.object.name.startswith("IT") and context.object.name.endswith(
-                ("CTVolume", "SEGMENTATION")
-            ):
-                row = Box.row()
-                split = row.split()
-                col = split.column()
-                col.operator("intact.addslices", icon="EMPTY_AXIS")
-                col = split.column()
-                col.operator("intact.multiview")
+
 
 class INTACT_PT_SurfacePanel(bpy.types.Panel):
     """ INTACT Scan Panel"""
@@ -279,13 +268,18 @@ class INTACT_PT_SurfacePanel(bpy.types.Panel):
        VGS = bpy.data.node_groups.get(GroupNodeName)
         # Draw Addon UI :
        layout = self.layout
-
-       row = layout.row()
-       split = row.split()
-       col = split.column()
-       col.label(text="Surface scan directory (.obj file) :")
-       col = split.column()
-       col.prop(INTACT_Props, "UserObjDir", text="")
+       
+       if not INTACT_Props.UserProjectDir:
+           row = layout.row()
+           row.alignment = "LEFT"
+           row.label(text = "Please select working directory in INTACT panel")
+       else: 
+           row = layout.row()
+           split = row.split()
+           col = split.column()
+           col.label(text="Surface scan directory (.obj file) :")
+           col = split.column()
+           col.prop(INTACT_Props, "UserObjDir", text="")
         
        if INTACT_Props.UserObjDir:
            Box = layout.box()
@@ -443,27 +437,38 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
         GroupNodeName = INTACT_Props.GroupNodeName
         VGS = bpy.data.node_groups.get(GroupNodeName)
         
+        
+        
         if context.object:
             if context.object.name.startswith("IT") and context.object.name.endswith(
                 "CTVolume"
             ):
-                                                             
+                row = layout.row()
+                row.label(text="If the CT volume has moved, reset it's position.")
+                
                 row = layout.row()
                 row.operator("intact.reset_ctvolume_position")
+                
                 row = layout.row()
-                row.label(text=f"Threshold {Wmin} to {Wmax} HU :")
+                row.label(text="Determine the threshold to separate air and object.")
                 row = layout.row()
                 row.prop(INTACT_Props, "Thres1Treshold", text="THRESHOLD", slider=True)
                    
                 layout.separator()
 
                 row = layout.row()
-                row.label(text="Segments :")
+                row.label(text="Choose color for segmentation, then click SEGMENTATION. ")
 
-                Box = layout.box()
-                row = Box.row()
+                row = layout.row()
+                split = row.split()
+                col = split.column()
+                col.label(text = "Color of segmentation:")
+                col = split.column()
                 #row.prop(INTACT_Props, "Thres1Treshold", text="Threshold 1")
-                row.prop(INTACT_Props, "Thres1SegmentColor", text="")
+                col.prop(INTACT_Props, "Thres1SegmentColor", text="")
+                
+                
+                
                 #row.prop(INTACT_Props, "Thres1Bool", text="")
                 # row = Box.row()
                 # row.prop(INTACT_Props, "Thres2Treshold", text="Threshold 2")
@@ -484,32 +489,34 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
                 
         #readme panel
         
-        row = layout.row()
-        row.alignment = "RIGHT"
-        row.scale_x = 2
-        row.operator("object.icpreadme", text = "", icon = "QUESTION")
+        # row = layout.row()
+        # row.alignment = "RIGHT"
+        # row.scale_x = 2
+        # row.operator("object.icpreadme", text = "", icon = "QUESTION")
         layout.separator()
         
         #rough alignment panel
         layout.label(text = "Initial Alignment")
+        layout.label(text = "Either manually move the surface scan for a rough alignment or place landmarks on each object (CT first, press enter to confirm) and align.")
+        layout.prop(context.scene, "allowScaling", text = "Allow Scaling")
         layout.operator("object.placelandmarks")
         layout.operator("object.deletelandmarks")
         layout.operator("object.initialalignment")
-        layout.prop(context.scene, "allowScaling", text = "Allow Scaling")
+              
         layout.separator()
         
         #fine alignment panel
         layout.label(text = "ICP Alignment")
-        layout.operator("object.icp")
         layout.prop(context.scene, "allowScaling", text = "Allow Scaling")
         layout.prop(context.scene, "vertexSelect", text = "Use Vertex Selections")
         layout.prop(context.scene, "iterations", text = "Iterations")
         layout.prop(context.scene, "outlierPerc", text = "Outlier %")
         layout.prop(context.scene, "downsamplingPerc", text = "Downsampling %")
+        layout.operator("object.icp")
         
         #transformations panel
         layout.separator()
-        layout.label(text = "Transformations")
+        layout.label(text = "Transformations export and import")
         layout.prop(context.scene, "exportTransformation", text = "")
         layout.operator("object.icpexport")
         layout.operator("object.icpset")
@@ -528,6 +535,22 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
         row = layout.row()
         scene = context.scene
         #mytool = scene.my_tool
+        INTACT_Props = context.scene.INTACT_Props
+        GroupNodeName = INTACT_Props.GroupNodeName
+        VGS = bpy.data.node_groups.get(GroupNodeName)
+        
+        if not (context.object.name.startswith("IT") and context.object.name.endswith(
+                ("CTVolume"))):
+                row = layout.row()
+                row.label(text = "Please select CT volume first, then generate slices.")
+
+        row = layout.row()
+        row.operator("intact.addslices", icon="EMPTY_AXIS")
+        
+        row = layout.row()
+        row.label(text = "Open viewing in multiple directions.")
+        row = layout.row()
+        row.operator("intact.multiview")
         
         layout.label(text="Tool Setup:")
         layout.operator("intact.init_setup")
