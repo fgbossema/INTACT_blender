@@ -596,7 +596,7 @@ def Load_Tiff_function(context, q):
         O = Origin
         Direction = D
         
-        DirectionMatrix_4x4 = Matrix(intact.addslices
+        DirectionMatrix_4x4 = Matrix(
             (
                 (D[0], D[1], D[2], 0.0),
                 (D[3], D[4], D[5], 0.0),

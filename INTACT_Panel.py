@@ -559,12 +559,10 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
         layout.operator("intact.cropping_cube_boolean")
         layout.operator("intact.cropping_cube_drivers")
         
-        layout.label(text="Operators:")
-        layout.operator("intact.camera_setup")
-        layout.operator("intact.animation_path")
+
         layout.operator("intact.slices_tracking2")
         layout.operator("intact.no_slices_tracking")
-        layout.operator("intact.slices_update")
+        #layout.operator("intact.slices_update")
         
         # layout.label(text="Visibilities:")
         # layout.prop(mytool, "ct_vis")
@@ -580,6 +578,28 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
         layout.operator("intact.debug_1")
         layout.operator("intact.debug_2")
         
+class OBJECT_PT_Image_Panel(bpy.types.Panel):
+    """Creates a Panel in the scene context of the properties editor"""
+    bl_category = "INTACT"
+    bl_label = "IMAGES AND OUTPUT"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_context = "objectmode"
+    bl_options = {"DEFAULT_CLOSED"}
+    
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        scene = context.scene
+        #mytool = scene.my_tool
+        INTACT_Props = context.scene.INTACT_Props
+        GroupNodeName = INTACT_Props.GroupNodeName
+        VGS = bpy.data.node_groups.get(GroupNodeName)
+        
+        layout.label(text="Operators:")
+        layout.operator("intact.camera_setup")
+        layout.operator("intact.animation_path")
+        
         
 #################################################################################################
 # Registration :
@@ -591,7 +611,8 @@ classes = [
     INTACT_PT_SurfacePanel,
     #INTACT_PT_MeshesTools_Panel,
     OBJECT_PT_ICP_panel,
-    OBJECT_PT_Visualisation_Panel
+    OBJECT_PT_Visualisation_Panel,
+    OBJECT_PT_Image_Panel
     ]
 
 
