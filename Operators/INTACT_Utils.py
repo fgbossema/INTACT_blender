@@ -769,11 +769,24 @@ def AxialSliceUpdate(scene):
         INTACT_Props = scene.INTACT_Props
         ActiveObject = bpy.context.view_layer.objects.active
 
-        Condition1 = ActiveObject in Planes
+        # Only update when position or rotation of plane changes (this also allows it to update when not selected)
+        Condition1 = False
+        if len(Planes) > 0:
+            Axial_Slice_Pos = Planes[0].location
+            Axial_Slice_Rot = Planes[0].rotation_euler
+
+            if INTACT_Props.Axial_Slice_Pos != Axial_Slice_Pos:
+                Condition1 = True
+                INTACT_Props.Axial_Slice_Pos = Axial_Slice_Pos
+            elif INTACT_Props.Axial_Slice_Rot != Axial_Slice_Rot:
+                Condition1 = True
+                INTACT_Props.Axial_Slice_Rot = Axial_Slice_Rot
+
         Condition2 = ActiveObject in SLICES_POINTER
 
         if Condition1:
-            Preffix = ActiveObject.name[2:7]
+            Preffix = Planes[0].name[2:7]
+
         if Condition2:
             Preffix = ActiveObject.name[0:5]
 
@@ -875,11 +888,24 @@ def CoronalSliceUpdate(scene):
         INTACT_Props = scene.INTACT_Props
         ActiveObject = bpy.context.view_layer.objects.active
 
-        Condition1 = ActiveObject in Planes
+        # Only update when position or rotation of plane changes (this also allows it to update when not selected)
+        Condition1 = False
+        if len(Planes) > 0:
+            Coronal_Slice_Pos = Planes[0].location
+            Coronal_Slice_Rot = Planes[0].rotation_euler
+
+            if INTACT_Props.Coronal_Slice_Pos != Coronal_Slice_Pos:
+                Condition1 = True
+                INTACT_Props.Coronal_Slice_Pos = Coronal_Slice_Pos
+            elif INTACT_Props.Coronal_Slice_Rot != Coronal_Slice_Rot:
+                Condition1 = True
+                INTACT_Props.Coronal_Slice_Rot = Coronal_Slice_Rot
+
         Condition2 = ActiveObject in SLICES_POINTER
 
         if Condition1:
-            Preffix = ActiveObject.name[2:7]
+            Preffix = Planes[0].name[2:7]
+
         if Condition2:
             Preffix = ActiveObject.name[0:5]
 
@@ -982,11 +1008,24 @@ def SagitalSliceUpdate(scene):
         INTACT_Props = scene.INTACT_Props
         ActiveObject = bpy.context.view_layer.objects.active
 
-        Condition1 = ActiveObject in Planes
+        # Only update when position or rotation of plane changes (this also allows it to update when not selected)
+        Condition1 = False
+        if len(Planes) > 0:
+            Sagital_Slice_Pos = Planes[0].location
+            Sagital_Slice_Rot = Planes[0].rotation_euler
+
+            if INTACT_Props.Sagital_Slice_Pos != Sagital_Slice_Pos:
+                Condition1 = True
+                INTACT_Props.Sagital_Slice_Pos = Sagital_Slice_Pos
+            elif INTACT_Props.Sagital_Slice_Rot != Sagital_Slice_Rot:
+                Condition1 = True
+                INTACT_Props.Sagital_Slice_Rot = Sagital_Slice_Rot
+
         Condition2 = ActiveObject in SLICES_POINTER
 
         if Condition1:
-            Preffix = ActiveObject.name[2:7]
+            Preffix = Planes[0].name[2:7]
+
         if Condition2:
             Preffix = ActiveObject.name[0:5]
 

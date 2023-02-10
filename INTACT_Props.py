@@ -453,6 +453,24 @@ class INTACT_Props(bpy.types.PropertyGroup):
         name="Cropping_Cube",
         type=bpy.types.Object)
 
+    Axial_Slice_Pos: FloatVectorProperty(
+        name='')
+
+    Coronal_Slice_Pos: FloatVectorProperty(
+        name='')
+
+    Sagital_Slice_Pos: FloatVectorProperty(
+        name='')
+
+    Axial_Slice_Rot: FloatVectorProperty(
+        name='')
+
+    Coronal_Slice_Rot: FloatVectorProperty(
+        name='')
+
+    Sagital_Slice_Rot: FloatVectorProperty(
+        name='')
+
 
 #################################################################################################
 # Registration :

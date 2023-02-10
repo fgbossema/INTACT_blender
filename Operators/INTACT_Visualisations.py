@@ -730,6 +730,13 @@ class Slices_Tracking2(bpy.types.Operator):
     """
     bl_idname = "intact.slices_tracking2"
     bl_label = "Slices Tracking"
+
+    def calculate_slice_location(self, cropping_cube_location, cropping_cube_dim, ct_vol_location, ct_vol_dim):
+        location = cropping_cube_location - (0.5 * cropping_cube_dim)
+        if location < (ct_vol_location - (0.5 * ct_vol_dim)):
+            location = cropping_cube_location + (0.5 * cropping_cube_dim)
+
+        return location
     
     def execute(self, context):
         INTACT_Props = context.scene.INTACT_Props
@@ -741,21 +748,45 @@ class Slices_Tracking2(bpy.types.Operator):
 
         transforms = ["X", "Y", "Z"]
         slices = [Sagital_Slice, Coronal_Slice, Axial_Slice]
+        bpy.app.driver_namespace['calculate_slice_location'] = self.calculate_slice_location
 
         for i in range(0, len(transforms)):
             location_driver = slices[i].driver_add("location", i)
-            var1 = location_driver.driver.variables.new()
-            var1.name = "var1"
-            var1.type = 'TRANSFORMS'
-            var1.targets[0].id = Cropping_Cube
-            var1.targets[0].transform_type = f'LOC_{transforms[i]}'
-            cube_dim = Cropping_Cube.dimensions[i]
-            location = Cropping_Cube.location[i] - (0.5 * cube_dim)
-            # location = Cropping_Cube.location[i] - (0.5 * cube_dim) - (max_CT_dim * 0.002)
+            cropping_cube_location = location_driver.driver.variables.new()
+            cropping_cube_location.name = "cropping_cube_location"
+            cropping_cube_location.type = 'TRANSFORMS'
+            cropping_cube_location.targets[0].id = Cropping_Cube
+            cropping_cube_location.targets[0].transform_type = f'LOC_{transforms[i]}'
 
-            if location < (CT_Vol.location[i] - (0.5 * CT_Vol.dimensions[i])):
-                location = Cropping_Cube.location[i] + (0.5 * cube_dim)
-            location_driver.driver.expression = "var1 - " + str(location)
+            ct_vol_location = location_driver.driver.variables.new()
+            ct_vol_location.name = "ct_vol_location"
+            ct_vol_location.type = 'TRANSFORMS'
+            ct_vol_location.targets[0].id = CT_Vol
+            ct_vol_location.targets[0].transform_type = f'LOC_{transforms[i]}'
+
+            cropping_cube_dim = location_driver.driver.variables.new()
+            cropping_cube_dim.name = "cropping_cube_dim"
+            cropping_cube_dim.type = 'SINGLE_PROP'
+            cropping_cube_dim.targets[0].id = Cropping_Cube
+            cropping_cube_dim.targets[0].data_path = f"dimensions[{i}]"
+
+            ct_vol_dim = location_driver.driver.variables.new()
+            ct_vol_dim.name = "ct_vol_dim"
+            ct_vol_dim.type = 'SINGLE_PROP'
+            ct_vol_dim.targets[0].id = CT_Vol
+            ct_vol_dim.targets[0].data_path = f"dimensions[{i}]"
+
+            location_driver.driver.expression = "calculate_slice_location(cropping_cube_location, cropping_cube_dim, " \
+                                                "ct_vol_location, ct_vol_dim)"
+
+            #
+            # cube_dim = Cropping_Cube.dimensions[i]
+            # location = Cropping_Cube.location[i] - (0.5 * cube_dim)
+            # # location = Cropping_Cube.location[i] - (0.5 * cube_dim) - (max_CT_dim * 0.002)
+            #
+            # if location < (CT_Vol.location[i] - (0.5 * CT_Vol.dimensions[i])):
+            #     location = Cropping_Cube.location[i] + (0.5 * cube_dim)
+            # location_driver.driver.expression = "var1 - " + str(location)
 
         # saglocx = bpy.data.objects["Crop 3D_X"].driver_add("location", 0)
         # var1 = saglocx.driver.variables.new()
