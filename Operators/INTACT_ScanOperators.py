@@ -564,16 +564,25 @@ def Load_Tiff_function(context, q):
         Origin = (-(Sz[0]-1)/2*Sp[0], (Sz[1]-1)/2*Sp[1], (Sz[2]-1)/2*Sp[2])
         
         
+      
+        Image3D = sitk.Cast(Image3D, sitk.sitkFloat32)
         minmax = sitk.MinimumMaximumImageFilter()
         minmax.Execute(Image3D)
         Wmax = minmax.GetMaximum()
         Wmin = minmax.GetMinimum()
-        fact = []    
-        fact.append(4000/Wmax)
-        fact.append(abs(2000/Wmin))
-        mult_factor = min(fact)
-        multiply = sitk.MultiplyImageFilter()
-        Image3D = multiply.Execute(Image3D, mult_factor)
+        print(Wmin, Wmax)
+        #if not (Wmin == 0.0 and Wmax == 255.0):
+        if not (Wmin == 0.0) :
+            fact = []    
+            fact.append(4000/Wmax)
+            fact.append(abs(2000/Wmin))
+            mult_factor = min(fact)
+            multiply = sitk.MultiplyImageFilter()
+            Image3D = multiply.Execute(Image3D, mult_factor)
+        else: 
+            mult_factor = 4000/Wmax
+            multiply = sitk.MultiplyImageFilter()
+            Image3D = multiply.Execute(Image3D, mult_factor)
         
         #Re-evaluate Wmin and Wmax after scaling
         minmax = sitk.MinimumMaximumImageFilter()
