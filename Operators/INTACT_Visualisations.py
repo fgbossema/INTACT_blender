@@ -93,71 +93,77 @@ class Object_Selection(bpy.types.Operator):
     bl_label = "Object Selection"
     
     def execute(self, context):
-        global CT_Vol, Surf_3D, Seg, Axial_Slice, Coronal_Slice, Sagital_Slice
-        list_3DCT = bpy.context.selected_objects #makes a list of both the 3D and CT object
-        CT_Vol = bpy.context.active_object #this marks the active object as CT_Vol
-        list_3DCT.remove(CT_Vol)
-        Surf_3D = list_3DCT[0]
-        list_3DCT.clear()
+        INTACT_Props = context.scene.INTACT_Props
+
+        CT_Vol = INTACT_Props.CT_Vol
+        Surf_3D = INTACT_Props.Surf_3D
         
-        bpy.ops.object.select_all(action='DESELECT') #deselect all objects
-        bpy.context.view_layer.objects.active = Surf_3D        
-        Surf_3D.select_set(True)
-        
-        if not Surf_3D.users_collection[0].name == '3D Surface Scan':
-            bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name='3D Surface Scan')
-        else:
-            pass
-        
-        print("\nPlease select your CT scan first, and then Shift+click your 3D scan.")
+        # bpy.ops.object.select_all(action='DESELECT') #deselect all objects
+        # bpy.context.view_layer.objects.active = Surf_3D
+        # Surf_3D.select_set(True)
+        #
+        # if not Surf_3D.users_collection[0].name == '3D Surface Scan':
+        #     bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name='3D Surface Scan')
+        # else:
+        #     pass
+        #
+        # print("\nPlease select your CT scan first, and then Shift+click your 3D scan.")
         
         try:
             slices = bpy.data.collections['SLICES'].all_objects
-            Axial_Slice = slices[0]
-            Coronal_Slice = slices[1]
-            Sagital_Slice = slices[2]
+            INTACT_Props.Axial_Slice = slices[0]
+            INTACT_Props.Coronal_Slice = slices[1]
+            INTACT_Props.Sagital_Slice = slices[2]
+
+            # Give slices a tiny bit of thickness, so they don't give z fighting artefacts when tracked right on top of the
+            # boolean faces of meshes
+            # TODO - this should probably go somewhere else
+            for slice in slices:
+                solidify = slice.modifiers.new(type="SOLIDIFY", name="Solidify")
+                solidify.thickness = 1
+                solidify.offset = 0
         except:
             print("\nNo slices found. Ensure the collection in which they are kept has not changed name ('SLICES')")
 
-        try:
-            Segments = bpy.data.collections['SEGMENTS'].all_objects
-            Seg = Segments[0]
-            try:
-                Seg.modifier_remove(modifier="CorrectiveSmooth")
-            except:
-                pass
-        except:
-            print("\nNo segment found. Ensure the collection in which it is kept has not changed name ('SEGMENTS')")
+        # try:
+        #     Segments = bpy.data.collections['SEGMENTS'].all_objects
+        #     Seg = Segments[0]
+        #     try:
+        #         Seg.modifier_remove(modifier="CorrectiveSmooth")
+        #     except:
+        #         pass
+        # except:
+        #     print("\nNo segment found. Ensure the collection in which it is kept has not changed name ('SEGMENTS')")
 
-        q1 = ''
-        q1q = str("\nIs '" + CT_Vol.name + "' your CT voxel representation, and '" + Surf_3D.name + "' your 3D Surface scan? (answer y/n)")
-
-        while q1 == '':
-            q1 = input(q1q)
-            if q1 == 'y' or q1 == 'Y' or q1 == 'Yes' or q1 == 'yes':
-                print("\nInput succesful. Move on to the next step.")
-                break
-            elif q1 == 'n' or q1 == 'N' or q1 == 'No' or q1 == 'no':
-                q1 = ''
-                print("\nUnsuccesful. Try selecting your two objects in the proper order, and click the button again. Select your CT object first, then SHIFT+Click your 3D Surface scan.")
-                break
-            else:
-                q1 = ''
-                print("\nPlease answer the question with 'y' or 'n'. Try again")
-                continue
-            
-        print("Your CT Volume: " + str(CT_Vol.name))
-        print("Your 3D Surface Scan: " + str(Surf_3D.name))
-        try:
-            print("Your Segmentation: " + str(Seg.name))
-        except:
-            pass
-        try:
-            print("Your Axial Slice: " + str(Axial_Slice.name))
-            print("Your Coronal Slice: " + str(Coronal_Slice.name))
-            print("Your Sagital Slice: " + str(Sagital_Slice.name))
-        except:
-            pass
+        # q1 = ''
+        # q1q = str("\nIs '" + CT_Vol.name + "' your CT voxel representation, and '" + Surf_3D.name + "' your 3D Surface scan? (answer y/n)")
+        #
+        # while q1 == '':
+        #     q1 = input(q1q)
+        #     if q1 == 'y' or q1 == 'Y' or q1 == 'Yes' or q1 == 'yes':
+        #         print("\nInput succesful. Move on to the next step.")
+        #         break
+        #     elif q1 == 'n' or q1 == 'N' or q1 == 'No' or q1 == 'no':
+        #         q1 = ''
+        #         print("\nUnsuccesful. Try selecting your two objects in the proper order, and click the button again. Select your CT object first, then SHIFT+Click your 3D Surface scan.")
+        #         break
+        #     else:
+        #         q1 = ''
+        #         print("\nPlease answer the question with 'y' or 'n'. Try again")
+        #         continue
+        #
+        # print("Your CT Volume: " + str(CT_Vol.name))
+        # print("Your 3D Surface Scan: " + str(Surf_3D.name))
+        # try:
+        #     print("Your Segmentation: " + str(Seg.name))
+        # except:
+        #     pass
+        # try:
+        #     print("Your Axial Slice: " + str(Axial_Slice.name))
+        #     print("Your Coronal Slice: " + str(Coronal_Slice.name))
+        #     print("Your Sagital Slice: " + str(Sagital_Slice.name))
+        # except:
+        #     pass
         return {'FINISHED'}
     
 class Cropping_Cube_Creation(bpy.types.Operator):
@@ -169,25 +175,28 @@ class Cropping_Cube_Creation(bpy.types.Operator):
     bl_label = "Cropping Cube Creation"
     
     def execute(self, context):
-        global mat
-        mat = bpy.data.materials.new(name='Transparent Material')  # Create a material.
-        print("\nEmpty material created")
+        INTACT_Props = context.scene.INTACT_Props
+        CT_Vol = INTACT_Props.CT_Vol
 
-        #Enable 'Use Nodes'
-        mat.use_nodes = True
-        
-        #Remove the standard Principled BSDF
-        mat.node_tree.nodes.remove(mat.node_tree.nodes.get('Principled BSDF'))
-
-        #Define the material output
-        mat_output = mat.node_tree.nodes.get('Material Output')
-
-        #add a transparent shader and set its location
-        transparent = mat.node_tree.nodes.new('ShaderNodeBsdfTransparent')
-        print("\nMaterial made transparent.")
-
-        #link the translucent node to the material output
-        mat.node_tree.links.new(mat_output.inputs[0], transparent.outputs[0])
+        # global mat
+        # mat = bpy.data.materials.new(name='Transparent Material')  # Create a material.
+        # print("\nEmpty material created")
+        #
+        # #Enable 'Use Nodes'
+        # mat.use_nodes = True
+        #
+        # #Remove the standard Principled BSDF
+        # mat.node_tree.nodes.remove(mat.node_tree.nodes.get('Principled BSDF'))
+        #
+        # #Define the material output
+        # mat_output = mat.node_tree.nodes.get('Material Output')
+        #
+        # #add a transparent shader and set its location
+        # transparent = mat.node_tree.nodes.new('ShaderNodeBsdfTransparent')
+        # print("\nMaterial made transparent.")
+        #
+        # #link the translucent node to the material output
+        # mat.node_tree.links.new(mat_output.inputs[0], transparent.outputs[0])
         
         """
         This part of the script creates cropping cubes in all dimensions, that will allow to cut through
@@ -195,105 +204,125 @@ class Cropping_Cube_Creation(bpy.types.Operator):
         """
         #Extracts the dimensions of the object. The dimensions of the cropping cube will be identical,
         #such that the entire object can be cropped in any dimension
-        croppingcubedim = CT_Vol.dimensions*1.002
-        croppingcubedim_2 = croppingcubedim*1.02    #The cube that crops the 3D scan has to be ever so slightly bigger to ensure the visible face shows the
-                                                    #internal CT data, and not a Boolean-generated face of the 3D scan 
+        # croppingcubedim = CT_Vol.dimensions*1.002
+        # croppingcubedim_2 = croppingcubedim*1.02    #The cube that crops the 3D scan has to be ever so slightly bigger to ensure the visible face shows the
+                                                    #internal CT data, and not a Boolean-generated face of the 3D scan
+
+        croppingcubedim = CT_Vol.dimensions
         croppingcube_x = croppingcubedim[0]
-        croppingcube_y = croppingcubedim[1]
-        croppingcube_z = croppingcubedim[2]
+        # croppingcube_y = croppingcubedim[1]
+        # croppingcube_z = croppingcubedim[2]
         
         croppingcubeloc = CT_Vol.location
         loc_x = croppingcubeloc[0]
         loc_y = croppingcubeloc[1]
         loc_z = croppingcubeloc[2]
         print("\nDimensions of CT voxel representation extracted.")
+
+        # Just have one cropping cube
+        # TODO - must be way to name it without selecting it, same for putting in collection
+        bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD',
+                                        location=(loc_x + croppingcube_x, loc_y, loc_z), scale=croppingcubedim)
+        cropct = bpy.context.active_object
+        INTACT_Props.Cropping_Cube = cropct
+        cropct.name = "Crop CT"
+        # Display as bounds, so can see through the cube to the object inside
+        cropct.display_type = "BOUNDS"
+        # Lock rotation and scale, so it can only be translated along x/y/z
+        cropct.lock_rotation[0] = True
+        cropct.lock_rotation[1] = True
+        cropct.lock_rotation[2] = True
+        cropct.lock_scale[0] = True
+        cropct.lock_scale[1] = True
+        cropct.lock_scale[2] = True
+        bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name='Cropping Cubes')
         
-        global cropctx, cropcty, cropctz, crop3dx, crop3dy, crop3dz
+        # global cropctx, cropcty, cropctz, crop3dx, crop3dy, crop3dz
         
         
         #Creates 3 pairs of cropping cubes. Two in each direction (x,y,z) for both the CT-Voxel representation and the 3D surface scan
-        bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(loc_x + croppingcube_x*1.02, loc_y, loc_z), scale=croppingcubedim)
+        # bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(loc_x + croppingcube_x*1.02, loc_y, loc_z), scale=croppingcubedim)
         print("\nCropping cube 1 created", end = "\r")
-        cropctx = bpy.context.active_object
-        cropctx.name = "Crop CT_X"
-        if cropctx.data.materials:
-            # assign to 1st material slot
-            cropctx.data.materials[0] = mat
-            cropctx.active_material.blend_method = 'BLEND'
-        else:
-           # no slots
-            cropctx.data.materials.append(mat)
-            cropctx.active_material.blend_method = 'BLEND'
-
-        bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(loc_x + croppingcube_x*1.02, loc_y, loc_z), scale=croppingcubedim_2)
-        print("\nCropping cube 2 created", end = "\r")
-        crop3dx = bpy.context.active_object
-        crop3dx.name = "Crop 3D_X"
-        if crop3dx.data.materials:
-            # assign to 1st material slot
-            crop3dx.data.materials[0] = mat
-            crop3dx.active_material.blend_method = 'BLEND'
-        else:
-           # no slots
-            crop3dx.data.materials.append(mat)
-            crop3dx.active_material.blend_method = 'BLEND'
-
-        bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(loc_x, loc_y + croppingcube_y*1.02, loc_z), scale=croppingcubedim)
-        print("\nCropping cube 3 created", end = "\r")
-        cropcty = bpy.context.active_object
-        cropcty.name = "Crop CT_Y"
-        if cropcty.data.materials:
-            # assign to 1st material slot
-            cropcty.data.materials[0] = mat
-            cropcty.active_material.blend_method = 'BLEND'
-        else:
-           # no slots
-            cropcty.data.materials.append(mat)
-            cropcty.active_material.blend_method = 'BLEND'
-
-        bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(loc_x, loc_y + croppingcube_y*1.02, loc_z), scale=croppingcubedim_2)
-        print("\nCropping cube 4 created", end = "\r")
-        crop3dy = bpy.context.active_object
-        crop3dy.name = "Crop 3D_Y"
-        if crop3dy.data.materials:
-            # assign to 1st material slot
-            crop3dy.data.materials[0] = mat
-            crop3dy.active_material.blend_method = 'BLEND'
-        else:
-           # no slots
-            crop3dy.data.materials.append(mat)
-            crop3dy.active_material.blend_method = 'BLEND'
-
-        bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(loc_x, loc_y, loc_z + croppingcube_z*1.02), scale=croppingcubedim)
-        print("\nCropping cube 5 created", end = "\r")
-        cropctz = bpy.context.active_object
-        cropctz.name = "Crop CT_Z"
-        if cropctz.data.materials:
-            # assign to 1st material slot
-            cropctz.data.materials[0] = mat
-            cropctz.active_material.blend_method = 'BLEND'
-        else:
-           # no slots
-            cropctz.data.materials.append(mat)
-            cropctz.active_material.blend_method = 'BLEND'
-
-        bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(loc_x, loc_y, loc_z + croppingcube_z*1.02), scale=croppingcubedim_2)
-        print("\nCropping cube 6 created. Done.")
-        crop3dz = bpy.context.active_object
-        bpy.context.active_object.name = "Crop 3D_Z"
-        if crop3dz.data.materials:
-            # assign to 1st material slot
-            crop3dz.data.materials[0] = mat
-            crop3dz.active_material.blend_method = 'BLEND'
-        else:
-           # no slots
-            crop3dz.data.materials.append(mat)
-            crop3dz.active_material.blend_method = 'BLEND'
+        # cropctx = bpy.context.active_object
+        # cropctx.name = "Crop CT_X"
+        # if cropctx.data.materials:
+        #     # assign to 1st material slot
+        #     cropctx.data.materials[0] = mat
+        #     cropctx.active_material.blend_method = 'BLEND'
+        # else:
+        #    # no slots
+        #     cropctx.data.materials.append(mat)
+        #     cropctx.active_material.blend_method = 'BLEND'
+        #
+        # bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(loc_x + croppingcube_x*1.02, loc_y, loc_z), scale=croppingcubedim_2)
+        # print("\nCropping cube 2 created", end = "\r")
+        # crop3dx = bpy.context.active_object
+        # crop3dx.name = "Crop 3D_X"
+        # if crop3dx.data.materials:
+        #     # assign to 1st material slot
+        #     crop3dx.data.materials[0] = mat
+        #     crop3dx.active_material.blend_method = 'BLEND'
+        # else:
+        #    # no slots
+        #     crop3dx.data.materials.append(mat)
+        #     crop3dx.active_material.blend_method = 'BLEND'
+        #
+        # bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(loc_x, loc_y + croppingcube_y*1.02, loc_z), scale=croppingcubedim)
+        # print("\nCropping cube 3 created", end = "\r")
+        # cropcty = bpy.context.active_object
+        # cropcty.name = "Crop CT_Y"
+        # if cropcty.data.materials:
+        #     # assign to 1st material slot
+        #     cropcty.data.materials[0] = mat
+        #     cropcty.active_material.blend_method = 'BLEND'
+        # else:
+        #    # no slots
+        #     cropcty.data.materials.append(mat)
+        #     cropcty.active_material.blend_method = 'BLEND'
+        #
+        # bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(loc_x, loc_y + croppingcube_y*1.02, loc_z), scale=croppingcubedim_2)
+        # print("\nCropping cube 4 created", end = "\r")
+        # crop3dy = bpy.context.active_object
+        # crop3dy.name = "Crop 3D_Y"
+        # if crop3dy.data.materials:
+        #     # assign to 1st material slot
+        #     crop3dy.data.materials[0] = mat
+        #     crop3dy.active_material.blend_method = 'BLEND'
+        # else:
+        #    # no slots
+        #     crop3dy.data.materials.append(mat)
+        #     crop3dy.active_material.blend_method = 'BLEND'
+        #
+        # bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(loc_x, loc_y, loc_z + croppingcube_z*1.02), scale=croppingcubedim)
+        # print("\nCropping cube 5 created", end = "\r")
+        # cropctz = bpy.context.active_object
+        # cropctz.name = "Crop CT_Z"
+        # if cropctz.data.materials:
+        #     # assign to 1st material slot
+        #     cropctz.data.materials[0] = mat
+        #     cropctz.active_material.blend_method = 'BLEND'
+        # else:
+        #    # no slots
+        #     cropctz.data.materials.append(mat)
+        #     cropctz.active_material.blend_method = 'BLEND'
+        #
+        # bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(loc_x, loc_y, loc_z + croppingcube_z*1.02), scale=croppingcubedim_2)
+        # print("\nCropping cube 6 created. Done.")
+        # crop3dz = bpy.context.active_object
+        # bpy.context.active_object.name = "Crop 3D_Z"
+        # if crop3dz.data.materials:
+        #     # assign to 1st material slot
+        #     crop3dz.data.materials[0] = mat
+        #     crop3dz.active_material.blend_method = 'BLEND'
+        # else:
+        #    # no slots
+        #     crop3dz.data.materials.append(mat)
+        #     crop3dz.active_material.blend_method = 'BLEND'
 
             #Put the Cropping cubes into a collection
-        bpy.ops.object.select_all(action='DESELECT') #deselect all objects
-        bpy.ops.object.select_pattern(pattern="Crop*")
-        bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name='Cropping Cubes')
+        # bpy.ops.object.select_all(action='DESELECT') #deselect all objects
+        # bpy.ops.object.select_pattern(pattern="Crop*")
+        # bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name='Cropping Cubes')
         return {'FINISHED'}
     
 class Cropping_Cube_Boolean(bpy.types.Operator):
@@ -304,45 +333,58 @@ class Cropping_Cube_Boolean(bpy.types.Operator):
     bl_label = "Cropping Cube Boolean"
     
     def execute(self, context):
-        #Make Boolean modifiers for CT
-        bpy.ops.object.select_all(action='DESELECT') #deselect all objects    
-        bpy.context.view_layer.objects.active = CT_Vol #Selects the CT Volume
-        CT_Vol.select_set(True)
+        INTACT_Props = context.scene.INTACT_Props
+        CT_Vol = INTACT_Props.CT_Vol
+        Surf_3D = INTACT_Props.Surf_3D
+        Cropping_Cube = INTACT_Props.Cropping_Cube
 
-        bpy.ops.object.modifier_add(type='BOOLEAN')
-        CT_Vol.modifiers["Boolean"].name = "Crop X"
-        CT_Vol.modifiers["Crop X"].object = bpy.data.objects["Crop CT_X"]
-        #CT_Vol.modifiers["Crop X"].solver = 'FAST'
+        CT_bool = CT_Vol.modifiers.new(type="BOOLEAN", name="Cropping Cube")
+        CT_bool.operation = 'DIFFERENCE'
+        CT_bool.object = Cropping_Cube
 
-        bpy.ops.object.modifier_add(type='BOOLEAN')
-        CT_Vol.modifiers["Boolean"].name = "Crop Y"
-        CT_Vol.modifiers["Crop Y"].object = bpy.data.objects["Crop CT_Y"]
-        #CT_Vol.modifiers["Crop Y"].solver = 'FAST'
+        Surf_bool = Surf_3D.modifiers.new(type="BOOLEAN", name="Cropping Cube")
+        Surf_bool.operation = "DIFFERENCE"
+        Surf_bool.object = Cropping_Cube
 
-        bpy.ops.object.modifier_add(type='BOOLEAN')
-        CT_Vol.modifiers["Boolean"].name = "Crop Z"
-        CT_Vol.modifiers["Crop Z"].object = bpy.data.objects["Crop CT_Z"]    
-        #CT_Vol.modifiers["Crop Z"].solver = 'FAST'
-            
-            #Make Boolean modifiers for 3D
-        bpy.ops.object.select_all(action='DESELECT') #deselect all objects    
-        bpy.context.view_layer.objects.active = Surf_3D #Selects the 3D Surface scan
-        Surf_3D.select_set(True)
-
-        bpy.ops.object.modifier_add(type='BOOLEAN')
-        Surf_3D.modifiers["Boolean"].name = "Crop X"
-        Surf_3D.modifiers["Crop X"].object = bpy.data.objects["Crop 3D_X"]
-       # Surf_3D.modifiers["Crop X"].solver = 'FAST'
-
-        bpy.ops.object.modifier_add(type='BOOLEAN')
-        Surf_3D.modifiers["Boolean"].name = "Crop Y"
-        Surf_3D.modifiers["Crop Y"].object = bpy.data.objects["Crop 3D_Y"]
-        #Surf_3D.modifiers["Crop Y"].solver = 'FAST'
-
-        bpy.ops.object.modifier_add(type='BOOLEAN')
-        Surf_3D.modifiers["Boolean"].name = "Crop Z"
-        Surf_3D.modifiers["Crop Z"].object = bpy.data.objects["Crop 3D_Z"] 
-        #Surf_3D.modifiers["Crop Z"].solver = 'FAST'
+       #  #Make Boolean modifiers for CT
+       #  bpy.ops.object.select_all(action='DESELECT') #deselect all objects
+       #  bpy.context.view_layer.objects.active = CT_Vol #Selects the CT Volume
+       #  CT_Vol.select_set(True)
+       #
+       #  bpy.ops.object.modifier_add(type='BOOLEAN')
+       #  CT_Vol.modifiers["Boolean"].name = "Crop X"
+       #  CT_Vol.modifiers["Crop X"].object = bpy.data.objects["Crop CT_X"]
+       #  #CT_Vol.modifiers["Crop X"].solver = 'FAST'
+       #
+       #  bpy.ops.object.modifier_add(type='BOOLEAN')
+       #  CT_Vol.modifiers["Boolean"].name = "Crop Y"
+       #  CT_Vol.modifiers["Crop Y"].object = bpy.data.objects["Crop CT_Y"]
+       #  #CT_Vol.modifiers["Crop Y"].solver = 'FAST'
+       #
+       #  bpy.ops.object.modifier_add(type='BOOLEAN')
+       #  CT_Vol.modifiers["Boolean"].name = "Crop Z"
+       #  CT_Vol.modifiers["Crop Z"].object = bpy.data.objects["Crop CT_Z"]
+       #  #CT_Vol.modifiers["Crop Z"].solver = 'FAST'
+       #
+       #      #Make Boolean modifiers for 3D
+       #  bpy.ops.object.select_all(action='DESELECT') #deselect all objects
+       #  bpy.context.view_layer.objects.active = Surf_3D #Selects the 3D Surface scan
+       #  Surf_3D.select_set(True)
+       #
+       #  bpy.ops.object.modifier_add(type='BOOLEAN')
+       #  Surf_3D.modifiers["Boolean"].name = "Crop X"
+       #  Surf_3D.modifiers["Crop X"].object = bpy.data.objects["Crop 3D_X"]
+       # # Surf_3D.modifiers["Crop X"].solver = 'FAST'
+       #
+       #  bpy.ops.object.modifier_add(type='BOOLEAN')
+       #  Surf_3D.modifiers["Boolean"].name = "Crop Y"
+       #  Surf_3D.modifiers["Crop Y"].object = bpy.data.objects["Crop 3D_Y"]
+       #  #Surf_3D.modifiers["Crop Y"].solver = 'FAST'
+       #
+       #  bpy.ops.object.modifier_add(type='BOOLEAN')
+       #  Surf_3D.modifiers["Boolean"].name = "Crop Z"
+       #  Surf_3D.modifiers["Crop Z"].object = bpy.data.objects["Crop 3D_Z"]
+       #  #Surf_3D.modifiers["Crop Z"].solver = 'FAST'
 
         print("\nBoolean modifiers applied to both CT visualisation and 3D surface scan")
         return {'FINISHED'}
@@ -354,162 +396,162 @@ class Cropping_Cube_Drivers(bpy.types.Operator):
     """
     bl_idname = "intact.cropping_cube_drivers"
     bl_label = "Cropping Cube Drivers"
-    
+
     def execute(self, context):
         bpy.ops.object.select_all(action='DESELECT') #deselect all objects
-
-        #Create the drivers for the X-direction cropping cubes
-        bpy.context.view_layer.objects.active = cropctx
-        xlocx = cropctx.driver_add("location", 0) 
-        var1 = xlocx.driver.variables.new()
-        var1.name = "var1"
-        var1.type = 'TRANSFORMS'
-        var1.targets[0].transform_type = 'LOC_X'
-        var1.targets[0].id = bpy.data.objects["Crop 3D_X"]
-        xlocx.driver.expression = "var1"
-
-        xlocy = cropctx.driver_add("location", 1) 
-        var2 = xlocy.driver.variables.new()
-        var2.name = "var2"
-        var2.type = 'TRANSFORMS'
-        var2.targets[0].transform_type = 'LOC_Y'
-        var2.targets[0].id = bpy.data.objects["Crop 3D_X"]
-        xlocy.driver.expression = "var2"
-
-        xlocz = cropctx.driver_add("location", 2) 
-        var3 = xlocz.driver.variables.new()
-        var3.name = "var3"
-        var3.type = 'TRANSFORMS'
-        var3.targets[0].transform_type = 'LOC_Z'
-        var3.targets[0].id = bpy.data.objects["Crop 3D_X"]
-        xlocz.driver.expression = "var3"
-
-        xrotx = cropctx.driver_add("rotation_euler", 0) 
-        var4 = xrotx.driver.variables.new()
-        var4.name = "var4"
-        var4.type = 'TRANSFORMS'
-        var4.targets[0].transform_type = 'ROT_X'
-        var4.targets[0].id = bpy.data.objects["Crop 3D_X"]
-        xrotx.driver.expression = "var4"
-
-        xroty = cropctx.driver_add("rotation_euler", 1) 
-        var5 = xroty.driver.variables.new()
-        var5.name = "var5"
-        var5.type = 'TRANSFORMS'
-        var5.targets[0].transform_type = 'ROT_Y'
-        var5.targets[0].id = bpy.data.objects["Crop 3D_X"]
-        xroty.driver.expression = "var5"
-
-        xrotz = cropctx.driver_add("rotation_euler", 2) 
-        var6 = xrotz.driver.variables.new()
-        var6.name = "var6"
-        var6.type = 'TRANSFORMS'
-        var6.targets[0].transform_type = 'ROT_Z'
-        var6.targets[0].id = bpy.data.objects["Crop 3D_X"]
-        xrotz.driver.expression = "var6"
-
-        #Do the same for the Y direction cropping cube
-        bpy.context.view_layer.objects.active = cropcty
-        ylocx = cropcty.driver_add("location", 0) 
-        var1 = ylocx.driver.variables.new()
-        var1.name = "var1"
-        var1.type = 'TRANSFORMS'
-        var1.targets[0].transform_type = 'LOC_X'
-        var1.targets[0].id = bpy.data.objects["Crop 3D_Y"]
-        ylocx.driver.expression = "var1"
-
-        ylocy = cropcty.driver_add("location", 1) 
-        var2 = ylocy.driver.variables.new()
-        var2.name = "var2"
-        var2.type = 'TRANSFORMS'
-        var2.targets[0].transform_type = 'LOC_Y'
-        var2.targets[0].id = bpy.data.objects["Crop 3D_Y"]
-        ylocy.driver.expression = "var2"
-
-        ylocz = cropcty.driver_add("location", 2) 
-        var3 = ylocz.driver.variables.new()
-        var3.name = "var3"
-        var3.type = 'TRANSFORMS'
-        var3.targets[0].transform_type = 'LOC_Z'
-        var3.targets[0].id = bpy.data.objects["Crop 3D_Y"]
-        ylocz.driver.expression = "var3"
-
-        yrotx = cropcty.driver_add("rotation_euler", 0) 
-        var4 = yrotx.driver.variables.new()
-        var4.name = "var4"
-        var4.type = 'TRANSFORMS'
-        var4.targets[0].transform_type = 'ROT_X'
-        var4.targets[0].id = bpy.data.objects["Crop 3D_Y"]
-        yrotx.driver.expression = "var4"
-
-        yroty = cropcty.driver_add("rotation_euler", 1) 
-        var5 = yroty.driver.variables.new()
-        var5.name = "var5"
-        var5.type = 'TRANSFORMS'
-        var5.targets[0].transform_type = 'ROT_Y'
-        var5.targets[0].id = bpy.data.objects["Crop 3D_Y"]
-        yroty.driver.expression = "var5"
-
-        yrotz = cropcty.driver_add("rotation_euler", 2) 
-        var6 = yrotz.driver.variables.new()
-        var6.name = "var6"
-        var6.type = 'TRANSFORMS'
-        var6.targets[0].transform_type = 'ROT_Z'
-        var6.targets[0].id = bpy.data.objects["Crop 3D_Y"]
-        yrotz.driver.expression = "var6"
-
-        #Do the same for the Z direction cropping cube
-        bpy.context.view_layer.objects.active = cropctz
-        zlocx = cropctz.driver_add("location", 0) 
-        var1 = zlocx.driver.variables.new()
-        var1.name = "var1"
-        var1.type = 'TRANSFORMS'
-        var1.targets[0].transform_type = 'LOC_X'
-        var1.targets[0].id = bpy.data.objects["Crop 3D_Z"]
-        zlocx.driver.expression = "var1"
-
-        zlocy = cropctz.driver_add("location", 1) 
-        var2 = zlocy.driver.variables.new()
-        var2.name = "var2"
-        var2.type = 'TRANSFORMS'
-        var2.targets[0].transform_type = 'LOC_Y'
-        var2.targets[0].id = bpy.data.objects["Crop 3D_Z"]
-        zlocy.driver.expression = "var2"
-
-        zlocz = cropctz.driver_add("location", 2) 
-        var3 = zlocz.driver.variables.new()
-        var3.name = "var3"
-        var3.type = 'TRANSFORMS'
-        var3.targets[0].transform_type = 'LOC_Z'
-        var3.targets[0].id = bpy.data.objects["Crop 3D_Z"]
-        zlocz.driver.expression = "var3"
-
-        zrotx = cropctz.driver_add("rotation_euler", 0) 
-        var4 = zrotx.driver.variables.new()
-        var4.name = "var4"
-        var4.type = 'TRANSFORMS'
-        var4.targets[0].transform_type = 'ROT_X'
-        var4.targets[0].id = bpy.data.objects["Crop 3D_Z"]
-        zrotx.driver.expression = "var4"
-
-        zroty = cropctz.driver_add("rotation_euler", 1) 
-        var5 = zroty.driver.variables.new()
-        var5.name = "var5"
-        var5.type = 'TRANSFORMS'
-        var5.targets[0].transform_type = 'ROT_Y'
-        var5.targets[0].id = bpy.data.objects["Crop 3D_Z"]
-        zroty.driver.expression = "var5"
-
-        zrotz = cropctz.driver_add("rotation_euler", 2) 
-        var6 = zrotz.driver.variables.new()
-        var6.name = "var6"
-        var6.type = 'TRANSFORMS'
-        var6.targets[0].transform_type = 'ROT_Z'
-        var6.targets[0].id = bpy.data.objects["Crop 3D_Z"]
-        zrotz.driver.expression = "var6"
-        
-        print("\nTranslation and Rotation of cropping cube pairs are linked.")
-        return {'FINISHED'}
+#
+#         #Create the drivers for the X-direction cropping cubes
+#         bpy.context.view_layer.objects.active = cropctx
+#         xlocx = cropctx.driver_add("location", 0)
+#         var1 = xlocx.driver.variables.new()
+#         var1.name = "var1"
+#         var1.type = 'TRANSFORMS'
+#         var1.targets[0].transform_type = 'LOC_X'
+#         var1.targets[0].id = bpy.data.objects["Crop 3D_X"]
+#         xlocx.driver.expression = "var1"
+#
+#         xlocy = cropctx.driver_add("location", 1)
+#         var2 = xlocy.driver.variables.new()
+#         var2.name = "var2"
+#         var2.type = 'TRANSFORMS'
+#         var2.targets[0].transform_type = 'LOC_Y'
+#         var2.targets[0].id = bpy.data.objects["Crop 3D_X"]
+#         xlocy.driver.expression = "var2"
+#
+#         xlocz = cropctx.driver_add("location", 2)
+#         var3 = xlocz.driver.variables.new()
+#         var3.name = "var3"
+#         var3.type = 'TRANSFORMS'
+#         var3.targets[0].transform_type = 'LOC_Z'
+#         var3.targets[0].id = bpy.data.objects["Crop 3D_X"]
+#         xlocz.driver.expression = "var3"
+#
+#         xrotx = cropctx.driver_add("rotation_euler", 0)
+#         var4 = xrotx.driver.variables.new()
+#         var4.name = "var4"
+#         var4.type = 'TRANSFORMS'
+#         var4.targets[0].transform_type = 'ROT_X'
+#         var4.targets[0].id = bpy.data.objects["Crop 3D_X"]
+#         xrotx.driver.expression = "var4"
+#
+#         xroty = cropctx.driver_add("rotation_euler", 1)
+#         var5 = xroty.driver.variables.new()
+#         var5.name = "var5"
+#         var5.type = 'TRANSFORMS'
+#         var5.targets[0].transform_type = 'ROT_Y'
+#         var5.targets[0].id = bpy.data.objects["Crop 3D_X"]
+#         xroty.driver.expression = "var5"
+#
+#         xrotz = cropctx.driver_add("rotation_euler", 2)
+#         var6 = xrotz.driver.variables.new()
+#         var6.name = "var6"
+#         var6.type = 'TRANSFORMS'
+#         var6.targets[0].transform_type = 'ROT_Z'
+#         var6.targets[0].id = bpy.data.objects["Crop 3D_X"]
+#         xrotz.driver.expression = "var6"
+#
+#         #Do the same for the Y direction cropping cube
+#         bpy.context.view_layer.objects.active = cropcty
+#         ylocx = cropcty.driver_add("location", 0)
+#         var1 = ylocx.driver.variables.new()
+#         var1.name = "var1"
+#         var1.type = 'TRANSFORMS'
+#         var1.targets[0].transform_type = 'LOC_X'
+#         var1.targets[0].id = bpy.data.objects["Crop 3D_Y"]
+#         ylocx.driver.expression = "var1"
+#
+#         ylocy = cropcty.driver_add("location", 1)
+#         var2 = ylocy.driver.variables.new()
+#         var2.name = "var2"
+#         var2.type = 'TRANSFORMS'
+#         var2.targets[0].transform_type = 'LOC_Y'
+#         var2.targets[0].id = bpy.data.objects["Crop 3D_Y"]
+#         ylocy.driver.expression = "var2"
+#
+#         ylocz = cropcty.driver_add("location", 2)
+#         var3 = ylocz.driver.variables.new()
+#         var3.name = "var3"
+#         var3.type = 'TRANSFORMS'
+#         var3.targets[0].transform_type = 'LOC_Z'
+#         var3.targets[0].id = bpy.data.objects["Crop 3D_Y"]
+#         ylocz.driver.expression = "var3"
+#
+#         yrotx = cropcty.driver_add("rotation_euler", 0)
+#         var4 = yrotx.driver.variables.new()
+#         var4.name = "var4"
+#         var4.type = 'TRANSFORMS'
+#         var4.targets[0].transform_type = 'ROT_X'
+#         var4.targets[0].id = bpy.data.objects["Crop 3D_Y"]
+#         yrotx.driver.expression = "var4"
+#
+#         yroty = cropcty.driver_add("rotation_euler", 1)
+#         var5 = yroty.driver.variables.new()
+#         var5.name = "var5"
+#         var5.type = 'TRANSFORMS'
+#         var5.targets[0].transform_type = 'ROT_Y'
+#         var5.targets[0].id = bpy.data.objects["Crop 3D_Y"]
+#         yroty.driver.expression = "var5"
+#
+#         yrotz = cropcty.driver_add("rotation_euler", 2)
+#         var6 = yrotz.driver.variables.new()
+#         var6.name = "var6"
+#         var6.type = 'TRANSFORMS'
+#         var6.targets[0].transform_type = 'ROT_Z'
+#         var6.targets[0].id = bpy.data.objects["Crop 3D_Y"]
+#         yrotz.driver.expression = "var6"
+#
+#         #Do the same for the Z direction cropping cube
+#         bpy.context.view_layer.objects.active = cropctz
+#         zlocx = cropctz.driver_add("location", 0)
+#         var1 = zlocx.driver.variables.new()
+#         var1.name = "var1"
+#         var1.type = 'TRANSFORMS'
+#         var1.targets[0].transform_type = 'LOC_X'
+#         var1.targets[0].id = bpy.data.objects["Crop 3D_Z"]
+#         zlocx.driver.expression = "var1"
+#
+#         zlocy = cropctz.driver_add("location", 1)
+#         var2 = zlocy.driver.variables.new()
+#         var2.name = "var2"
+#         var2.type = 'TRANSFORMS'
+#         var2.targets[0].transform_type = 'LOC_Y'
+#         var2.targets[0].id = bpy.data.objects["Crop 3D_Z"]
+#         zlocy.driver.expression = "var2"
+#
+#         zlocz = cropctz.driver_add("location", 2)
+#         var3 = zlocz.driver.variables.new()
+#         var3.name = "var3"
+#         var3.type = 'TRANSFORMS'
+#         var3.targets[0].transform_type = 'LOC_Z'
+#         var3.targets[0].id = bpy.data.objects["Crop 3D_Z"]
+#         zlocz.driver.expression = "var3"
+#
+#         zrotx = cropctz.driver_add("rotation_euler", 0)
+#         var4 = zrotx.driver.variables.new()
+#         var4.name = "var4"
+#         var4.type = 'TRANSFORMS'
+#         var4.targets[0].transform_type = 'ROT_X'
+#         var4.targets[0].id = bpy.data.objects["Crop 3D_Z"]
+#         zrotx.driver.expression = "var4"
+#
+#         zroty = cropctz.driver_add("rotation_euler", 1)
+#         var5 = zroty.driver.variables.new()
+#         var5.name = "var5"
+#         var5.type = 'TRANSFORMS'
+#         var5.targets[0].transform_type = 'ROT_Y'
+#         var5.targets[0].id = bpy.data.objects["Crop 3D_Z"]
+#         zroty.driver.expression = "var5"
+#
+#         zrotz = cropctz.driver_add("rotation_euler", 2)
+#         var6 = zrotz.driver.variables.new()
+#         var6.name = "var6"
+#         var6.type = 'TRANSFORMS'
+#         var6.targets[0].transform_type = 'ROT_Z'
+#         var6.targets[0].id = bpy.data.objects["Crop 3D_Z"]
+#         zrotz.driver.expression = "var6"
+#
+#         print("\nTranslation and Rotation of cropping cube pairs are linked.")
+#         return {'FINISHED'}
 
 
 class Slices_Tracking(bpy.types.Operator):
@@ -520,6 +562,11 @@ class Slices_Tracking(bpy.types.Operator):
     bl_label = "Slices Tracking"
     
     def execute(self, context):
+        INTACT_Props = context.scene.INTACT_Props
+        Sagital_Slice = INTACT_Props.Sagital_Slice
+        Coronal_Slice = INTACT_Props.Coronal_Slice
+        Axial_Slice = INTACT_Props.Axial_Slice
+
         saglocx = Sagital_Slice.driver_add("location", 0) 
         var1 = saglocx.driver.variables.new()
         var1.name = "var1"
@@ -685,162 +732,187 @@ class Slices_Tracking2(bpy.types.Operator):
     bl_label = "Slices Tracking"
     
     def execute(self, context):
-        saglocx = bpy.data.objects["Crop 3D_X"].driver_add("location", 0) 
-        var1 = saglocx.driver.variables.new()
-        var1.name = "var1"
-        var1.type = 'TRANSFORMS'
-        var1.targets[0].transform_type = 'LOC_X'
-        var1.targets[0].id = bpy.data.objects["3_IT001_SAGITAL_SLICE"]
-        x = bpy.data.objects["Crop 3D_X"].dimensions[0]
-        x = 0.5 * x  - 2
-        saglocx.driver.expression = "var1 - " + str(x)
-        
-        saglocy = bpy.data.objects["Crop 3D_X"].driver_add("location", 1) 
-        var1 = saglocy.driver.variables.new()
-        var1.name = "var1"
-        var1.type = 'TRANSFORMS'
-        var1.targets[0].transform_type = 'LOC_Y'
-        var1.targets[0].id = bpy.data.objects["3_IT001_SAGITAL_SLICE"]
-        saglocy.driver.expression = "var1"
-        
-        saglocz = bpy.data.objects["Crop 3D_X"].driver_add("location", 2) 
-        var1 = saglocz.driver.variables.new()
-        var1.name = "var1"
-        var1.type = 'TRANSFORMS'
-        var1.targets[0].transform_type = 'LOC_Z'
-        var1.targets[0].id = bpy.data.objects["3_IT001_SAGITAL_SLICE"]
-        saglocz.driver.expression = "var1"
-        
-        sagrotx = bpy.data.objects["Crop 3D_X"].driver_add("rotation_euler", 0) 
-        var1 = sagrotx.driver.variables.new()
-        var1.name = "var1"
-        var1.type = 'TRANSFORMS'
-        var1.targets[0].transform_type = 'ROT_X'
-        var1.targets[0].id = bpy.data.objects["3_IT001_SAGITAL_SLICE"]
-        sagrotx.driver.expression = "var1 + 1.5708"
-        
-        sagroty = bpy.data.objects["Crop 3D_X"].driver_add("rotation_euler", 1) 
-        var1 = sagroty.driver.variables.new()
-        var1.name = "var1"
-        var1.type = 'TRANSFORMS'
-        var1.targets[0].transform_type = 'ROT_Y'
-        var1.targets[0].id = bpy.data.objects["3_IT001_SAGITAL_SLICE"]
-        sagroty.driver.expression = "var1"
-        
-        sagrotz = bpy.data.objects["Crop 3D_X"].driver_add("rotation_euler", 2) 
-        var1 = sagrotz.driver.variables.new()
-        var1.name = "var1"
-        var1.type = 'TRANSFORMS'
-        var1.targets[0].transform_type = 'ROT_Z'
-        var1.targets[0].id = bpy.data.objects["3_IT001_SAGITAL_SLICE"]
-        sagrotz.driver.expression = "var1 - 1.5708"    
-        
-        """
-        These 6 blocks of code link the location and rotation of the coronal slice to that of the Y-cropping cube.
-        """
-        corlocx = bpy.data.objects["Crop 3D_Y"].driver_add("location", 0) 
-        var1 = corlocx.driver.variables.new()
-        var1.name = "var1"
-        var1.type = 'TRANSFORMS'
-        var1.targets[0].transform_type = 'LOC_X'
-        var1.targets[0].id = bpy.data.objects["2_IT001_CORONAL_SLICE"]
-        corlocx.driver.expression = "var1"
-        
-        corlocy = bpy.data.objects["Crop 3D_Y"].driver_add("location", 1) 
-        var1 = corlocy.driver.variables.new()
-        var1.name = "var1"
-        var1.type = 'TRANSFORMS'
-        var1.targets[0].transform_type = 'LOC_Y'
-        var1.targets[0].id = bpy.data.objects["2_IT001_CORONAL_SLICE"]
-        y = bpy.data.objects["Crop 3D_Y"].dimensions[1]
-        y = -(0.5 * y - 2)
-        corlocy.driver.expression = "var1 -" + str(y)
-    
-        corlocz = bpy.data.objects["Crop 3D_Y"].driver_add("location", 2) 
-        var1 = corlocz.driver.variables.new()
-        var1.name = "var1"
-        var1.type = 'TRANSFORMS'
-        var1.targets[0].transform_type = 'LOC_Z'
-        var1.targets[0].id = bpy.data.objects["2_IT001_CORONAL_SLICE"]
-        corlocz.driver.expression = "var1"
-        
-        
-        corrotx = bpy.data.objects["Crop 3D_Y"].driver_add("rotation_euler", 0) 
-        var1 = corrotx.driver.variables.new()
-        var1.name = "var1"
-        var1.type = 'TRANSFORMS'
-        var1.targets[0].transform_type = 'ROT_X'
-        var1.targets[0].id = bpy.data.objects["2_IT001_CORONAL_SLICE"]
-        corrotx.driver.expression = "var1 + 1.5708"
-        
-        corroty = bpy.data.objects["Crop 3D_Y"].driver_add("rotation_euler", 1) 
-        var1 = corroty.driver.variables.new()
-        var1.name = "var1"
-        var1.type = 'TRANSFORMS'
-        var1.targets[0].transform_type = 'ROT_Y'
-        var1.targets[0].id = bpy.data.objects["2_IT001_CORONAL_SLICE"]
-        corroty.driver.expression = "var1"
-        
-        corrotz = bpy.data.objects["Crop 3D_Y"].driver_add("rotation_euler", 2) 
-        var1 = corrotz.driver.variables.new()
-        var1.name = "var1"
-        var1.type = 'TRANSFORMS'
-        var1.targets[0].transform_type = 'ROT_Z'
-        var1.targets[0].id = bpy.data.objects["2_IT001_CORONAL_SLICE"]
-        corrotz.driver.expression = "var1"
-            
-        """
-        These 6 blocks of code link the location and rotation of the sagital slice to that of the Z-cropping cube.
-        """
-        axilocx = bpy.data.objects["Crop 3D_Z"].driver_add("location", 0)
-        var1 = axilocx.driver.variables.new()
-        var1.name = "var1"
-        var1.type = 'TRANSFORMS'
-        var1.targets[0].transform_type = 'LOC_X'
-        var1.targets[0].id = bpy.data.objects["1_IT001_AXIAL_SLICE"]
-        axilocx.driver.expression = "var1"
-        
-        axilocy = bpy.data.objects["Crop 3D_Z"].driver_add("location", 1)
-        var1 = axilocy.driver.variables.new()
-        var1.name = "var1"
-        var1.type = 'TRANSFORMS'
-        var1.targets[0].transform_type = 'LOC_Y'
-        var1.targets[0].id = bpy.data.objects["1_IT001_AXIAL_SLICE"]
-        axilocy.driver.expression = "var1"
-               
-        axilocz = bpy.data.objects["Crop 3D_Z"].driver_add("location", 2)
-        var1 = axilocz.driver.variables.new()
-        var1.name = "var1"
-        var1.type = 'TRANSFORMS'
-        var1.targets[0].transform_type = 'LOC_Z'
-        var1.targets[0].id = bpy.data.objects["1_IT001_AXIAL_SLICE"]
-        z = bpy.data.objects["Crop 3D_Z"].dimensions[2]
-        z = (0.5 * z - 1)
-        axilocz.driver.expression = "var1 - " + str(z)
-        
-        axirotx = bpy.data.objects["Crop 3D_Z"].driver_add("rotation_euler", 0) 
-        var1 = axirotx.driver.variables.new()
-        var1.name = "var1"
-        var1.type = 'TRANSFORMS'
-        var1.targets[0].transform_type = 'ROT_X'
-        var1.targets[0].id = bpy.data.objects["1_IT001_AXIAL_SLICE"]
-        axirotx.driver.expression = "var1"
-        
-        axiroty = bpy.data.objects["Crop 3D_Z"].driver_add("rotation_euler", 1) 
-        var1 = axiroty.driver.variables.new()
-        var1.name = "var1"
-        var1.type = 'TRANSFORMS'
-        var1.targets[0].transform_type = 'ROT_Y'
-        var1.targets[0].id = bpy.data.objects["1_IT001_AXIAL_SLICE"]
-        axiroty.driver.expression = "var1"
-        
-        axirotz = bpy.data.objects["Crop 3D_Z"].driver_add("rotation_euler", 2) 
-        var1 = axirotz.driver.variables.new()
-        var1.name = "var1"
-        var1.type = 'TRANSFORMS'
-        var1.targets[0].transform_type = 'ROT_Z'
-        var1.targets[0].id = bpy.data.objects["1_IT001_AXIAL_SLICE"]
-        axirotz.driver.expression = "var1"
+        INTACT_Props = context.scene.INTACT_Props
+        CT_Vol = INTACT_Props.CT_Vol
+        Sagital_Slice = INTACT_Props.Sagital_Slice
+        Coronal_Slice = INTACT_Props.Coronal_Slice
+        Axial_Slice = INTACT_Props.Axial_Slice
+        Cropping_Cube = INTACT_Props.Cropping_Cube
+
+        transforms = ["X", "Y", "Z"]
+        slices = [Sagital_Slice, Coronal_Slice, Axial_Slice]
+
+        for i in range(0, len(transforms)):
+            location_driver = slices[i].driver_add("location", i)
+            var1 = location_driver.driver.variables.new()
+            var1.name = "var1"
+            var1.type = 'TRANSFORMS'
+            var1.targets[0].id = Cropping_Cube
+            var1.targets[0].transform_type = f'LOC_{transforms[i]}'
+            cube_dim = Cropping_Cube.dimensions[i]
+            location = Cropping_Cube.location[i] - (0.5 * cube_dim)
+            # location = Cropping_Cube.location[i] - (0.5 * cube_dim) - (max_CT_dim * 0.002)
+
+            if location < (CT_Vol.location[i] - (0.5 * CT_Vol.dimensions[i])):
+                location = Cropping_Cube.location[i] + (0.5 * cube_dim)
+            location_driver.driver.expression = "var1 - " + str(location)
+
+        # saglocx = bpy.data.objects["Crop 3D_X"].driver_add("location", 0)
+        # var1 = saglocx.driver.variables.new()
+        # var1.name = "var1"
+        # var1.type = 'TRANSFORMS'
+        # var1.targets[0].transform_type = 'LOC_X'
+        # var1.targets[0].id = bpy.data.objects["3_IT001_SAGITAL_SLICE"]
+        # x = bpy.data.objects["Crop 3D_X"].dimensions[0]
+        # x = 0.5 * x  - 2
+        # saglocx.driver.expression = "var1 - " + str(x)
+        #
+        # saglocy = bpy.data.objects["Crop 3D_X"].driver_add("location", 1)
+        # var1 = saglocy.driver.variables.new()
+        # var1.name = "var1"
+        # var1.type = 'TRANSFORMS'
+        # var1.targets[0].transform_type = 'LOC_Y'
+        # var1.targets[0].id = bpy.data.objects["3_IT001_SAGITAL_SLICE"]
+        # saglocy.driver.expression = "var1"
+        #
+        # saglocz = bpy.data.objects["Crop 3D_X"].driver_add("location", 2)
+        # var1 = saglocz.driver.variables.new()
+        # var1.name = "var1"
+        # var1.type = 'TRANSFORMS'
+        # var1.targets[0].transform_type = 'LOC_Z'
+        # var1.targets[0].id = bpy.data.objects["3_IT001_SAGITAL_SLICE"]
+        # saglocz.driver.expression = "var1"
+        #
+        # sagrotx = bpy.data.objects["Crop 3D_X"].driver_add("rotation_euler", 0)
+        # var1 = sagrotx.driver.variables.new()
+        # var1.name = "var1"
+        # var1.type = 'TRANSFORMS'
+        # var1.targets[0].transform_type = 'ROT_X'
+        # var1.targets[0].id = bpy.data.objects["3_IT001_SAGITAL_SLICE"]
+        # sagrotx.driver.expression = "var1 + 1.5708"
+        #
+        # sagroty = bpy.data.objects["Crop 3D_X"].driver_add("rotation_euler", 1)
+        # var1 = sagroty.driver.variables.new()
+        # var1.name = "var1"
+        # var1.type = 'TRANSFORMS'
+        # var1.targets[0].transform_type = 'ROT_Y'
+        # var1.targets[0].id = bpy.data.objects["3_IT001_SAGITAL_SLICE"]
+        # sagroty.driver.expression = "var1"
+        #
+        # sagrotz = bpy.data.objects["Crop 3D_X"].driver_add("rotation_euler", 2)
+        # var1 = sagrotz.driver.variables.new()
+        # var1.name = "var1"
+        # var1.type = 'TRANSFORMS'
+        # var1.targets[0].transform_type = 'ROT_Z'
+        # var1.targets[0].id = bpy.data.objects["3_IT001_SAGITAL_SLICE"]
+        # sagrotz.driver.expression = "var1 - 1.5708"
+        #
+        # """
+        # These 6 blocks of code link the location and rotation of the coronal slice to that of the Y-cropping cube.
+        # """
+        # corlocx = bpy.data.objects["Crop 3D_Y"].driver_add("location", 0)
+        # var1 = corlocx.driver.variables.new()
+        # var1.name = "var1"
+        # var1.type = 'TRANSFORMS'
+        # var1.targets[0].transform_type = 'LOC_X'
+        # var1.targets[0].id = bpy.data.objects["2_IT001_CORONAL_SLICE"]
+        # corlocx.driver.expression = "var1"
+        #
+        # corlocy = bpy.data.objects["Crop 3D_Y"].driver_add("location", 1)
+        # var1 = corlocy.driver.variables.new()
+        # var1.name = "var1"
+        # var1.type = 'TRANSFORMS'
+        # var1.targets[0].transform_type = 'LOC_Y'
+        # var1.targets[0].id = bpy.data.objects["2_IT001_CORONAL_SLICE"]
+        # y = bpy.data.objects["Crop 3D_Y"].dimensions[1]
+        # y = -(0.5 * y - 2)
+        # corlocy.driver.expression = "var1 -" + str(y)
+        #
+        # corlocz = bpy.data.objects["Crop 3D_Y"].driver_add("location", 2)
+        # var1 = corlocz.driver.variables.new()
+        # var1.name = "var1"
+        # var1.type = 'TRANSFORMS'
+        # var1.targets[0].transform_type = 'LOC_Z'
+        # var1.targets[0].id = bpy.data.objects["2_IT001_CORONAL_SLICE"]
+        # corlocz.driver.expression = "var1"
+        #
+        #
+        # corrotx = bpy.data.objects["Crop 3D_Y"].driver_add("rotation_euler", 0)
+        # var1 = corrotx.driver.variables.new()
+        # var1.name = "var1"
+        # var1.type = 'TRANSFORMS'
+        # var1.targets[0].transform_type = 'ROT_X'
+        # var1.targets[0].id = bpy.data.objects["2_IT001_CORONAL_SLICE"]
+        # corrotx.driver.expression = "var1 + 1.5708"
+        #
+        # corroty = bpy.data.objects["Crop 3D_Y"].driver_add("rotation_euler", 1)
+        # var1 = corroty.driver.variables.new()
+        # var1.name = "var1"
+        # var1.type = 'TRANSFORMS'
+        # var1.targets[0].transform_type = 'ROT_Y'
+        # var1.targets[0].id = bpy.data.objects["2_IT001_CORONAL_SLICE"]
+        # corroty.driver.expression = "var1"
+        #
+        # corrotz = bpy.data.objects["Crop 3D_Y"].driver_add("rotation_euler", 2)
+        # var1 = corrotz.driver.variables.new()
+        # var1.name = "var1"
+        # var1.type = 'TRANSFORMS'
+        # var1.targets[0].transform_type = 'ROT_Z'
+        # var1.targets[0].id = bpy.data.objects["2_IT001_CORONAL_SLICE"]
+        # corrotz.driver.expression = "var1"
+        #
+        # """
+        # These 6 blocks of code link the location and rotation of the sagital slice to that of the Z-cropping cube.
+        # """
+        # axilocx = bpy.data.objects["Crop 3D_Z"].driver_add("location", 0)
+        # var1 = axilocx.driver.variables.new()
+        # var1.name = "var1"
+        # var1.type = 'TRANSFORMS'
+        # var1.targets[0].transform_type = 'LOC_X'
+        # var1.targets[0].id = bpy.data.objects["1_IT001_AXIAL_SLICE"]
+        # axilocx.driver.expression = "var1"
+        #
+        # axilocy = bpy.data.objects["Crop 3D_Z"].driver_add("location", 1)
+        # var1 = axilocy.driver.variables.new()
+        # var1.name = "var1"
+        # var1.type = 'TRANSFORMS'
+        # var1.targets[0].transform_type = 'LOC_Y'
+        # var1.targets[0].id = bpy.data.objects["1_IT001_AXIAL_SLICE"]
+        # axilocy.driver.expression = "var1"
+        #
+        # axilocz = bpy.data.objects["Crop 3D_Z"].driver_add("location", 2)
+        # var1 = axilocz.driver.variables.new()
+        # var1.name = "var1"
+        # var1.type = 'TRANSFORMS'
+        # var1.targets[0].transform_type = 'LOC_Z'
+        # var1.targets[0].id = bpy.data.objects["1_IT001_AXIAL_SLICE"]
+        # z = bpy.data.objects["Crop 3D_Z"].dimensions[2]
+        # z = (0.5 * z - 1)
+        # axilocz.driver.expression = "var1 - " + str(z)
+        #
+        # axirotx = bpy.data.objects["Crop 3D_Z"].driver_add("rotation_euler", 0)
+        # var1 = axirotx.driver.variables.new()
+        # var1.name = "var1"
+        # var1.type = 'TRANSFORMS'
+        # var1.targets[0].transform_type = 'ROT_X'
+        # var1.targets[0].id = bpy.data.objects["1_IT001_AXIAL_SLICE"]
+        # axirotx.driver.expression = "var1"
+        #
+        # axiroty = bpy.data.objects["Crop 3D_Z"].driver_add("rotation_euler", 1)
+        # var1 = axiroty.driver.variables.new()
+        # var1.name = "var1"
+        # var1.type = 'TRANSFORMS'
+        # var1.targets[0].transform_type = 'ROT_Y'
+        # var1.targets[0].id = bpy.data.objects["1_IT001_AXIAL_SLICE"]
+        # axiroty.driver.expression = "var1"
+        #
+        # axirotz = bpy.data.objects["Crop 3D_Z"].driver_add("rotation_euler", 2)
+        # var1 = axirotz.driver.variables.new()
+        # var1.name = "var1"
+        # var1.type = 'TRANSFORMS'
+        # var1.targets[0].transform_type = 'ROT_Z'
+        # var1.targets[0].id = bpy.data.objects["1_IT001_AXIAL_SLICE"]
+        # axirotz.driver.expression = "var1"
         return {'FINISHED'}
     
 class No_Slices_Tracking(bpy.types.Operator):
@@ -851,14 +923,15 @@ class No_Slices_Tracking(bpy.types.Operator):
     bl_label = "Disable Tracking Slices"
     
     def execute(self, context):
+        INTACT_Props = context.scene.INTACT_Props
         x = range(3)
         for n in x:
-            Axial_Slice.driver_remove("location", n)
-            Axial_Slice.driver_remove("rotation_euler", n)
-            Coronal_Slice.driver_remove("location", n)
-            Coronal_Slice.driver_remove("rotation_euler", n)
-            Sagital_Slice.driver_remove("location", n)
-            Sagital_Slice.driver_remove("rotation_euler", n)
+            INTACT_Props.Axial_Slice.driver_remove("location", n)
+            # INTACT_Props.Axial_Slice.driver_remove("rotation_euler", n)
+            INTACT_Props.Coronal_Slice.driver_remove("location", n)
+            # INTACT_Props.Coronal_Slice.driver_remove("rotation_euler", n)
+            INTACT_Props.Sagital_Slice.driver_remove("location", n)
+            # INTACT_Props.Sagital_Slice.driver_remove("rotation_euler", n)
         return {'FINISHED'}
     
 class Slices_Update(bpy.types.Operator):
@@ -884,6 +957,9 @@ class Camera_Setup(bpy.types.Operator):
     bl_label = "Camera Setup"
     
     def execute(self, context):
+        INTACT_Props = context.scene.INTACT_Props
+        CT_Vol = INTACT_Props.CT_Vol
+
         loc = CT_Vol.location
         dim = CT_Vol.dimensions
         maxdim = max(dim)
@@ -948,6 +1024,10 @@ class Switch_Boolean_Solver(bpy.types.Operator):
     bl_label = "Switch Boolean Solver"
     
     def execute(self, context):
+        INTACT_Props = context.scene.INTACT_Props
+        CT_Vol = INTACT_Props.CT_Vol
+        Surf_3D = INTACT_Props.Surf_3D
+
         if CT_Vol.modifiers["Crop X"].solver == 'FAST':
             #Select the CT scan
             bpy.ops.object.select_all(action='DESELECT') #deselect all objects    

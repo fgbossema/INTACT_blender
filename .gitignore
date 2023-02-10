@@ -92,6 +92,9 @@ ENV/
 .spyderproject
 .spyproject
 
+#Pycharm settings
+.idea/
+
 # Rope project settings
 .ropeproject
 

@@ -9,6 +9,7 @@ from bpy.props import (
     EnumProperty,
     FloatVectorProperty,
     BoolProperty,
+    PointerProperty
 )
 
 
@@ -420,6 +421,37 @@ class INTACT_Props(bpy.types.PropertyGroup):
         items.append(item)
 
     cutting_mode: EnumProperty(items=items, description="", default="Cut inner")
+
+    #########################################################################################
+    # Visualisation Props :
+    #########################################################################################
+    CT_Vol: PointerProperty(
+        name="CT_Vol",
+        type=bpy.types.Object)
+
+    Surf_3D: PointerProperty(
+        name="Surf_3D",
+        type=bpy.types.Object)
+
+    Seg: PointerProperty(
+        name="Seg",
+        type=bpy.types.Object)
+
+    Axial_Slice: PointerProperty(
+        name="Seg",
+        type=bpy.types.Object)
+
+    Coronal_Slice: PointerProperty(
+        name="Seg",
+        type=bpy.types.Object)
+
+    Sagital_Slice: PointerProperty(
+        name="Seg",
+        type=bpy.types.Object)
+
+    Cropping_Cube: PointerProperty(
+        name="Cropping_Cube",
+        type=bpy.types.Object)
 
 
 #################################################################################################

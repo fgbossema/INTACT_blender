@@ -545,6 +545,27 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
                 row.label(text = "Please select CT volume first, then generate slices.")
 
         row = layout.row()
+        split = row.split()
+        col = split.column()
+        col.label(text="CT Volume:")
+        col = split.column()
+        col.prop(INTACT_Props, "CT_Vol", text="")
+
+        row = layout.row()
+        split = row.split()
+        col = split.column()
+        col.label(text="Surface scan:")
+        col = split.column()
+        col.prop(INTACT_Props, "Surf_3D", text="")
+
+        row = layout.row()
+        split = row.split()
+        col = split.column()
+        col.label(text="CT Segmentation:")
+        col = split.column()
+        col.prop(INTACT_Props, "Seg", text="")
+
+        row = layout.row()
         row.operator("intact.addslices", icon="EMPTY_AXIS")
         
         row = layout.row()
