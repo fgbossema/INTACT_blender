@@ -1,21 +1,6 @@
-#bl_info = {
- #   "name": "CT and 3D for Cultural Heritage visualisations",
-  #  "author": "Paul van Laar",
-   # "version": (0, 1),
-    #"blender": (2, 91, 2),
-    #"location": "View3D > Sidebar > INTACT_Visualisations",
-    #"descripton": "Allows for the simultaneous inspection of CT voxel data and 3D surface scans",
-   # "warning": "",
-    #"wiki_url": "",
-    #"category": "Cultural Heritage",
-#}
-
 import bpy
 from mathutils import Euler
 import math
-
-#bpy.context=bpy.context
-#bpy.data=bpy.data
 
 #---------------------------------------------------------------------------
 #          Scene Properties
