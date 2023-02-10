@@ -64,9 +64,8 @@ class Example_class(bpy.types.Operator):
 #---------------------------------------------------------------------------
 
 classes = [
-    Init_Setup,
     Example_class,
-    #]
+    ]
             
 def register():
     for cls in classes:

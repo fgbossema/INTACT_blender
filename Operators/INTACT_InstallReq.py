@@ -136,8 +136,8 @@ class INTACT_OT_InstallRequirements(bpy.types.Operator):
 
         ReqInstall(REQ_DICT, REQ_ZIP_DIR, INTACT_Modules_DIR)
 
-        if exists(INTACT_Theme):
-            bpy.ops.preferences.theme_install(filepath=INTACT_Theme)
+        # if exists(INTACT_Theme):
+            # bpy.ops.preferences.theme_install(filepath=INTACT_Theme)
 
         return {"FINISHED"}
 
