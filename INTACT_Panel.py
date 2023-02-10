@@ -103,17 +103,18 @@ class INTACT_PT_MainPanel(bpy.types.Panel):
         row.label(text="See: https://3d-operators.com/")
 
         row = layout.row()
-        row.alignment = "LEFT"
-        row.label(text="Optional: use a theme with light background.")
-        row = layout.row()
-        row.operator("intact.template", text="INTACT THEME")        
-
-        row = layout.row()
         split = row.split()
         col = split.column()
         col.label(text="Project Directory :")
         col = split.column()
         col.prop(INTACT_Props, "UserProjectDir", text="")
+        
+        row = layout.row()
+        split = row.split()
+        col = split.column()
+        col.label(text="Optional: use a theme with light background.")
+        col = split.column()
+        col.operator("intact.template", text="INTACT THEME")
 
 
 class INTACT_PT_ScanPanel(bpy.types.Panel):

@@ -22,10 +22,6 @@ import SimpleITK as sitk
 import vtk
 import cv2
 
-# try :
-#     cv2 = reload(cv2)
-# except ImportError :
-#     pass
 from vtk.util import numpy_support
 from vtk import vtkCommand
 
@@ -40,6 +36,7 @@ GpShader = "VGS_Marcos_modified"  #
 Wmin = -400
 Wmax = 3000
 ProgEvent = vtkCommand.ProgressEvent
+
 #######################################################################################
 ########################### CT Scan Load : Operators ##############################
 #######################################################################################
@@ -52,48 +49,6 @@ def rmtree(top):
         for name in dirs:
             os.rmdir(os.path.join(root, name))
     os.rmdir(top)
-
-
-# class INTACT_OT_Uninstall(bpy.types.Operator):
-#     """ Uninstall Addon """
-
-#     bl_idname = "intact.uninstall"
-#     bl_label = "UNINSTALL"
-
-#     def execute(self, context):
-
-#         # Disable Addon :
-#         Addon_Enable(AddonName='INTACT', Enable=False)
-#         try :
-#             shutil.rmtree(addon_dir)
-#             print('INTACT Addon uninstalled successfully.(shutil)')
-#         except Exception as Er :
-#             print(Er)
-#             if sys.platform == 'win32':
-#                 try :
-#                     rmtree(addon_dir)
-#                     if not exists(addon_dir):
-#                         print('INTACT Addon uninstalled successfully.(rmtree)')
-#                     else :
-#                         print('INTACT Addon could not be uninstalled ! (Folder still exists wthout error)')
-#                 except Exception as Er :
-#                     print(f'INTACT Addon could not be uninstalled ! Error : {Er}')
-
-#                 # try :
-#                 #     os.chmod(addon_dir,stat.S_IWUSR)
-#                 #     # os.chmod(addon_dir,stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
-#                 #     shutil.rmtree(addon_dir)
-#                 #     if not exists(addon_dir):
-#                 #         print('INTACT Addon uninstalled successfully.(os.chmod)')
-#                 #     else :
-#                 #         print('INTACT Addon could not be uninstalled !')
-#                 # except Exception as Er :
-#                 #     print(Er)
-#                 #     print('INTACT Addon could not be uninstalled !')
-
-
-#         return {"FINISHED"}
-
 
 class INTACT_OT_Template(bpy.types.Operator):
     """ Open INTACT workspace template """
@@ -591,7 +546,6 @@ def Load_Tiff_function(context, q):
         Wmin = minmax.GetMinimum()
 
         # calculate Informations :
-        #D = (1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0)
         D = (1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0)
         O = Origin
         Direction = D
@@ -717,7 +671,6 @@ def Load_Tiff_function(context, q):
 
         
         # Convert Dicom to nrrd file :
-        # sitk.WriteImage(Image3D, NrrdHuPath)
         sitk.WriteImage(Image3D_255, Nrrd255Path)
 
         ################################## debug_03 ######################################
