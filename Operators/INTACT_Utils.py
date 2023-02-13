@@ -752,11 +752,10 @@ def Scene_Settings():
 #################################################################################################
 # Add Slices :
 #################################################################################################
-def SlicesUpdate(scene, slice_index):
+def SlicesUpdate(INTACT_Props, slice_index):
     """ Update slices when moved in UI. Slice index determines which slice to update 0 = axial, 1 = Coronal,
     2 = Sagital
     """
-    INTACT_Props = scene.INTACT_Props
 
     slice_name_suffixes = ["_AXIAL_SLICE", "_CORONAL_SLICE", "_SAGITAL_SLICE"]
     slice_position_properites = [INTACT_Props.Axial_Slice_Pos,
@@ -875,13 +874,22 @@ def SlicesUpdate(scene, slice_index):
                 Array = sitk.GetArrayFromImage(Image2D)
                 Flipped_Array = np.flipud(Array.reshape(Array.shape[1], Array.shape[2]))
 
-                # BlenderImage = bpy.data.images.new(img_name, width, height, alpha=False)
+                # # Set image directly from the numpy array + pack it into the .blend so it gets saved
+                # # https://blender.stackexchange.com/questions/229850/apply-texture-from-numpy-array
+                # blender_array = np.zeros(shape=(4, Flipped_Array.shape[0], Flipped_Array.shape[1]),
+                #                          dtype=np.float32)
+                # blender_array[0] = Flipped_Array
+                # print(blender_array.shape)
+                # print(len(blender_array))
+                # print(4 * Flipped_Array.shape[0] * Flipped_Array.shape[1])
                 #
-                # # Fast way to set pixels (since 2.83)
-                # img.pixels.foreach_set(array)
+                # BlenderImage = bpy.data.images.new(f"{Plane.name}.png",
+                #                                    Flipped_Array.shape[0], Flipped_Array.shape[1], alpha=False)
+                # BlenderImage.pixels.foreach_set(blender_array.flatten())
+                # BlenderImage.pack()
 
                 cv2.imwrite(ImagePath, Flipped_Array)
-                #############################################
+                ############################################
                 # Update Blender Image data :
                 BlenderImage = bpy.data.images.get(f"{Plane.name}.png")
                 if not BlenderImage:
@@ -893,15 +901,15 @@ def SlicesUpdate(scene, slice_index):
 
 @persistent
 def AxialSliceUpdate(scene):
-    SlicesUpdate(scene, 0)
+    SlicesUpdate(scene.INTACT_Props, 0)
 
 @persistent
 def CoronalSliceUpdate(scene):
-    SlicesUpdate(scene, 1)
+    SlicesUpdate(scene.INTACT_Props, 1)
 
 @persistent
 def SagitalSliceUpdate(scene):
-    SlicesUpdate(scene, 2)
+    SlicesUpdate(scene.INTACT_Props, 2)
 
 ####################################################################
 def Add_Cam_To_Plane(Plane, CamDistance, ClipOffset):
@@ -1032,8 +1040,9 @@ def AddSlice(slice_index, Preffix, DcmInfo):
     ImagePath = join(SlicesDir, ImageName)
 
     # write "name.png" to here ImagePath
-    SlicesUpdate(bpy.context.scene, slice_index)
+    SlicesUpdate(bpy.context.scene.INTACT_Props, slice_index)
 
+    # BlenderImage = bpy.data.images.get(ImageName)
     BlenderImage = bpy.data.images.get(ImageName) or bpy.data.images.load(ImagePath)
 
     TextureCoord = AddNode(nodes, type="ShaderNodeTexCoord", name="TextureCoord")
