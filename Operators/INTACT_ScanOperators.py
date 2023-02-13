@@ -1244,13 +1244,13 @@ class INTACT_OT_AddSlices(bpy.types.Operator):
                 # if SLICES_Coll :
                 #     SLICES_Coll.hide_viewport = False
 
-                AxialPlane = AddAxialSlice(Preffix, DcmInfo)
+                AxialPlane = AddSlice(0, Preffix, DcmInfo)
                 MoveToCollection(obj=AxialPlane, CollName="SLICES")
 
-                CoronalPlane = AddCoronalSlice(Preffix, DcmInfo)
+                CoronalPlane = AddSlice(1, Preffix, DcmInfo)
                 MoveToCollection(obj=CoronalPlane, CollName="SLICES")
 
-                SagitalPlane = AddSagitalSlice(Preffix, DcmInfo)
+                SagitalPlane = AddSlice(2, Preffix, DcmInfo)
                 MoveToCollection(obj=SagitalPlane, CollName="SLICES")
 
                 # Add Cameras :

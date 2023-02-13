@@ -599,7 +599,8 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
             layout.operator("intact.object_selection")
             layout.operator("intact.cropping_cube_creation")
             layout.operator("intact.cropping_cube_boolean")
-            layout.operator("intact.cropping_cube_drivers")
+            # layout.operator("intact.cropping_cube_drivers")
+            layout.operator("intact.slices_boolean")
             layout.operator("intact.slices_tracking2")
             layout.operator("intact.no_slices_tracking")
         

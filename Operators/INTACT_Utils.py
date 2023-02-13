@@ -752,12 +752,22 @@ def Scene_Settings():
 #################################################################################################
 # Add Slices :
 #################################################################################################
-@persistent
-def AxialSliceUpdate(scene):
+def SlicesUpdate(scene, slice_index):
+    """ Update slices when moved in UI. Slice index determines which slice to update 0 = axial, 1 = Coronal,
+    2 = Sagital
+    """
+    INTACT_Props = scene.INTACT_Props
+
+    slice_name_suffixes = ["_AXIAL_SLICE", "_CORONAL_SLICE", "_SAGITAL_SLICE"]
+    slice_position_properites = [INTACT_Props.Axial_Slice_Pos,
+                                 INTACT_Props.Coronal_Slice_Pos, INTACT_Props.Sagital_Slice_Pos]
+    slice_rotation_properties = [INTACT_Props.Axial_Slice_Rot,
+                                 INTACT_Props.Coronal_Slice_Rot, INTACT_Props.Sagital_Slice_Rot]
+
     Planes = [
         obj
         for obj in bpy.context.scene.objects
-        if (obj.name[2:4] == "IT" and obj.name.endswith("_AXIAL_SLICE"))
+        if (obj.name[2:4] == "IT" and obj.name.endswith(slice_name_suffixes[slice_index]))
     ]
     SLICES_POINTER = [
         obj
@@ -766,21 +776,19 @@ def AxialSliceUpdate(scene):
     ]
 
     if Planes:
-        INTACT_Props = scene.INTACT_Props
         ActiveObject = bpy.context.view_layer.objects.active
 
         # Only update when position or rotation of plane changes (this also allows it to update when not selected)
         Condition1 = False
-        if len(Planes) > 0:
-            Axial_Slice_Pos = Planes[0].location
-            Axial_Slice_Rot = Planes[0].rotation_euler
+        slice_pos = Planes[0].location
+        slice_rot = Planes[0].rotation_euler
 
-            if INTACT_Props.Axial_Slice_Pos != Axial_Slice_Pos:
-                Condition1 = True
-                INTACT_Props.Axial_Slice_Pos = Axial_Slice_Pos
-            elif INTACT_Props.Axial_Slice_Rot != Axial_Slice_Rot:
-                Condition1 = True
-                INTACT_Props.Axial_Slice_Rot = Axial_Slice_Rot
+        if slice_position_properites[slice_index] != slice_pos:
+            Condition1 = True
+            slice_position_properites[slice_index] = slice_pos
+        elif slice_rotation_properties[slice_index] != slice_rot:
+            Condition1 = True
+            slice_rotation_properties[slice_index] = slice_rot
 
         Condition2 = ActiveObject in SLICES_POINTER
 
@@ -816,15 +824,23 @@ def AxialSliceUpdate(scene):
                 Sp = Spacing = Image3D_255.GetSpacing()
                 Sz = Size = Image3D_255.GetSize()
                 Ortho_Origin = (
-                    -0.5 * np.array(Sp) * (np.array(Sz) - np.array((1, 1, 1)))
+                        -0.5 * np.array(Sp) * (np.array(Sz) - np.array((1, 1, 1)))
                 )
                 Image3D_255.SetOrigin(Ortho_Origin)
                 Image3D_255.SetDirection(np.identity(3).flatten())
 
                 # Output Parameters :
-                Out_Origin = [Ortho_Origin[0], Ortho_Origin[1], 0]
+                if slice_index == 0:
+                    Out_Origin = [Ortho_Origin[0], Ortho_Origin[1], 0]
+                    Out_Size = (Sz[0], Sz[1], 1)
+                elif slice_index == 1:
+                    Out_Origin = [Ortho_Origin[0], Ortho_Origin[2], 0]
+                    Out_Size = (Sz[0], Sz[2], 1)
+                elif slice_index == 2:
+                    Out_Origin = [Ortho_Origin[1], Ortho_Origin[2], 0]
+                    Out_Size = (Sz[1], Sz[2], 1)
+
                 Out_Direction = Vector(np.identity(3).flatten())
-                Out_Size = (Sz[0], Sz[1], 1)
                 Out_Spacing = Sp
 
                 ######################################
@@ -858,6 +874,12 @@ def AxialSliceUpdate(scene):
                 # Write Image :
                 Array = sitk.GetArrayFromImage(Image2D)
                 Flipped_Array = np.flipud(Array.reshape(Array.shape[1], Array.shape[2]))
+
+                # BlenderImage = bpy.data.images.new(img_name, width, height, alpha=False)
+                #
+                # # Fast way to set pixels (since 2.83)
+                # img.pixels.foreach_set(array)
+
                 cv2.imwrite(ImagePath, Flipped_Array)
                 #############################################
                 # Update Blender Image data :
@@ -869,245 +891,17 @@ def AxialSliceUpdate(scene):
                     BlenderImage.filepath = ImagePath
                     BlenderImage.reload()
 
+@persistent
+def AxialSliceUpdate(scene):
+    SlicesUpdate(scene, 0)
 
 @persistent
 def CoronalSliceUpdate(scene):
-
-    Planes = [
-        obj
-        for obj in bpy.context.scene.objects
-        if (obj.name[2:4] == "IT" and obj.name.endswith("_CORONAL_SLICE"))
-    ]
-    SLICES_POINTER = [
-        obj
-        for obj in bpy.context.scene.objects
-        if (obj.name.startswith("IT") and obj.name.endswith("_SLICES_POINTER"))
-    ]
-
-    if Planes:
-        INTACT_Props = scene.INTACT_Props
-        ActiveObject = bpy.context.view_layer.objects.active
-
-        # Only update when position or rotation of plane changes (this also allows it to update when not selected)
-        Condition1 = False
-        if len(Planes) > 0:
-            Coronal_Slice_Pos = Planes[0].location
-            Coronal_Slice_Rot = Planes[0].rotation_euler
-
-            if INTACT_Props.Coronal_Slice_Pos != Coronal_Slice_Pos:
-                Condition1 = True
-                INTACT_Props.Coronal_Slice_Pos = Coronal_Slice_Pos
-            elif INTACT_Props.Coronal_Slice_Rot != Coronal_Slice_Rot:
-                Condition1 = True
-                INTACT_Props.Coronal_Slice_Rot = Coronal_Slice_Rot
-
-        Condition2 = ActiveObject in SLICES_POINTER
-
-        if Condition1:
-            Preffix = Planes[0].name[2:7]
-
-        if Condition2:
-            Preffix = ActiveObject.name[0:5]
-
-        if Condition1 or Condition2:
-
-            Plane = [obj for obj in Planes if Preffix in obj.name][0]
-            DcmInfoDict = eval(INTACT_Props.DcmInfo)
-            DcmInfo = DcmInfoDict[Preffix]
-            ImageData = AbsPath(DcmInfo["Nrrd255Path"])
-
-            Condition2 = exists(ImageData)
-
-            if Condition2:
-
-                CTVolume = bpy.data.objects.get(f"{Preffix}_CTVolume")
-                TransformMatrix = CTVolume.matrix_world
-
-                SlicesDir = AbsPath(DcmInfo["SlicesDir"])
-                # TransformMatrix = DcmInfo["TransformMatrix"]
-                ImageName = f"{Plane.name}.png"
-                ImagePath = join(SlicesDir, ImageName)
-
-                #########################################
-                #########################################
-                # Get ImageData Infos :
-                Image3D_255 = sitk.ReadImage(ImageData)
-                Sp = Spacing = Image3D_255.GetSpacing()
-                Sz = Size = Image3D_255.GetSize()
-                Ortho_Origin = (
-                    -0.5 * np.array(Sp) * (np.array(Sz) - np.array((1, 1, 1)))
-                )
-                Image3D_255.SetOrigin(Ortho_Origin)
-                Image3D_255.SetDirection(np.identity(3).flatten())
-				
-                # Output Parameters :
-                Out_Origin = [Ortho_Origin[0], Ortho_Origin[2], 0]
-                Out_Direction = Vector(np.identity(3).flatten())
-                Out_Size = (Sz[0], Sz[2], 1)
-                Out_Spacing = Sp
-
-                ######################################
-                # Get Plane Orientation and location :
-                PlanMatrix = TransformMatrix.inverted() @ Plane.matrix_world
-                Rot = PlanMatrix.to_euler()
-                Trans = PlanMatrix.translation
-                Rvec = (Rot.x, Rot.y, Rot.z)
-                Tvec = Trans
-
-                ##########################################
-                # Euler3DTransform :
-                Euler3D = sitk.Euler3DTransform()
-                Euler3D.SetCenter((0, 0, 0))
-                Euler3D.SetRotation(Rvec[0], Rvec[1], Rvec[2])
-                Euler3D.SetTranslation(Tvec)
-                Euler3D.ComputeZYXOn()
-                #########################################
-
-                Image2D = sitk.Resample(
-                    Image3D_255,
-                    Out_Size,
-                    Euler3D,
-                    sitk.sitkLinear,
-                    Out_Origin,
-                    Out_Spacing,
-                    Out_Direction,
-                    0,
-                )
-                #############################################
-                # Write Image :
-                Array = sitk.GetArrayFromImage(Image2D)
-                Flipped_Array = np.flipud(Array.reshape(Array.shape[1], Array.shape[2]))
-                cv2.imwrite(ImagePath, Flipped_Array)
-                #############################################
-                # Update Blender Image data :
-                BlenderImage = bpy.data.images.get(f"{Plane.name}.png")
-                if not BlenderImage:
-                    bpy.data.images.load(ImagePath)
-                    BlenderImage = bpy.data.images.get(f"{Plane.name}.png")
-
-                else:
-                    BlenderImage.filepath = ImagePath
-                    BlenderImage.reload()
-
+    SlicesUpdate(scene, 1)
 
 @persistent
 def SagitalSliceUpdate(scene):
-
-    Planes = [
-        obj
-        for obj in bpy.context.scene.objects
-        if (obj.name[2:4] == "IT" and obj.name.endswith("_SAGITAL_SLICE"))
-    ]
-    SLICES_POINTER = [
-        obj
-        for obj in bpy.context.scene.objects
-        if (obj.name.startswith("IT") and obj.name.endswith("_SLICES_POINTER"))
-    ]
-
-    if Planes:
-        INTACT_Props = scene.INTACT_Props
-        ActiveObject = bpy.context.view_layer.objects.active
-
-        # Only update when position or rotation of plane changes (this also allows it to update when not selected)
-        Condition1 = False
-        if len(Planes) > 0:
-            Sagital_Slice_Pos = Planes[0].location
-            Sagital_Slice_Rot = Planes[0].rotation_euler
-
-            if INTACT_Props.Sagital_Slice_Pos != Sagital_Slice_Pos:
-                Condition1 = True
-                INTACT_Props.Sagital_Slice_Pos = Sagital_Slice_Pos
-            elif INTACT_Props.Sagital_Slice_Rot != Sagital_Slice_Rot:
-                Condition1 = True
-                INTACT_Props.Sagital_Slice_Rot = Sagital_Slice_Rot
-
-        Condition2 = ActiveObject in SLICES_POINTER
-
-        if Condition1:
-            Preffix = Planes[0].name[2:7]
-
-        if Condition2:
-            Preffix = ActiveObject.name[0:5]
-
-        if Condition1 or Condition2:
-
-            Plane = [obj for obj in Planes if Preffix in obj.name][0]
-            DcmInfoDict = eval(INTACT_Props.DcmInfo)
-            DcmInfo = DcmInfoDict[Preffix]
-            ImageData = AbsPath(DcmInfo["Nrrd255Path"])
-
-            Condition2 = exists(ImageData)
-
-            if Condition2:
-
-                CTVolume = bpy.data.objects.get(f"{Preffix}_CTVolume")
-                TransformMatrix = CTVolume.matrix_world
-
-                SlicesDir = AbsPath(DcmInfo["SlicesDir"])
-                # TransformMatrix = DcmInfo["TransformMatrix"]
-                ImageName = f"{Plane.name}.png"
-                ImagePath = join(SlicesDir, ImageName)
-
-                #########################################
-                #########################################
-                # Get ImageData Infos :
-                Image3D_255 = sitk.ReadImage(ImageData)
-                Sp = Spacing = Image3D_255.GetSpacing()
-                Sz = Size = Image3D_255.GetSize()
-                Ortho_Origin = (
-                    -0.5 * np.array(Sp) * (np.array(Sz) - np.array((1, 1, 1)))
-                )
-                Image3D_255.SetOrigin(Ortho_Origin)
-                Image3D_255.SetDirection(np.identity(3).flatten())
-
-                # Output Parameters :
-                Out_Origin = [Ortho_Origin[1], Ortho_Origin[2], 0]
-                Out_Direction = Vector(np.identity(3).flatten())
-                Out_Size = (Sz[1], Sz[2], 1)
-                Out_Spacing = Sp
-
-                ######################################
-                # Get Plane Orientation and location :
-                PlanMatrix = TransformMatrix.inverted() @ Plane.matrix_world
-                Rot = PlanMatrix.to_euler()
-                Trans = PlanMatrix.translation
-                Rvec = (Rot.x, Rot.y, Rot.z)
-                Tvec = Trans
-
-                ##########################################
-                # Euler3DTransform :
-                Euler3D = sitk.Euler3DTransform()
-                Euler3D.SetCenter((0, 0, 0))
-                Euler3D.SetRotation(Rvec[0], Rvec[1], Rvec[2])
-                Euler3D.SetTranslation(Tvec)
-                Euler3D.ComputeZYXOn()
-                #########################################
-
-                Image2D = sitk.Resample(
-                    Image3D_255,
-                    Out_Size,
-                    Euler3D,
-                    sitk.sitkLinear,
-                    Out_Origin,
-                    Out_Spacing,
-                    Out_Direction,
-                    0,
-                )
-                #############################################
-                # Write Image :
-                Array = sitk.GetArrayFromImage(Image2D)
-                Flipped_Array = np.flipud(Array.reshape(Array.shape[1], Array.shape[2]))
-                cv2.imwrite(ImagePath, Flipped_Array)
-                #############################################
-                # Update Blender Image data :
-                BlenderImage = bpy.data.images.get(f"{Plane.name}.png")
-                if not BlenderImage:
-                    bpy.data.images.load(ImagePath)
-                    BlenderImage = bpy.data.images.get(f"{Plane.name}.png")
-                else:
-                    BlenderImage.filepath = ImagePath
-                    BlenderImage.reload()
-
+    SlicesUpdate(scene, 2)
 
 ####################################################################
 def Add_Cam_To_Plane(Plane, CamDistance, ClipOffset):
@@ -1161,9 +955,12 @@ def Add_Cam_To_Plane(Plane, CamDistance, ClipOffset):
 #     Cam.select_set(False)
 
 ####################################################################
-def AddAxialSlice(Preffix, DcmInfo):
+def AddSlice(slice_index, Preffix, DcmInfo):
+    """ Add slices to the UI. Slice index determines which slice to add 0 = axial, 1 = Coronal,
+        2 = Sagital
+    """
     CTVolume = bpy.data.objects.get(f"{Preffix}_CTVolume")
-    name = f"1_{Preffix}_AXIAL_SLICE"
+
     Sp, Sz, Origin, Direction, VC = (
         DcmInfo["Spacing"],
         DcmInfo["Size"],
@@ -1174,6 +971,16 @@ def AddAxialSlice(Preffix, DcmInfo):
 
     DimX, DimY, DimZ = (Sz[0] * Sp[0], Sz[1] * Sp[1], Sz[2] * Sp[2])
 
+    if slice_index == 0:
+        name = f"1_{Preffix}_AXIAL_SLICE"
+        PlaneDims = Vector((DimX, DimY, 0.0))
+    elif slice_index == 1:
+        name = f"2_{Preffix}_CORONAL_SLICE"
+        PlaneDims = Vector((DimX, DimZ, 0.0))
+    elif slice_index == 2:
+        name = f"3_{Preffix}_SAGITAL_SLICE"
+        PlaneDims = Vector((DimY, DimZ, 0.0))
+
     # Remove old Slices and their data meshs :
     OldSlices = [obj for obj in bpy.context.view_layer.objects if name in obj.name]
     OldSliceMeshs = [mesh for mesh in bpy.data.meshes if name in mesh.name]
@@ -1183,24 +990,34 @@ def AddAxialSlice(Preffix, DcmInfo):
     for mesh in OldSliceMeshs:
         bpy.data.meshes.remove(mesh)
 
-    # Add AXIAL :
+    # Add Slice :
     bpy.ops.mesh.primitive_plane_add()
-    AxialPlane = bpy.context.active_object
-    AxialPlane.name = name
-    AxialPlane.data.name = f"{name}_mesh"
-    AxialPlane.rotation_mode = "XYZ"
-    AxialDims = Vector((DimX, DimY, 0.0))
-    AxialPlane.dimensions = AxialDims
+    Plane = bpy.context.active_object
+    Plane.name = name
+    Plane.data.name = f"{name}_mesh"
+    Plane.rotation_mode = "XYZ"
+    Plane.dimensions = PlaneDims
     bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
-    # AxialPlane.location = VC
-    AxialPlane.matrix_world = CTVolume.matrix_world
+
+    if slice_index == 0:
+        # AxialPlane.location = VC
+        Plane.matrix_world = CTVolume.matrix_world
+    elif slice_index == 1:
+        rotation_euler = Euler((pi / 2, 0.0, 0.0), "XYZ")
+        RotMtx = rotation_euler.to_matrix().to_4x4()
+        Plane.matrix_world = CTVolume.matrix_world @ RotMtx
+    elif slice_index == 2:
+        rotation_euler = Euler((pi / 2, 0.0, -pi / 2), "XYZ")
+        RotMtx = rotation_euler.to_matrix().to_4x4()
+        Plane.matrix_world = CTVolume.matrix_world @ RotMtx
+
     # Add Material :
     mat = bpy.data.materials.get(f"{name}_mat") or bpy.data.materials.new(f"{name}_mat")
 
-    for slot in AxialPlane.material_slots:
+    for slot in Plane.material_slots:
         bpy.ops.object.material_slot_remove()
     bpy.ops.object.material_slot_add()
-    AxialPlane.active_material = mat
+    Plane.active_material = mat
 
     mat.use_nodes = True
     node_tree = mat.node_tree
@@ -1214,8 +1031,8 @@ def AddAxialSlice(Preffix, DcmInfo):
     ImageName = f"{name}.png"
     ImagePath = join(SlicesDir, ImageName)
 
-    # write "1_AXIAL_SLICE.png" to here ImagePath
-    AxialSliceUpdate(bpy.context.scene)
+    # write "name.png" to here ImagePath
+    SlicesUpdate(bpy.context.scene, slice_index)
 
     BlenderImage = bpy.data.images.get(ImageName) or bpy.data.images.load(ImagePath)
 
@@ -1231,158 +1048,7 @@ def AddAxialSlice(Preffix, DcmInfo):
     bpy.context.scene.transform_orientation_slots[1].type = "LOCAL"
     bpy.ops.wm.tool_set_by_id(name="builtin.move")
 
-    return AxialPlane
-
-
-def AddCoronalSlice(Preffix, DcmInfo):
-    CTVolume = bpy.data.objects.get(f"{Preffix}_CTVolume")
-    name = f"2_{Preffix}_CORONAL_SLICE"
-    Sp, Sz, Origin, Direction, VC = (
-        DcmInfo["Spacing"],
-        DcmInfo["Size"],
-        DcmInfo["Origin"],
-        DcmInfo["Direction"],
-        DcmInfo["VolumeCenter"],
-    )
-
-    DimX, DimY, DimZ = (Sz[0] * Sp[0], Sz[1] * Sp[1], Sz[2] * Sp[2])
-
-    # Remove old Slices and their data meshs :
-    OldSlices = [obj for obj in bpy.context.view_layer.objects if name in obj.name]
-    OldSliceMeshs = [mesh for mesh in bpy.data.meshes if name in mesh.name]
-
-    for obj in OldSlices:
-        bpy.data.objects.remove(obj)
-    for mesh in OldSliceMeshs:
-        bpy.data.meshes.remove(mesh)
-
-    # Add CORONAL :
-    bpy.ops.mesh.primitive_plane_add()
-    CoronalPlane = bpy.context.active_object
-    CoronalPlane.name = name
-    CoronalPlane.data.name = f"{name}_mesh"
-    CoronalPlane.rotation_mode = "XYZ"
-    CoronalDims = Vector((DimX, DimZ, 0.0))
-    CoronalPlane.dimensions = CoronalDims
-    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
-    rotation_euler = Euler((pi / 2, 0.0, 0.0), "XYZ")
-    RotMtx = rotation_euler.to_matrix().to_4x4()
-    CoronalPlane.matrix_world = CTVolume.matrix_world @ RotMtx
-    # CoronalPlane.rotation_euler = Euler((pi / 2, 0.0, 0.0), "XYZ")
-    # CoronalPlane.location = VC
-    # Add Material :
-    mat = bpy.data.materials.get(f"{name}_mat") or bpy.data.materials.new(f"{name}_mat")
-
-    for slot in CoronalPlane.material_slots:
-        bpy.ops.object.material_slot_remove() 
-    bpy.ops.object.material_slot_add()
-    CoronalPlane.active_material = mat
-
-    mat.use_nodes = True
-    node_tree = mat.node_tree
-    nodes = node_tree.nodes
-    links = node_tree.links
-
-    for node in nodes:
-        if node.type != "OUTPUT_MATERIAL":
-            nodes.remove(node)
-    SlicesDir = AbsPath(DcmInfo["SlicesDir"])
-    ImageName = f"{name}.png"
-    ImagePath = join(SlicesDir, ImageName)
-
-    # write "2_CORONAL_SLICE.png" to here ImagePath
-    CoronalSliceUpdate(bpy.context.scene)
-
-    BlenderImage = bpy.data.images.get(ImageName) or bpy.data.images.load(ImagePath)
-
-    TextureCoord = AddNode(nodes, type="ShaderNodeTexCoord", name="TextureCoord")
-    ImageTexture = AddNode(nodes, type="ShaderNodeTexImage", name="Image Texture")
-    print(ImageTexture)
-    ImageTexture.image = BlenderImage
-    BlenderImage.colorspace_settings.name = "Non-Color"
-    materialOutput = nodes["Material Output"]
-    links.new(TextureCoord.outputs[0], ImageTexture.inputs[0])
-    links.new(ImageTexture.outputs[0], materialOutput.inputs[0])
-    bpy.context.scene.transform_orientation_slots[0].type = "LOCAL"
-    bpy.context.scene.transform_orientation_slots[1].type = "LOCAL"
-    bpy.ops.wm.tool_set_by_id(name="builtin.move")
-
-    return CoronalPlane
-
-
-def AddSagitalSlice(Preffix, DcmInfo):
-    CTVolume = bpy.data.objects.get(f"{Preffix}_CTVolume")
-    name = f"3_{Preffix}_SAGITAL_SLICE"
-    Sp, Sz, Origin, Direction, VC = (
-        DcmInfo["Spacing"],
-        DcmInfo["Size"],
-        DcmInfo["Origin"],
-        DcmInfo["Direction"],
-        DcmInfo["VolumeCenter"],
-    )
-
-    DimX, DimY, DimZ = (Sz[0] * Sp[0], Sz[1] * Sp[1], Sz[2] * Sp[2])
-
-    # Remove old Slices and their data meshs :
-    OldSlices = [obj for obj in bpy.context.view_layer.objects if name in obj.name]
-    OldSliceMeshs = [mesh for mesh in bpy.data.meshes if name in mesh.name]
-
-    for obj in OldSlices:
-        bpy.data.objects.remove(obj)
-    for mesh in OldSliceMeshs:
-        bpy.data.meshes.remove(mesh)
-
-    # Add SAGITAL :
-    bpy.ops.mesh.primitive_plane_add()
-    SagitalPlane = bpy.context.active_object
-    SagitalPlane.name = name
-    SagitalPlane.data.name = f"{name}_mesh"
-    SagitalPlane.rotation_mode = "XYZ"
-    SagitalDims = Vector((DimY, DimZ, 0.0))
-    SagitalPlane.dimensions = SagitalDims
-    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
-    rotation_euler = Euler((pi / 2, 0.0, -pi / 2), "XYZ")
-    RotMtx = rotation_euler.to_matrix().to_4x4()
-    SagitalPlane.matrix_world = CTVolume.matrix_world @ RotMtx
-    # SagitalPlane.location = VC
-    # Add Material :
-    mat = bpy.data.materials.get(f"{name}_mat") or bpy.data.materials.new(f"{name}_mat")
-
-    for slot in SagitalPlane.material_slots:
-        bpy.ops.object.material_slot_remove()
-    bpy.ops.object.material_slot_add()
-    SagitalPlane.active_material = mat
-
-    mat.use_nodes = True
-    node_tree = mat.node_tree
-    nodes = node_tree.nodes
-    links = node_tree.links
-
-    for node in nodes:
-        if node.type != "OUTPUT_MATERIAL":
-            nodes.remove(node)
-    SlicesDir = AbsPath(DcmInfo["SlicesDir"])
-    ImageName = f"{name}.png"
-    ImagePath = join(SlicesDir, ImageName)
-
-    # write "3_SAGITAL_SLICE.png" to here ImagePath
-    SagitalSliceUpdate(bpy.context.scene)
-
-    BlenderImage = bpy.data.images.get(ImageName) or bpy.data.images.load(ImagePath)
-
-    TextureCoord = AddNode(nodes, type="ShaderNodeTexCoord", name="TextureCoord")
-    ImageTexture = AddNode(nodes, type="ShaderNodeTexImage", name="Image Texture")
-    print(ImageTexture)
-    ImageTexture.image = BlenderImage
-    BlenderImage.colorspace_settings.name = "Non-Color"
-    materialOutput = nodes["Material Output"]
-    links.new(TextureCoord.outputs[0], ImageTexture.inputs[0])
-    links.new(ImageTexture.outputs[0], materialOutput.inputs[0])
-    bpy.context.scene.transform_orientation_slots[0].type = "LOCAL"
-    bpy.context.scene.transform_orientation_slots[1].type = "LOCAL"
-    bpy.ops.wm.tool_set_by_id(name="builtin.move")
-
-    return SagitalPlane
+    return Plane
 
 
 #############################################################################

@@ -6,38 +6,38 @@ import math
 #          Scene Properties
 #---------------------------------------------------------------------------
 
-class MyProperties(bpy.types.PropertyGroup):
-    
-    ct_vis : bpy.props.BoolProperty(
-        name="Enable CT-scan",
-        description="Enable or Disable the visibility of the CT-Scan",
-        default = True
-        )
-    surf_vis : bpy.props.BoolProperty(
-        name="Enable Surface-scan",
-        description="Enable or Disable the visibility of the 3D Surface Scan",
-        default = True
-        )
-    axi_vis : bpy.props.BoolProperty(
-        name="Enable Axial Slice",
-        description="Enable or Disable the visibility of the Axial Slice",
-        default = False
-        )
-    cor_vis : bpy.props.BoolProperty(
-        name="Enable Coronal Slice",
-        description="Enable or Disable the visibility of the Coronal Slice",
-        default = False
-        )
-    sag_vis : bpy.props.BoolProperty(
-        name="Enable Sagital Slice",
-        description="Enable or Disable the visibility of the Sagital Slice",
-        default = False
-        )
-    seg_vis : bpy.props.BoolProperty(
-        name="Enable Segmentation",
-        description="Enable or Disable the visibility of the CT Segmented Mesh",
-        default = False
-        )
+# class MyProperties(bpy.types.PropertyGroup):
+#
+#     ct_vis : bpy.props.BoolProperty(
+#         name="Enable CT-scan",
+#         description="Enable or Disable the visibility of the CT-Scan",
+#         default = True
+#         )
+#     surf_vis : bpy.props.BoolProperty(
+#         name="Enable Surface-scan",
+#         description="Enable or Disable the visibility of the 3D Surface Scan",
+#         default = True
+#         )
+#     axi_vis : bpy.props.BoolProperty(
+#         name="Enable Axial Slice",
+#         description="Enable or Disable the visibility of the Axial Slice",
+#         default = False
+#         )
+#     cor_vis : bpy.props.BoolProperty(
+#         name="Enable Coronal Slice",
+#         description="Enable or Disable the visibility of the Coronal Slice",
+#         default = False
+#         )
+#     sag_vis : bpy.props.BoolProperty(
+#         name="Enable Sagital Slice",
+#         description="Enable or Disable the visibility of the Sagital Slice",
+#         default = False
+#         )
+#     seg_vis : bpy.props.BoolProperty(
+#         name="Enable Segmentation",
+#         description="Enable or Disable the visibility of the CT Segmented Mesh",
+#         default = False
+#         )
     
 #---------------------------------------------------------------------------
 #          Operators
@@ -372,6 +372,34 @@ class Cropping_Cube_Boolean(bpy.types.Operator):
        #  #Surf_3D.modifiers["Crop Z"].solver = 'FAST'
 
         print("\nBoolean modifiers applied to both CT visualisation and 3D surface scan")
+        return {'FINISHED'}
+
+
+class Slices_Boolean(bpy.types.Operator):
+    """
+    This part of the script ensures that the surface scan mesh acts as a boolean to cut into the slices.
+    """
+    bl_idname = "intact.slices_boolean"
+    bl_label = "Slices boolean"
+
+    def execute(self, context):
+        INTACT_Props = context.scene.INTACT_Props
+        Surf_3D = INTACT_Props.Surf_3D
+        slices = [INTACT_Props.Axial_Slice, INTACT_Props.Coronal_Slice, INTACT_Props.Sagital_Slice]
+
+        for slice in slices:
+            # TODO - make more robust. I.e. check if it already exists - if so just enable its view rather than making
+            # new. Also make a disable function.
+            # TODO - to work with the cropping cube, this would need to use a linked copy (alt + d) of the original,
+            # non-booleaned mesh. This copy must be hidden from viewport and renders, and placed in the cropping cube
+            # collection.
+            slice_bool = slice.modifiers.new(type="BOOLEAN", name="3D scan")
+            slice_bool.operation = 'INTERSECT'
+            slice_bool.object = Surf_3D
+            # Move to top of modifier stack
+            bpy.ops.object.modifier_move_to_index({'object':slice}, modifier=slice_bool.name, index=0)
+
+        print("\nBoolean modifiers applied to all slices")
         return {'FINISHED'}
 
 class Cropping_Cube_Drivers(bpy.types.Operator):
@@ -1195,11 +1223,12 @@ class Debug_2(bpy.types.Operator):
 #---------------------------------------------------------------------------
 
 classes = [
-    MyProperties,
+    # MyProperties,
     Init_Setup,
     Object_Selection,
     Cropping_Cube_Creation,
     Cropping_Cube_Boolean,
+    Slices_Boolean,
     Cropping_Cube_Drivers,
     Slices_Tracking2,
     No_Slices_Tracking,
