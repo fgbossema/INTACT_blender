@@ -873,20 +873,38 @@ def SlicesUpdate(INTACT_Props, slice_index):
                 # Write Image :
                 Array = sitk.GetArrayFromImage(Image2D)
                 Flipped_Array = np.flipud(Array.reshape(Array.shape[1], Array.shape[2]))
-
+                # print(Image2D.GetSize())
+                # print(Array.shape)
+                #
+                # # Blender needs everything in float range 0-1, so here divide by max of the 8 bit image
+                # # Flipped_Array = Flipped_Array / 255
+                #
                 # # Set image directly from the numpy array + pack it into the .blend so it gets saved
                 # # https://blender.stackexchange.com/questions/229850/apply-texture-from-numpy-array
-                # blender_array = np.zeros(shape=(4, Flipped_Array.shape[0], Flipped_Array.shape[1]),
+                # # https://blender.stackexchange.com/questions/643/is-it-possible-to-create-image-data-and-save-to-a-file-from-a-script
+                # # https://pastebin.com/embed_iframe/DQt7YmXv
+                # # blender stores pixels as a long list where every 4 values is rgba of one pixel
+                # blender_array = np.zeros(shape=(Flipped_Array.shape[0], Flipped_Array.shape[1], 4),
                 #                          dtype=np.float32)
-                # blender_array[0] = Flipped_Array
+                # # blender_array[:, :, 0] = np.swapaxes(Flipped_Array, 0, 1)
+                # blender_array[:, :, 1] = Flipped_Array
+                # # blender_array[:, :, 2] = np.swapaxes(Flipped_Array, 0, 1)
+                # blender_array[:, :, 3] = np.ones_like(Flipped_Array)
                 # print(blender_array.shape)
                 # print(len(blender_array))
                 # print(4 * Flipped_Array.shape[0] * Flipped_Array.shape[1])
                 #
-                # BlenderImage = bpy.data.images.new(f"{Plane.name}.png",
-                #                                    Flipped_Array.shape[0], Flipped_Array.shape[1], alpha=False)
-                # BlenderImage.pixels.foreach_set(blender_array.flatten())
-                # BlenderImage.pack()
+                # BlenderImage = bpy.data.images.get(f"{Plane.name}.png")
+                # if not BlenderImage:
+                #     BlenderImage = bpy.data.images.new(f"{Plane.name}.png",
+                #                                        Flipped_Array.shape[0], Flipped_Array.shape[1], alpha=False)
+                #     BlenderImage.pack()
+                # # BlenderImage.pixels.foreach_set(blender_array.flatten())
+                # BlenderImage.pixels = blender_array.flatten()
+                # BlenderImage.update()
+                # print(blender_array.flatten()[0:20])
+                #
+                # cv2.imwrite(ImagePath, blender_array[:, :, 0:3])
 
                 cv2.imwrite(ImagePath, Flipped_Array)
                 ############################################
