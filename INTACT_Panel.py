@@ -56,55 +56,51 @@ class INTACT_PT_MainPanel(bpy.types.Panel):
         
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text=f"Description of plugin:")
+        row.label(text="Description of plugin:")
         
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text=f"A plugin designed for visualising CT scans and 3D visualisations of cultural heritage objects.")
+        row.label(text="A plugin designed for visualising CT scans and 3D visualisations of cultural heritage objects.")
         
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text=f"The plugin has the following submodules") 
+        row.label(text="The plugin has the following submodules") 
         
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text=f"1. Loading")
+        row.label(text="1. Loading")
         
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text=f"2. Registration")
+        row.label(text="2. Registration")
         
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text=f"3. Visualisation")
+        row.label(text="3. Visualisation")
 
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text=f"Designed and developed by Paul van Laar & Francien Bossema.")
+        row.label(text="Designed and developed by Paul van Laar & Francien Bossema.")
         
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text=f"ACKNOWLEDGEMENTS")
+        row.label(text="ACKNOWLEDGEMENTS")
         
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text=f"Issam Dakir, whose plugin BDENTAL served as the base for this plugin.")
+        row.label(text="Issam Dakir, whose plugin BDENTAL served as the base for this plugin.")
 
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text=f"See: https://github.com/issamdakir/BDENTAL ")
+        row.label(text="See: https://github.com/issamdakir/BDENTAL ")
         
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text=f"Niels Klop, whose plugins ICP Registration/Alignment and Distance Map are incorporated in the Registration module.")
+        row.label(text="Niels Klop, whose plugins ICP Registration/Alignment and Distance Map are incorporated in the Registration module.")
         
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text=f"See: https://3d-operators.com/")
-
-        row = box.row()
-        row.alignment = "CENTER"
-        row.operator("intact.template", text="INTACT THEME")        
+        row.label(text="See: https://3d-operators.com/")
 
         row = layout.row()
         split = row.split()
@@ -112,6 +108,13 @@ class INTACT_PT_MainPanel(bpy.types.Panel):
         col.label(text="Project Directory :")
         col = split.column()
         col.prop(INTACT_Props, "UserProjectDir", text="")
+        
+        row = layout.row()
+        split = row.split()
+        col = split.column()
+        col.label(text="Optional: use a theme with light background.")
+        col = split.column()
+        col.operator("intact.template", text="INTACT THEME")
 
 
 class INTACT_PT_ScanPanel(bpy.types.Panel):
@@ -133,13 +136,7 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
         # Draw Addon UI :
         layout = self.layout
 
-        # row = layout.row()
-        # split = row.split()
-        # col = split.column()
-        # col.label(text="Project Directory :")
-        # col = split.column()
-        # col.prop(INTACT_Props, "UserProjectDir", text="")
-             
+          
         if not INTACT_Props.UserProjectDir:
             row = layout.row()
             row.alignment = "LEFT"
@@ -437,12 +434,13 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
         GroupNodeName = INTACT_Props.GroupNodeName
         VGS = bpy.data.node_groups.get(GroupNodeName)
         
-        
+        if not context.object:
+            row = layout.row()
+            row.label(text = "Please load your data first.")
+           
         
         if context.object:
-            if context.object.name.startswith("IT") and context.object.name.endswith(
-                "CTVolume"
-            ):
+            if context.object.name.endswith("CTVolume"):
                 row = layout.row()
                 row.label(text="If the CT volume has moved, reset it's position.")
                 
@@ -482,44 +480,66 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
 
                 Box = layout.box()
                 row = Box.row()
+                row.alignment = "CENTER"
+                row.scale_y = 2
                 row.operator("intact.multitresh_segment")
-            else: 
-                row = layout.row()
-                row.label(text="Please select CT volume.")
-                
-        #readme panel
+
+
         
+        condition1 = False
+        condition2 = False
+        #readme panel
+        if context.object:
+            for obj in context.scene.objects: 
+                if obj.name.endswith("SEGMENTATION"):
+                    condition1 = True
+                if obj.name.startswith("IT_surface"):
+                    condition2 = True
+            if not condition1:
+                row = layout.row()
+                row.label(text="Please select CT volume to create a segmentation first.")
+            if not condition2:
+                row = layout.row()
+                row.label(text="Please load a surface scan.")
+            
         # row = layout.row()
         # row.alignment = "RIGHT"
         # row.scale_x = 2
         # row.operator("object.icpreadme", text = "", icon = "QUESTION")
-        layout.separator()
-        
+        if (condition1 and condition2):
         #rough alignment panel
-        layout.label(text = "Initial Alignment")
-        layout.label(text = "Either manually move the surface scan for a rough alignment or place landmarks on each object (CT first, press enter to confirm) and align.")
-        layout.prop(context.scene, "allowScaling", text = "Allow Scaling")
-        layout.operator("object.placelandmarks")
-        layout.operator("object.deletelandmarks")
-        layout.operator("object.initialalignment")
+            layout.label(text = "Initial Alignment")
+            layout.label(text = "Either manually move the surface scan for a rough alignment or place landmarks on each object (CT first, press enter to confirm) and align.")
+            layout.prop(context.scene, "allowScaling", text = "Allow Scaling")
+            layout.operator("object.placelandmarks")
+            layout.operator("object.deletelandmarks")
+            Box = layout.box()
+            row = Box.row()
+            row.alignment = "CENTER"
+            row.scale_y = 2
+            row.operator("object.initialalignment")
               
-        layout.separator()
+            layout.separator()
         
         #fine alignment panel
-        layout.label(text = "ICP Alignment")
-        layout.prop(context.scene, "allowScaling", text = "Allow Scaling")
-        layout.prop(context.scene, "vertexSelect", text = "Use Vertex Selections")
-        layout.prop(context.scene, "iterations", text = "Iterations")
-        layout.prop(context.scene, "outlierPerc", text = "Outlier %")
-        layout.prop(context.scene, "downsamplingPerc", text = "Downsampling %")
-        layout.operator("object.icp")
+            layout.label(text = "ICP Alignment")
+            layout.prop(context.scene, "allowScaling", text = "Allow Scaling")
+            layout.prop(context.scene, "vertexSelect", text = "Use Vertex Selections")
+            layout.prop(context.scene, "iterations", text = "Iterations")
+            layout.prop(context.scene, "outlierPerc", text = "Outlier %")
+            layout.prop(context.scene, "downsamplingPerc", text = "Downsampling %")
+            Box = layout.box()
+            row = Box.row()
+            row.alignment = "CENTER"
+            row.scale_y = 2
+            row.operator("object.icp")
         
         #transformations panel
-        layout.separator()
-        layout.label(text = "Transformations export and import")
-        layout.prop(context.scene, "exportTransformation", text = "")
-        layout.operator("object.icpexport")
-        layout.operator("object.icpset")
+            layout.separator()
+            layout.label(text = "Transformations export and import")
+            layout.prop(context.scene, "exportTransformation", text = "")
+            layout.operator("object.icpexport")
+            layout.operator("object.icpset")
 
 class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
     """Creates a Panel in the scene context of the properties editor"""
@@ -539,10 +559,15 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
         GroupNodeName = INTACT_Props.GroupNodeName
         VGS = bpy.data.node_groups.get(GroupNodeName)
         
-        if not (context.object.name.startswith("IT") and context.object.name.endswith(
+        if not context.object:
+            row = layout.row()
+            row.label(text = "Please load your data first.")
+        
+        else:
+            if not (context.object.name.startswith("IT") and context.object.name.endswith(
                 ("CTVolume"))):
                 row = layout.row()
-                row.label(text = "Please select CT volume first, then generate slices.")
+                row.label(text = "Please select CT volume, to generate slices.")
 
         row = layout.row()
         split = row.split()
@@ -568,22 +593,22 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
         row = layout.row()
         row.operator("intact.addslices", icon="EMPTY_AXIS")
         
-        row = layout.row()
-        row.label(text = "Open viewing in multiple directions.")
-        row = layout.row()
-        row.operator("intact.multiview")
+        if context.object:
+            layout.label(text="Tool Setup:")
+            layout.operator("intact.init_setup")
+            layout.operator("intact.object_selection")
+            layout.operator("intact.cropping_cube_creation")
+            layout.operator("intact.cropping_cube_boolean")
+            layout.operator("intact.cropping_cube_drivers")
+            layout.operator("intact.slices_tracking2")
+            layout.operator("intact.no_slices_tracking")
         
-        layout.label(text="Tool Setup:")
-        layout.operator("intact.init_setup")
-        layout.operator("intact.object_selection")
-        layout.operator("intact.cropping_cube_creation")
-        layout.operator("intact.cropping_cube_boolean")
-        layout.operator("intact.cropping_cube_drivers")
-        
-
-        layout.operator("intact.slices_tracking2")
-        layout.operator("intact.no_slices_tracking")
-        #layout.operator("intact.slices_update")
+            row = layout.row()
+            row.label(text = "Open viewing in multiple directions.")
+            row = layout.row()
+            row.operator("intact.multiview")
+            layout.operator("intact.slices_tracking2")
+            layout.operator("intact.no_slices_tracking")
         
         # layout.label(text="Visibilities:")
         # layout.prop(mytool, "ct_vis")
@@ -594,10 +619,10 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
         # layout.prop(mytool, "seg_vis")
         # layout.operator("intact.update_visibilities")
         
-        layout.label(text="Debugging:")
-        layout.operator("intact.switch_boolean_solver")
-        layout.operator("intact.debug_1")
-        layout.operator("intact.debug_2")
+            layout.label(text="Debugging:")
+            layout.operator("intact.switch_boolean_solver")
+            layout.operator("intact.debug_1")
+            layout.operator("intact.debug_2")
         
 class OBJECT_PT_Image_Panel(bpy.types.Panel):
     """Creates a Panel in the scene context of the properties editor"""
@@ -617,9 +642,13 @@ class OBJECT_PT_Image_Panel(bpy.types.Panel):
         GroupNodeName = INTACT_Props.GroupNodeName
         VGS = bpy.data.node_groups.get(GroupNodeName)
         
-        layout.label(text="Operators:")
-        layout.operator("intact.camera_setup")
-        layout.operator("intact.animation_path")
+        if not context.object:
+            row = layout.row()
+            row.label(text = "Please load your data first.")
+        else:
+            layout.label(text="Operators:")
+            layout.operator("intact.camera_setup")
+            layout.operator("intact.animation_path")
         
         
 #################################################################################################

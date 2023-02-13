@@ -101,7 +101,7 @@ else:
 
     # Addon modules imports :
     from . import INTACT_Props, INTACT_Panel
-    from .Operators import INTACT_ScanOperators, INTACT_MeshesTools_Operators, INTACT_ICP, INTACT_Visualisations
+    from .Operators import INTACT_ScanOperators, INTACT_MeshesTools_Operators, INTACT_ICP, INTACT_Visualisations, INTACT_Images
 
     addon_modules = [
         INTACT_Props,
@@ -109,7 +109,8 @@ else:
         INTACT_ScanOperators,
         INTACT_MeshesTools_Operators,
         INTACT_ICP,
-        INTACT_Visualisations
+        INTACT_Visualisations,
+        INTACT_Images
     ]
     init_classes = []
 
