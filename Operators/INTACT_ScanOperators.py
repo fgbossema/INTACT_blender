@@ -1218,31 +1218,15 @@ class INTACT_OT_AddSlices(bpy.types.Operator):
     def execute(self, context):
         INTACT_Props = bpy.context.scene.INTACT_Props
 
-        # Active_Obj = bpy.context.view_layer.objects.active
-
         if not INTACT_Props.CT_Vol:
             message = [" Please input CT Volume first "]
             ShowMessageBox(message=message, icon="COLORSET_02_VEC")
             return {"CANCELLED"}
         else:
-            # Conditions = [
-            #     not Active_Obj.name.startswith("IT"),
-            #     not Active_Obj.name.endswith(("_CTVolume", "SEGMENTATION")),
-            #     Active_Obj.select_get() == False,
-            # ]
-            # if Conditions[0] or Conditions[1] or Conditions[2]:
-            #     message = [" Please select CTVOLUME or SEGMENTATION ! "]
-            #     ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-            #     return {"CANCELLED"}
-            # else:
             Vol = INTACT_Props.CT_Vol
             Preffix = Vol.name[:5]
             DcmInfoDict = eval(INTACT_Props.DcmInfo)
             DcmInfo = DcmInfoDict[Preffix]
-
-            # SLICES_Coll = bpy.context.scene.collection.children.get('SLICES')
-            # if SLICES_Coll :
-            #     SLICES_Coll.hide_viewport = False
 
             AxialPlane = AddSlice(0, Preffix, DcmInfo)
             MoveToCollection(obj=AxialPlane, CollName="SLICES")
