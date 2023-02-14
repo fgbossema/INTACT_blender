@@ -455,22 +455,22 @@ class INTACT_Props(bpy.types.PropertyGroup):
         type=bpy.types.Object)
 
     Axial_Slice_Pos: FloatVectorProperty(
-        name='')
+        name='', size=3, subtype="TRANSLATION")
 
     Coronal_Slice_Pos: FloatVectorProperty(
-        name='')
+        name='', size=3, subtype="TRANSLATION")
 
     Sagital_Slice_Pos: FloatVectorProperty(
-        name='')
+        name='', size=3, subtype="TRANSLATION")
 
     Axial_Slice_Rot: FloatVectorProperty(
-        name='')
+        name='', size=3, subtype="EULER")
 
     Coronal_Slice_Rot: FloatVectorProperty(
-        name='')
+        name='', size=3, subtype="EULER")
 
     Sagital_Slice_Rot: FloatVectorProperty(
-        name='')
+        name='', size=3, subtype="EULER")
 
     Track_slices_to_cropping_cube: BoolProperty(
         name='', update=INTACT_Visualisations.track_slices)

@@ -2072,126 +2072,102 @@ class INTACT_OT_MultiView(bpy.types.Operator):
     def execute(self, context):
 
         INTACT_Props = bpy.context.scene.INTACT_Props
+        Vol = INTACT_Props.CT_Vol
+        AxialPlane = INTACT_Props.Axial_Slice
+        CoronalPlane = INTACT_Props.Coronal_Slice
+        SagitalPlane = INTACT_Props.Sagital_Slice
 
-        Active_Obj = bpy.context.view_layer.objects.active
-
-        if not Active_Obj:
-            message = [" Please select CTVOLUME or SEGMENTATION ! "]
+        if not Vol:
+            message = [" Please input CT Volume first "]
+            ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+            return {"CANCELLED"}
+        elif not AxialPlane or not CoronalPlane or not SagitalPlane:
+            message = [" Please click 'Slice Volume' first "]
             ShowMessageBox(message=message, icon="COLORSET_02_VEC")
             return {"CANCELLED"}
         else:
-            Conditions = [
-                not Active_Obj.name.startswith("IT"),
-                not Active_Obj.name.endswith(
-                    ("_CTVolume", "SEGMENTATION", "_SLICES_POINTER")
-                ),
-                Active_Obj.select_get() == False,
-            ]
-            if Conditions[0] or Conditions[1] or Conditions[2]:
-                message = [
-                    " Please select CTVOLUME or SEGMENTATION or _SLICES_POINTER ! "
-                ]
-                ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-                return {"CANCELLED"}
-            else:
-                Preffix = Active_Obj.name[:5]
-                AxialPlane = bpy.data.objects.get(f"1_{Preffix}_AXIAL_SLICE")
-                CoronalPlane = bpy.data.objects.get(f"2_{Preffix}_CORONAL_SLICE")
-                SagitalPlane = bpy.data.objects.get(f"3_{Preffix}_SAGITAL_SLICE")
-                SLICES_POINTER = bpy.data.objects.get(f"{Preffix}_SLICES_POINTER")
+            Preffix = INTACT_Props.CT_Vol.name[:5]
+            SLICES_POINTER = bpy.data.objects.get(f"{Preffix}_SLICES_POINTER")
 
-                if not AxialPlane or not CoronalPlane or not SagitalPlane:
-                    message = [
-                        "To Add Multi-View Window :",
-                        "1 - Please select CTVOLUME or SEGMENTATION",
-                        "2 - Click on < SLICE VOLUME > button",
-                        "AXIAL, CORONAL and SAGITAL slices will be added",
-                        "3 - Click <MULTI-VIEW> button",
-                    ]
-                    ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-                    return {"CANCELLED"}
+            bpy.context.scene.unit_settings.scale_length = 0.001
+            bpy.context.scene.unit_settings.length_unit = "MILLIMETERS"
 
-                else:
+            (
+                MultiView_Window,
+                OUTLINER,
+                PROPERTIES,
+                AXIAL,
+                CORONAL,
+                SAGITAL,
+                VIEW_3D,
+            ) = INTACT_MultiView_Toggle(Preffix)
+            MultiView_Screen = MultiView_Window.screen
+            AXIAL_Space3D = [
+                Space for Space in AXIAL.spaces if Space.type == "VIEW_3D"
+            ][0]
+            AXIAL_Region = [
+                reg for reg in AXIAL.regions if reg.type == "WINDOW"
+            ][0]
 
-                    bpy.context.scene.unit_settings.scale_length = 0.001
-                    bpy.context.scene.unit_settings.length_unit = "MILLIMETERS"
+            CORONAL_Space3D = [
+                Space for Space in CORONAL.spaces if Space.type == "VIEW_3D"
+            ][0]
+            CORONAL_Region = [
+                reg for reg in CORONAL.regions if reg.type == "WINDOW"
+            ][0]
 
-                    (
-                        MultiView_Window,
-                        OUTLINER,
-                        PROPERTIES,
-                        AXIAL,
-                        CORONAL,
-                        SAGITAL,
-                        VIEW_3D,
-                    ) = INTACT_MultiView_Toggle(Preffix)
-                    MultiView_Screen = MultiView_Window.screen
-                    AXIAL_Space3D = [
-                        Space for Space in AXIAL.spaces if Space.type == "VIEW_3D"
-                    ][0]
-                    AXIAL_Region = [
-                        reg for reg in AXIAL.regions if reg.type == "WINDOW"
-                    ][0]
+            SAGITAL_Space3D = [
+                Space for Space in SAGITAL.spaces if Space.type == "VIEW_3D"
+            ][0]
+            SAGITAL_Region = [
+                reg for reg in SAGITAL.regions if reg.type == "WINDOW"
+            ][0]
+            # AXIAL Cam view toggle :
 
-                    CORONAL_Space3D = [
-                        Space for Space in CORONAL.spaces if Space.type == "VIEW_3D"
-                    ][0]
-                    CORONAL_Region = [
-                        reg for reg in CORONAL.regions if reg.type == "WINDOW"
-                    ][0]
+            AxialCam = bpy.data.objects.get(f"{AxialPlane.name}_CAM")
+            AXIAL_Space3D.use_local_collections = True
+            AXIAL_Space3D.use_local_camera = True
+            AXIAL_Space3D.camera = AxialCam
+            Override = {
+                "window": MultiView_Window,
+                "screen": MultiView_Screen,
+                "area": AXIAL,
+                "space_data": AXIAL_Space3D,
+                "region": AXIAL_Region,
+            }
+            bpy.ops.view3d.view_camera(Override)
 
-                    SAGITAL_Space3D = [
-                        Space for Space in SAGITAL.spaces if Space.type == "VIEW_3D"
-                    ][0]
-                    SAGITAL_Region = [
-                        reg for reg in SAGITAL.regions if reg.type == "WINDOW"
-                    ][0]
-                    # AXIAL Cam view toggle :
+            # CORONAL Cam view toggle :
+            CoronalCam = bpy.data.objects.get(f"{CoronalPlane.name}_CAM")
+            CORONAL_Space3D.use_local_collections = True
+            CORONAL_Space3D.use_local_camera = True
+            CORONAL_Space3D.camera = CoronalCam
+            Override = {
+                "window": MultiView_Window,
+                "screen": MultiView_Screen,
+                "area": CORONAL,
+                "space_data": CORONAL_Space3D,
+                "region": CORONAL_Region,
+            }
+            bpy.ops.view3d.view_camera(Override)
 
-                    AxialCam = bpy.data.objects.get(f"{AxialPlane.name}_CAM")
-                    AXIAL_Space3D.use_local_collections = True
-                    AXIAL_Space3D.use_local_camera = True
-                    AXIAL_Space3D.camera = AxialCam
-                    Override = {
-                        "window": MultiView_Window,
-                        "screen": MultiView_Screen,
-                        "area": AXIAL,
-                        "space_data": AXIAL_Space3D,
-                        "region": AXIAL_Region,
-                    }
-                    bpy.ops.view3d.view_camera(Override)
+            # AXIAL Cam view toggle :
+            SagitalCam = bpy.data.objects.get(f"{SagitalPlane.name}_CAM")
+            SAGITAL_Space3D.use_local_collections = True
+            SAGITAL_Space3D.use_local_camera = True
+            SAGITAL_Space3D.camera = SagitalCam
+            Override = {
+                "window": MultiView_Window,
+                "screen": MultiView_Screen,
+                "area": SAGITAL,
+                "space_data": SAGITAL_Space3D,
+                "region": SAGITAL_Region,
+            }
+            bpy.ops.view3d.view_camera(Override)
 
-                    # CORONAL Cam view toggle :
-                    CoronalCam = bpy.data.objects.get(f"{CoronalPlane.name}_CAM")
-                    CORONAL_Space3D.use_local_collections = True
-                    CORONAL_Space3D.use_local_camera = True
-                    CORONAL_Space3D.camera = CoronalCam
-                    Override = {
-                        "window": MultiView_Window,
-                        "screen": MultiView_Screen,
-                        "area": CORONAL,
-                        "space_data": CORONAL_Space3D,
-                        "region": CORONAL_Region,
-                    }
-                    bpy.ops.view3d.view_camera(Override)
-
-                    # AXIAL Cam view toggle :
-                    SagitalCam = bpy.data.objects.get(f"{SagitalPlane.name}_CAM")
-                    SAGITAL_Space3D.use_local_collections = True
-                    SAGITAL_Space3D.use_local_camera = True
-                    SAGITAL_Space3D.camera = SagitalCam
-                    Override = {
-                        "window": MultiView_Window,
-                        "screen": MultiView_Screen,
-                        "area": SAGITAL,
-                        "space_data": SAGITAL_Space3D,
-                        "region": SAGITAL_Region,
-                    }
-                    bpy.ops.view3d.view_camera(Override)
-
-                    bpy.ops.object.select_all(Override, action="DESELECT")
-                    SLICES_POINTER.select_set(True)
-                    bpy.context.view_layer.objects.active = SLICES_POINTER
+            bpy.ops.object.select_all(Override, action="DESELECT")
+            SLICES_POINTER.select_set(True)
+            bpy.context.view_layer.objects.active = SLICES_POINTER
 
         return {"FINISHED"}
 

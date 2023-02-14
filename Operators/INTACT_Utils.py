@@ -752,16 +752,14 @@ def Scene_Settings():
 #################################################################################################
 # Add Slices :
 #################################################################################################
-def SlicesUpdate(INTACT_Props, slice_index):
+def SlicesUpdate(scene, slice_index):
     """ Update slices when moved in UI. Slice index determines which slice to update 0 = axial, 1 = Coronal,
     2 = Sagital
     """
-
+    INTACT_Props = scene.INTACT_Props
     slice_name_suffixes = ["_AXIAL_SLICE", "_CORONAL_SLICE", "_SAGITAL_SLICE"]
-    slice_position_properites = [INTACT_Props.Axial_Slice_Pos,
-                                 INTACT_Props.Coronal_Slice_Pos, INTACT_Props.Sagital_Slice_Pos]
-    slice_rotation_properties = [INTACT_Props.Axial_Slice_Rot,
-                                 INTACT_Props.Coronal_Slice_Rot, INTACT_Props.Sagital_Slice_Rot]
+    position_properties = ["Axial_Slice_Pos", "Coronal_Slice_Pos", "Sagital_Slice_Pos"]
+    rotation_properties = ["Axial_Slice_Rot", "Coronal_Slice_Rot", "Sagital_Slice_Rot"]
 
     Planes = [
         obj
@@ -776,18 +774,22 @@ def SlicesUpdate(INTACT_Props, slice_index):
 
     if Planes:
         ActiveObject = bpy.context.view_layer.objects.active
+        position_property = position_properties[slice_index]
+        rotation_property = rotation_properties[slice_index]
 
         # Only update when position or rotation of plane changes (this also allows it to update when not selected)
         Condition1 = False
         slice_pos = Planes[0].location
         slice_rot = Planes[0].rotation_euler
 
-        if slice_position_properites[slice_index] != slice_pos:
+        # If position isn't initialised, or has changed, then condition is true and position is updated
+        if position_property not in INTACT_Props or getattr(INTACT_Props, position_property) != slice_pos:
             Condition1 = True
-            slice_position_properites[slice_index] = slice_pos
-        elif slice_rotation_properties[slice_index] != slice_rot:
+            setattr(INTACT_Props, position_property, slice_pos)
+        # If rotation isn't initialised, or has changed, then condition is true and rotation is updated
+        elif rotation_property not in INTACT_Props or getattr(INTACT_Props, rotation_property) != slice_rot:
             Condition1 = True
-            slice_rotation_properties[slice_index] = slice_rot
+            setattr(INTACT_Props, rotation_property, slice_rot)
 
         Condition2 = ActiveObject in SLICES_POINTER
 
@@ -919,15 +921,15 @@ def SlicesUpdate(INTACT_Props, slice_index):
 
 @persistent
 def AxialSliceUpdate(scene):
-    SlicesUpdate(scene.INTACT_Props, 0)
+    SlicesUpdate(scene, 0)
 
 @persistent
 def CoronalSliceUpdate(scene):
-    SlicesUpdate(scene.INTACT_Props, 1)
+    SlicesUpdate(scene, 1)
 
 @persistent
 def SagitalSliceUpdate(scene):
-    SlicesUpdate(scene.INTACT_Props, 2)
+    SlicesUpdate(scene, 2)
 
 ####################################################################
 def Add_Cam_To_Plane(Plane, CamDistance, ClipOffset):
@@ -1058,7 +1060,7 @@ def AddSlice(slice_index, Preffix, DcmInfo):
     ImagePath = join(SlicesDir, ImageName)
 
     # write "name.png" to here ImagePath
-    SlicesUpdate(bpy.context.scene.INTACT_Props, slice_index)
+    SlicesUpdate(bpy.context.scene, slice_index)
 
     # BlenderImage = bpy.data.images.get(ImageName)
     BlenderImage = bpy.data.images.get(ImageName) or bpy.data.images.load(ImagePath)

@@ -554,7 +554,6 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
         layout = self.layout
         row = layout.row()
         scene = context.scene
-        #mytool = scene.my_tool
         INTACT_Props = context.scene.INTACT_Props
         GroupNodeName = INTACT_Props.GroupNodeName
         VGS = bpy.data.node_groups.get(GroupNodeName)
@@ -564,11 +563,6 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
             row.label(text = "Please load your data first.")
         
         else:
-            # if not (context.object.name.startswith("IT") and context.object.name.endswith(
-            #     ("CTVolume"))):
-            #     row = layout.row()
-            #     row.label(text = "Please select CT volume, to generate slices.")
-
             row = layout.row()
             split = row.split()
             col = split.column()
@@ -595,40 +589,27 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
         
         if context.object:
             layout.label(text="Make cropping cube:")
-            # layout.operator("intact.init_setup")
-            # layout.operator("intact.object_selection")
             layout.operator("intact.cropping_cube_creation", text="Create Cropping Cube")
-            layout.prop(INTACT_Props, "Track_slices_to_cropping_cube", text="Track slices")
-            layout.prop(INTACT_Props, "Remove_slice_outside_surface", text="Crop slices outside surface scan")
-            # layout.operator("intact.cropping_cube_boolean")
-            # layout.operator("intact.cropping_cube_drivers")
-            # layout.operator("intact.slices_boolean")
-            # layout.operator("intact.slices_tracking2")
-            # layout.operator("intact.no_slices_tracking")
+
+            row = layout.row()
+            row.prop(INTACT_Props, "Track_slices_to_cropping_cube", text="Track slices")
+            # disable checkbox while there are no slices + no cropping cube
+            row.enabled = INTACT_Props.Axial_Slice is not None and INTACT_Props.Cropping_Cube is not None
+
+            row = layout.row()
+            row.prop(INTACT_Props, "Remove_slice_outside_surface", text="Crop slices outside surface scan")
+            # disable checkbox while there are no slices + no cropping cube + surface isn't set
+            row.enabled = INTACT_Props.Axial_Slice is not None and INTACT_Props.Cropping_Cube is not None and \
+                          INTACT_Props.Surf_3D is not None
         
             row = layout.row()
             row.label(text = "Open viewing in multiple directions.")
             row = layout.row()
             row.operator("intact.multiview")
-            layout.operator("intact.slices_tracking2")
-            layout.operator("intact.no_slices_tracking")
 
             layout.prop(INTACT_Props, "Surface_scan_roughness", text="Surface scan roughness")
             layout.prop(INTACT_Props, "Slice_thickness", text="Slice thickness")
-        
-        # layout.label(text="Visibilities:")
-        # layout.prop(mytool, "ct_vis")
-        # layout.prop(mytool, "surf_vis")
-        # layout.prop(mytool, "axi_vis")
-        # layout.prop(mytool, "cor_vis")
-        # layout.prop(mytool, "sag_vis")
-        # layout.prop(mytool, "seg_vis")
-        # layout.operator("intact.update_visibilities")
-        
-            layout.label(text="Debugging:")
-            layout.operator("intact.switch_boolean_solver")
-            # layout.operator("intact.debug_1")
-            # layout.operator("intact.debug_2")
+
         
 class OBJECT_PT_Image_Panel(bpy.types.Panel):
     """Creates a Panel in the scene context of the properties editor"""
