@@ -612,6 +612,9 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
             row.operator("intact.multiview")
             layout.operator("intact.slices_tracking2")
             layout.operator("intact.no_slices_tracking")
+
+            layout.prop(INTACT_Props, "Surface_scan_roughness", text="Surface scan roughness")
+            layout.prop(INTACT_Props, "Slice_thickness", text="Slice thickness")
         
         # layout.label(text="Visibilities:")
         # layout.prop(mytool, "ct_vis")

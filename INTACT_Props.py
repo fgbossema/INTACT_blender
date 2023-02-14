@@ -478,6 +478,14 @@ class INTACT_Props(bpy.types.PropertyGroup):
     Remove_slice_outside_surface: BoolProperty(
         name='', update=INTACT_Visualisations.boolean_slice)
 
+    Surface_scan_roughness: FloatProperty(
+        name='', soft_min=0.0, soft_max=1.0, default=0.0, precision=1,
+        update=INTACT_Visualisations.surface_scan_roughness)
+
+    Slice_thickness: FloatProperty(
+        name='', soft_min=0.0, default=1.0, precision=2,
+        update=INTACT_Visualisations.slice_thickness)
+
 
 #################################################################################################
 # Registration :

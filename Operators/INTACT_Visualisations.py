@@ -497,10 +497,12 @@ def enable_track_slices_to_cropping_cube(context):
 
     # Give slices a tiny bit of thickness, so they don't give z fighting artefacts when tracked right on top of the
     # boolean faces of meshes
+    solidify_modifier_name = "Solidify"
     for slice in slices:
-        solidify = slice.modifiers.new(type="SOLIDIFY", name="Solidify")
-        solidify.thickness = 1
-        solidify.offset = 0
+        if solidify_modifier_name not in slice.modifiers:
+            solidify = slice.modifiers.new(type="SOLIDIFY", name=solidify_modifier_name)
+            solidify.thickness = 1
+            solidify.offset = 0
 
     return {'FINISHED'}
 
@@ -522,6 +524,26 @@ def track_slices(self, context):
         enable_track_slices_to_cropping_cube(context)
     else:
         disable_track_slices_to_cropping_cube(context)
+
+
+def surface_scan_roughness(self, context):
+    """Set roughness of the surface scan material"""
+    INTACT_Props = context.scene.INTACT_Props
+    Surf_3D = INTACT_Props.Surf_3D
+    if Surf_3D:
+        material = Surf_3D.material_slots[0].material
+        material.node_tree.nodes["Principled BSDF"].inputs['Roughness'].default_value = self.Surface_scan_roughness
+
+
+def slice_thickness(self, context):
+    """Set roughness of the surface scan material"""
+    INTACT_Props = context.scene.INTACT_Props
+    slices = [INTACT_Props.Axial_Slice, INTACT_Props.Coronal_Slice, INTACT_Props.Sagital_Slice]
+    solidify_modifier_name = "Solidify"
+
+    for slice in slices:
+        if slice and (solidify_modifier_name in slice.modifiers):
+            slice.modifiers[solidify_modifier_name].thickness = self.Slice_thickness
 
 
 # class Slices_Update(bpy.types.Operator):
