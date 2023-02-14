@@ -484,13 +484,13 @@ def INTACT_TresholdUpdate(scene):
 
             if GpShader == "VGS_Marcos_modified":
                 Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
-                INTACT_Props.Treshold = Low_Treshold.default_value
+                INTACT_Props.Thres1Treshold = Low_Treshold.default_value
             if GpShader == "VGS_Dakir_01":
                 DcmInfo = eval(INTACT_Props.DcmInfo)
                 Wmin = DcmInfo["Wmin"]
                 Wmax = DcmInfo["Wmax"]
                 treshramp = GpNode.nodes["TresholdRamp"].color_ramp.elements[0]
-                INTACT_Props.Treshold = treshramp.default_value * (Wmax - Wmin) + Wmin
+                INTACT_Props.Thres1Treshold = treshramp.default_value * (Wmax - Wmin) + Wmin
 
 
 def VolumeRender(DcmInfo, GpShader, ShadersBlendFile):

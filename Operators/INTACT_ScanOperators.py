@@ -1093,6 +1093,8 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
             WminNode.default_value = Wmin
             WmaxNode = GpNode.nodes["WmaxNode"].outputs[0]
             WmaxNode.default_value = Wmax
+           
+            GpNode.nodes["ColorPresetRamp"].color_ramp.elements[4].color = INTACT_Props.CTcolor
 
             # newdriver = Low_Treshold.driver_add("default_value")
             # newdriver.driver.type = "AVERAGE"
@@ -1106,9 +1108,11 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
 
         if GpShader == "VGS_Dakir_01":
             # Add Treshold Driver :
+            print(GpShader)
             GpNode = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
             value = (600 - Wmin) / (Wmax - Wmin)
             treshramp = GpNode.nodes["TresholdRamp"].color_ramp.elements[0] = value
+            #treshramp = GpNode.nodes["TresholdRamp"].color_ramp.elements[0].color = INTACT_Props.CTcolor
 
             # newdriver = treshramp.driver_add("position")
             # newdriver.driver.type = "SCRIPTED"

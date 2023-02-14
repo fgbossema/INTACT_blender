@@ -12,11 +12,11 @@ from bpy.props import (
 )
 
 
+
 def TresholdUpdateFunction(self, context):
     INTACT_Props = context.scene.INTACT_Props
     GpShader = INTACT_Props.GroupNodeName
     Treshold = INTACT_Props.Thres1Treshold
-
     CtVolumeList = [
         obj
         for obj in bpy.context.scene.objects
@@ -30,6 +30,10 @@ def TresholdUpdateFunction(self, context):
         if GpShader == "VGS_Marcos_modified":
             Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
             Low_Treshold.default_value = Treshold
+            
+            GpNode.nodes["ColorPresetRamp"].color_ramp.elements[4].color = INTACT_Props.CTcolor
+            #GpNode.nodes["ColorPresetRamp"].color_ramp.elements[5].color = (1-INTACT_Props.CTcolor)*0.25
+            
         if GpShader == "VGS_Dakir_01":
             DcmInfo = eval(INTACT_Props.DcmInfo)
             Wmin = DcmInfo["Wmin"]
@@ -351,6 +355,16 @@ class INTACT_Props(bpy.types.PropertyGroup):
         name="Segmentation Color 3",
         description="Color 3",
         default=[0.55, 0.645, 0.67, 1.000000],  # (0.8, 0.46, 0.4, 1.0),
+        soft_min=0.0,
+        soft_max=1.0,
+        size=4,
+        subtype="COLOR",
+    )
+    
+    CTcolor: FloatVectorProperty(
+        name="CT volume render color",
+        description="Choose a color for the volume render.",
+        default=[0.799, 0.448, 0.058, 1.000000],  # (0.8, 0.46, 0.4, 1.0),
         soft_min=0.0,
         soft_max=1.0,
         size=4,

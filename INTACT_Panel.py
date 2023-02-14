@@ -216,7 +216,14 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
             if context.object.name.startswith("IT") and context.object.name.endswith(
                 "CTVolume"
             ):
-                                               
+                row = layout.row()
+                split = row.split()
+                col = split.column()
+                col.label(text = "Color of volume render:")
+                col = split.column()
+                #row.prop(INTACT_Props, "Thres1Treshold", text="Threshold 1")
+                col.prop(INTACT_Props, "CTcolor", text="")
+                
                 row = layout.row()
                 row.label(text=f"Threshold {Wmin} to {Wmax} HU :")
                 row = layout.row()
