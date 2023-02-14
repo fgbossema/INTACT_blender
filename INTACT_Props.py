@@ -1,6 +1,7 @@
 import bpy
 from os.path import abspath
 import os
+from .Operators import INTACT_Visualisations
 
 from bpy.props import (
     StringProperty,
@@ -470,6 +471,9 @@ class INTACT_Props(bpy.types.PropertyGroup):
 
     Sagital_Slice_Rot: FloatVectorProperty(
         name='')
+
+    Track_slices_to_cropping_cube: BoolProperty(
+        name='', update=INTACT_Visualisations.track_slices)
 
 
 #################################################################################################

@@ -564,45 +564,46 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
             row.label(text = "Please load your data first.")
         
         else:
-            if not (context.object.name.startswith("IT") and context.object.name.endswith(
-                ("CTVolume"))):
-                row = layout.row()
-                row.label(text = "Please select CT volume, to generate slices.")
+            # if not (context.object.name.startswith("IT") and context.object.name.endswith(
+            #     ("CTVolume"))):
+            #     row = layout.row()
+            #     row.label(text = "Please select CT volume, to generate slices.")
 
-        row = layout.row()
-        split = row.split()
-        col = split.column()
-        col.label(text="CT Volume:")
-        col = split.column()
-        col.prop(INTACT_Props, "CT_Vol", text="")
+            row = layout.row()
+            split = row.split()
+            col = split.column()
+            col.label(text="CT Volume:")
+            col = split.column()
+            col.prop(INTACT_Props, "CT_Vol", text="")
 
-        row = layout.row()
-        split = row.split()
-        col = split.column()
-        col.label(text="Surface scan:")
-        col = split.column()
-        col.prop(INTACT_Props, "Surf_3D", text="")
+            row = layout.row()
+            split = row.split()
+            col = split.column()
+            col.label(text="Surface scan:")
+            col = split.column()
+            col.prop(INTACT_Props, "Surf_3D", text="")
 
-        row = layout.row()
-        split = row.split()
-        col = split.column()
-        col.label(text="CT Segmentation:")
-        col = split.column()
-        col.prop(INTACT_Props, "Seg", text="")
+            row = layout.row()
+            split = row.split()
+            col = split.column()
+            col.label(text="CT Segmentation:")
+            col = split.column()
+            col.prop(INTACT_Props, "Seg", text="")
 
-        row = layout.row()
-        row.operator("intact.addslices", icon="EMPTY_AXIS")
+            row = layout.row()
+            row.operator("intact.addslices", icon="EMPTY_AXIS")
         
         if context.object:
-            layout.label(text="Tool Setup:")
-            layout.operator("intact.init_setup")
-            layout.operator("intact.object_selection")
-            layout.operator("intact.cropping_cube_creation")
-            layout.operator("intact.cropping_cube_boolean")
+            layout.label(text="Make cropping cube:")
+            # layout.operator("intact.init_setup")
+            # layout.operator("intact.object_selection")
+            layout.operator("intact.cropping_cube_creation", text="Create Cropping Cube")
+            layout.prop(INTACT_Props, "Track_slices_to_cropping_cube", text="Track slices")
+            # layout.operator("intact.cropping_cube_boolean")
             # layout.operator("intact.cropping_cube_drivers")
             layout.operator("intact.slices_boolean")
-            layout.operator("intact.slices_tracking2")
-            layout.operator("intact.no_slices_tracking")
+            # layout.operator("intact.slices_tracking2")
+            # layout.operator("intact.no_slices_tracking")
         
             row = layout.row()
             row.label(text = "Open viewing in multiple directions.")
@@ -622,8 +623,8 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
         
             layout.label(text="Debugging:")
             layout.operator("intact.switch_boolean_solver")
-            layout.operator("intact.debug_1")
-            layout.operator("intact.debug_2")
+            # layout.operator("intact.debug_1")
+            # layout.operator("intact.debug_2")
         
 class OBJECT_PT_Image_Panel(bpy.types.Panel):
     """Creates a Panel in the scene context of the properties editor"""

@@ -1218,111 +1218,114 @@ class INTACT_OT_AddSlices(bpy.types.Operator):
     def execute(self, context):
         INTACT_Props = bpy.context.scene.INTACT_Props
 
-        Active_Obj = bpy.context.view_layer.objects.active
+        # Active_Obj = bpy.context.view_layer.objects.active
 
-        if not Active_Obj:
-            message = [" Please select CTVOLUME or SEGMENTATION ! "]
+        if not INTACT_Props.CT_Vol:
+            message = [" Please input CT Volume first "]
             ShowMessageBox(message=message, icon="COLORSET_02_VEC")
             return {"CANCELLED"}
         else:
-            Conditions = [
-                not Active_Obj.name.startswith("IT"),
-                not Active_Obj.name.endswith(("_CTVolume", "SEGMENTATION")),
-                Active_Obj.select_get() == False,
+            # Conditions = [
+            #     not Active_Obj.name.startswith("IT"),
+            #     not Active_Obj.name.endswith(("_CTVolume", "SEGMENTATION")),
+            #     Active_Obj.select_get() == False,
+            # ]
+            # if Conditions[0] or Conditions[1] or Conditions[2]:
+            #     message = [" Please select CTVOLUME or SEGMENTATION ! "]
+            #     ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+            #     return {"CANCELLED"}
+            # else:
+            Vol = INTACT_Props.CT_Vol
+            Preffix = Vol.name[:5]
+            DcmInfoDict = eval(INTACT_Props.DcmInfo)
+            DcmInfo = DcmInfoDict[Preffix]
+
+            # SLICES_Coll = bpy.context.scene.collection.children.get('SLICES')
+            # if SLICES_Coll :
+            #     SLICES_Coll.hide_viewport = False
+
+            AxialPlane = AddSlice(0, Preffix, DcmInfo)
+            MoveToCollection(obj=AxialPlane, CollName="SLICES")
+            INTACT_Props.Axial_Slice = AxialPlane
+
+            CoronalPlane = AddSlice(1, Preffix, DcmInfo)
+            MoveToCollection(obj=CoronalPlane, CollName="SLICES")
+            INTACT_Props.Coronal_Slice = CoronalPlane
+
+            SagitalPlane = AddSlice(2, Preffix, DcmInfo)
+            MoveToCollection(obj=SagitalPlane, CollName="SLICES")
+            INTACT_Props.Sagital_Slice = SagitalPlane
+
+            # Add Cameras :
+
+            bpy.context.scene.render.resolution_x = 512
+            bpy.context.scene.render.resolution_y = 512
+
+            [
+                bpy.data.cameras.remove(cam)
+                for cam in bpy.data.cameras
+                if f"{AxialPlane.name}_CAM" in cam.name
             ]
-            if Conditions[0] or Conditions[1] or Conditions[2]:
-                message = [" Please select CTVOLUME or SEGMENTATION ! "]
-                ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-                return {"CANCELLED"}
-            else:
-                Vol = Active_Obj
-                Preffix = Vol.name[:5]
-                DcmInfoDict = eval(INTACT_Props.DcmInfo)
-                DcmInfo = DcmInfoDict[Preffix]
+            AxialCam = Add_Cam_To_Plane(AxialPlane, CamDistance=100, ClipOffset=1)
+            MoveToCollection(obj=AxialCam, CollName="SLICES-CAMERAS")
 
-                # SLICES_Coll = bpy.context.scene.collection.children.get('SLICES')
-                # if SLICES_Coll :
-                #     SLICES_Coll.hide_viewport = False
+            [
+                bpy.data.cameras.remove(cam)
+                for cam in bpy.data.cameras
+                if f"{CoronalPlane.name}_CAM" in cam.name
+            ]
+            CoronalCam = Add_Cam_To_Plane(
+                CoronalPlane, CamDistance=100, ClipOffset=1
+            )
+            MoveToCollection(obj=CoronalCam, CollName="SLICES-CAMERAS")
 
-                AxialPlane = AddSlice(0, Preffix, DcmInfo)
-                MoveToCollection(obj=AxialPlane, CollName="SLICES")
+            [
+                bpy.data.cameras.remove(cam)
+                for cam in bpy.data.cameras
+                if f"{SagitalPlane.name}_CAM" in cam.name
+            ]
+            SagitalCam = Add_Cam_To_Plane(
+                SagitalPlane, CamDistance=100, ClipOffset=1
+            )
+            MoveToCollection(obj=SagitalCam, CollName="SLICES-CAMERAS")
 
-                CoronalPlane = AddSlice(1, Preffix, DcmInfo)
-                MoveToCollection(obj=CoronalPlane, CollName="SLICES")
+            for obj in bpy.data.objects:
+                if obj.name == f"{Preffix}_SLICES_POINTER":
+                    bpy.data.objects.remove(obj)
 
-                SagitalPlane = AddSlice(2, Preffix, DcmInfo)
-                MoveToCollection(obj=SagitalPlane, CollName="SLICES")
+            bpy.ops.object.empty_add(
+                type="PLAIN_AXES",
+                align="WORLD",
+                location=AxialPlane.location,
+                scale=(1, 1, 1),
+            )
+            SLICES_POINTER = bpy.context.object
+            SLICES_POINTER.empty_display_size = 20
+            SLICES_POINTER.show_name = True
+            SLICES_POINTER.show_in_front = True
+            SLICES_POINTER.name = f"{Preffix}_SLICES_POINTER"
 
-                # Add Cameras :
+            Override, _, _ = CtxOverride(bpy.context)
 
-                bpy.context.scene.render.resolution_x = 512
-                bpy.context.scene.render.resolution_y = 512
+            bpy.ops.object.select_all(Override, action="DESELECT")
+            AxialPlane.select_set(True)
+            CoronalPlane.select_set(True)
+            SagitalPlane.select_set(True)
+            SLICES_POINTER.select_set(True)
+            bpy.context.view_layer.objects.active = SLICES_POINTER
+            bpy.ops.object.parent_set(type="OBJECT", keep_transform=True)
+            bpy.ops.object.select_all(Override, action="DESELECT")
+            SLICES_POINTER.select_set(True)
+            Vol.select_set(True)
+            bpy.context.view_layer.objects.active = Vol
+            bpy.ops.object.parent_set(type="OBJECT", keep_transform=True)
 
-                [
-                    bpy.data.cameras.remove(cam)
-                    for cam in bpy.data.cameras
-                    if f"{AxialPlane.name}_CAM" in cam.name
-                ]
-                AxialCam = Add_Cam_To_Plane(AxialPlane, CamDistance=100, ClipOffset=1)
-                MoveToCollection(obj=AxialCam, CollName="SLICES-CAMERAS")
+            bpy.ops.object.select_all(Override, action="DESELECT")
+            SLICES_POINTER.select_set(True)
+            bpy.context.view_layer.objects.active = SLICES_POINTER
+            MoveToCollection(obj=SLICES_POINTER, CollName="SLICES_POINTERS")
 
-                [
-                    bpy.data.cameras.remove(cam)
-                    for cam in bpy.data.cameras
-                    if f"{CoronalPlane.name}_CAM" in cam.name
-                ]
-                CoronalCam = Add_Cam_To_Plane(
-                    CoronalPlane, CamDistance=100, ClipOffset=1
-                )
-                MoveToCollection(obj=CoronalCam, CollName="SLICES-CAMERAS")
-
-                [
-                    bpy.data.cameras.remove(cam)
-                    for cam in bpy.data.cameras
-                    if f"{SagitalPlane.name}_CAM" in cam.name
-                ]
-                SagitalCam = Add_Cam_To_Plane(
-                    SagitalPlane, CamDistance=100, ClipOffset=1
-                )
-                MoveToCollection(obj=SagitalCam, CollName="SLICES-CAMERAS")
-
-                for obj in bpy.data.objects:
-                    if obj.name == f"{Preffix}_SLICES_POINTER":
-                        bpy.data.objects.remove(obj)
-
-                bpy.ops.object.empty_add(
-                    type="PLAIN_AXES",
-                    align="WORLD",
-                    location=AxialPlane.location,
-                    scale=(1, 1, 1),
-                )
-                SLICES_POINTER = bpy.context.object
-                SLICES_POINTER.empty_display_size = 20
-                SLICES_POINTER.show_name = True
-                SLICES_POINTER.show_in_front = True
-                SLICES_POINTER.name = f"{Preffix}_SLICES_POINTER"
-
-                Override, _, _ = CtxOverride(bpy.context)
-
-                bpy.ops.object.select_all(Override, action="DESELECT")
-                AxialPlane.select_set(True)
-                CoronalPlane.select_set(True)
-                SagitalPlane.select_set(True)
-                SLICES_POINTER.select_set(True)
-                bpy.context.view_layer.objects.active = SLICES_POINTER
-                bpy.ops.object.parent_set(type="OBJECT", keep_transform=True)
-                bpy.ops.object.select_all(Override, action="DESELECT")
-                SLICES_POINTER.select_set(True)
-                Vol.select_set(True)
-                bpy.context.view_layer.objects.active = Vol
-                bpy.ops.object.parent_set(type="OBJECT", keep_transform=True)
-
-                bpy.ops.object.select_all(Override, action="DESELECT")
-                SLICES_POINTER.select_set(True)
-                bpy.context.view_layer.objects.active = SLICES_POINTER
-                MoveToCollection(obj=SLICES_POINTER, CollName="SLICES_POINTERS")
-
-                return {"FINISHED"}
+            return {"FINISHED"}
 
 
 class INTACT_OT_CtVolumeOrientation(bpy.types.Operator):
