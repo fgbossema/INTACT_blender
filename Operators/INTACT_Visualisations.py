@@ -217,32 +217,66 @@ class Cropping_Cube_Creation(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class Slices_Boolean(bpy.types.Operator):
+def enable_boolean_slice(context):
     """
     This part of the script ensures that the surface scan mesh acts as a boolean to cut into the slices.
     """
-    bl_idname = "intact.slices_boolean"
-    bl_label = "Slices boolean"
+    INTACT_Props = context.scene.INTACT_Props
+    Surf_3D = INTACT_Props.Surf_3D
+    slices = [INTACT_Props.Axial_Slice, INTACT_Props.Coronal_Slice, INTACT_Props.Sagital_Slice]
 
-    def execute(self, context):
-        INTACT_Props = context.scene.INTACT_Props
-        Surf_3D = INTACT_Props.Surf_3D
-        slices = [INTACT_Props.Axial_Slice, INTACT_Props.Coronal_Slice, INTACT_Props.Sagital_Slice]
+    cropping_cube_collection = bpy.data.collections['Cropping Cubes']
+    surface_copy_name = "Surface scan copy"
+    boolean_modifier_name = "3D scan"
 
-        for slice in slices:
-            # TODO - make more robust. I.e. check if it already exists - if so just enable its view rather than making
-            # new. Also make a disable function.
-            # TODO - to work with the cropping cube, this would need to use a linked copy (alt + d) of the original,
-            # non-booleaned mesh. This copy must be hidden from viewport and renders, and placed in the cropping cube
-            # collection.
-            slice_bool = slice.modifiers.new(type="BOOLEAN", name="3D scan")
+    # Make a copy of the surface scan (if it doesn't already exist). This will be used to boolean the slices.
+    # Can't use original as this is already being cut into by the cropping cube.
+    surf_copy = context.scene.objects.get(surface_copy_name)
+    surf_copy_exists = surf_copy and surf_copy.users_collection[0] == cropping_cube_collection
+    if not surf_copy_exists:
+        surf_copy = Surf_3D.copy()
+        surf_copy.name = surface_copy_name
+        surf_copy.modifiers.clear()
+        surf_copy.hide_viewport = True
+        surf_copy.hide_render = True
+        cropping_cube_collection.objects.link(surf_copy)
+
+    # Add boolean modifier. If it already exists, just enable it in viewport and render
+    for slice in slices:
+        if boolean_modifier_name not in slice.modifiers:
+            slice_bool = slice.modifiers.new(type="BOOLEAN", name=boolean_modifier_name)
             slice_bool.operation = 'INTERSECT'
-            slice_bool.object = Surf_3D
+            slice_bool.object = surf_copy
             # Move to top of modifier stack
             bpy.ops.object.modifier_move_to_index({'object':slice}, modifier=slice_bool.name, index=0)
+        else:
+            modifier = slice.modifiers.get(boolean_modifier_name)
+            modifier.show_viewport = True
+            modifier.show_render = True
 
-        print("\nBoolean modifiers applied to all slices")
-        return {'FINISHED'}
+    print("\nBoolean modifiers applied to all slices")
+
+
+def disable_boolean_slice(context):
+    """
+    This part of the script disables the boolean modifier in viewport + render.
+    """
+    INTACT_Props = context.scene.INTACT_Props
+    slices = [INTACT_Props.Axial_Slice, INTACT_Props.Coronal_Slice, INTACT_Props.Sagital_Slice]
+
+    for slice in slices:
+        modifier = slice.modifiers.get("3D scan")
+        modifier.show_viewport = False
+        modifier.show_render = False
+
+    print("\nBoolean modifiers disabled on all slices")
+
+
+def boolean_slice(self, context):
+    if self.Remove_slice_outside_surface:
+        enable_boolean_slice(context)
+    else:
+        disable_boolean_slice(context)
 
 # class Cropping_Cube_Drivers(bpy.types.Operator):
 #     """
@@ -490,22 +524,22 @@ def track_slices(self, context):
         disable_track_slices_to_cropping_cube(context)
 
 
-class Slices_Update(bpy.types.Operator):
-    """
-    This block of code re-selects all three slices, such that they are updated. No work-around was found (yet) to make them 
-    update continuously.
-    """
-    bl_idname = "intact.slices_update"
-    bl_label = "Slices Update"
-    
-    def execute(self, context):
-        bpy.ops.object.select_all(action='DESELECT') #deselect all objects
-        
-        for obj in bpy.data.collections['SLICES'].all_objects:
-            bpy.context.view_layer.objects.active = obj
-            bpy.ops.object.select_all(action='DESELECT') #deselect all objects 
-
-        return {'FINISHED'}
+# class Slices_Update(bpy.types.Operator):
+#     """
+#     This block of code re-selects all three slices, such that they are updated. No work-around was found (yet) to make them
+#     update continuously.
+#     """
+#     bl_idname = "intact.slices_update"
+#     bl_label = "Slices Update"
+#
+#     def execute(self, context):
+#         bpy.ops.object.select_all(action='DESELECT') #deselect all objects
+#
+#         for obj in bpy.data.collections['SLICES'].all_objects:
+#             bpy.context.view_layer.objects.active = obj
+#             bpy.ops.object.select_all(action='DESELECT') #deselect all objects
+#
+#         return {'FINISHED'}
     
 class Camera_Setup(bpy.types.Operator):
     """Tooltip"""
@@ -637,11 +671,11 @@ classes = [
     # Object_Selection,
     Cropping_Cube_Creation,
     # Cropping_Cube_Boolean,
-    Slices_Boolean,
+    # Slices_Boolean,
     # Cropping_Cube_Drivers,
     # Slices_Tracking2,
     # No_Slices_Tracking,
-    Slices_Update,
+    # Slices_Update,
     Camera_Setup,
     Animation_Path,
     Switch_Boolean_Solver]

@@ -475,6 +475,9 @@ class INTACT_Props(bpy.types.PropertyGroup):
     Track_slices_to_cropping_cube: BoolProperty(
         name='', update=INTACT_Visualisations.track_slices)
 
+    Remove_slice_outside_surface: BoolProperty(
+        name='', update=INTACT_Visualisations.boolean_slice)
+
 
 #################################################################################################
 # Registration :

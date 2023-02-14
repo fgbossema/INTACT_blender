@@ -599,9 +599,10 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
             # layout.operator("intact.object_selection")
             layout.operator("intact.cropping_cube_creation", text="Create Cropping Cube")
             layout.prop(INTACT_Props, "Track_slices_to_cropping_cube", text="Track slices")
+            layout.prop(INTACT_Props, "Remove_slice_outside_surface", text="Crop slices outside surface scan")
             # layout.operator("intact.cropping_cube_boolean")
             # layout.operator("intact.cropping_cube_drivers")
-            layout.operator("intact.slices_boolean")
+            # layout.operator("intact.slices_boolean")
             # layout.operator("intact.slices_tracking2")
             # layout.operator("intact.no_slices_tracking")
         
