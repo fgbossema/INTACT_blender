@@ -486,6 +486,12 @@ class INTACT_Props(bpy.types.PropertyGroup):
         name='', soft_min=0.0, default=1.0, precision=2,
         update=INTACT_Visualisations.slice_thickness)
 
+    Resolution_x: IntProperty(
+        name='', soft_min=500, soft_max=4000, default=1920, step=10)
+
+    Resolution_y: IntProperty(
+        name='', soft_min=500, soft_max=4000, default=1080, step=10)
+
 
 #################################################################################################
 # Registration :

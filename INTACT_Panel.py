@@ -633,7 +633,9 @@ class OBJECT_PT_Image_Panel(bpy.types.Panel):
             row = layout.row()
             row.label(text = "Please load your data first.")
         else:
-            layout.label(text="Operators:")
+            layout.prop(INTACT_Props, "Resolution_x", text="Resolution x (pixels)")
+            layout.prop(INTACT_Props, "Resolution_y", text="Resolution y (pixels)")
+            layout.operator("intact.take_screenshot", text="Take Screenshot")
             layout.operator("intact.camera_setup")
             layout.operator("intact.animation_path")
         

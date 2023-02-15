@@ -692,43 +692,43 @@ def VolumeRender(DcmInfo, GpShader, ShadersBlendFile):
 
 def Scene_Settings():
     # Set World Shader node :
-    WorldNodes = bpy.data.worlds["World"].node_tree.nodes
-    WColor = WorldNodes["Background"].inputs[0].default_value = (0.6, 0.6, 0.6, 0.6)
-    WStrength = WorldNodes["Background"].inputs[1].default_value = 1.5
+    # WorldNodes = bpy.data.worlds["World"].node_tree.nodes
+    # WColor = WorldNodes["Background"].inputs[0].default_value = (0.6, 0.6, 0.6, 0.6)
+    # WStrength = WorldNodes["Background"].inputs[1].default_value = 1.5
 
     Override, area3D, space3D = CtxOverride(bpy.context)
     # scene shading lights
 
     # 3DView Shading Methode : in {'WIREFRAME', 'SOLID', 'MATERIAL', 'RENDERED'}
-    space3D.shading.type = "RENDERED"
+    # space3D.shading.type = "RENDERED"
 
     # 'Material' Shading Light method :
-    space3D.shading.use_scene_lights = True
-    space3D.shading.use_scene_world = False
+    # space3D.shading.use_scene_lights = True
+    # space3D.shading.use_scene_world = False
 
     # 'RENDERED' Shading Light method :
-    space3D.shading.use_scene_lights_render = False
-    space3D.shading.use_scene_world_render = True
+    # space3D.shading.use_scene_lights_render = False
+    # space3D.shading.use_scene_world_render = True
 
-    space3D.shading.studio_light = "forest.exr"
-    space3D.shading.studiolight_rotate_z = 0
-    space3D.shading.studiolight_intensity = 1.5
-    space3D.shading.studiolight_background_alpha = 0.0
-    space3D.shading.studiolight_background_blur = 0.0
+    # space3D.shading.studio_light = "forest.exr"
+    # space3D.shading.studiolight_rotate_z = 0
+    # space3D.shading.studiolight_intensity = 1.5
+    # space3D.shading.studiolight_background_alpha = 0.0
+    # space3D.shading.studiolight_background_blur = 0.0
 
-    space3D.shading.render_pass = "COMBINED"
-
-    space3D.shading.type = "SOLID"
+    # space3D.shading.render_pass = "COMBINED"
+    #
+    # space3D.shading.type = "SOLID"
 
     # Override, area3D, space3D = CtxOverride(bpy.context)
-    space3D.shading.color_type = "TEXTURE"
+    # space3D.shading.color_type = "TEXTURE"
     # space.shading.light = "MATCAP"
     # space.shading.studio_light = "basic_side.exr"
-    space3D.shading.light = "STUDIO"
-    space3D.shading.studio_light = "outdoor.sl"
-    space3D.shading.show_cavity = True
-    space3D.shading.curvature_ridge_factor = 0.5
-    space3D.shading.curvature_valley_factor = 0.5
+    # space3D.shading.light = "STUDIO"
+    # space3D.shading.studio_light = "outdoor.sl"
+    # space3D.shading.show_cavity = True
+    # space3D.shading.curvature_ridge_factor = 0.5
+    # space3D.shading.curvature_valley_factor = 0.5
 
     scn = bpy.context.scene
     scn.render.engine = "BLENDER_EEVEE"
@@ -742,10 +742,10 @@ def Scene_Settings():
     scn.eevee.shadow_cascade_size = "512"
     scn.eevee.use_soft_shadows = True
     scn.eevee.taa_samples = 16
-    scn.display_settings.display_device = "None"
-    scn.view_settings.look = "Medium Low Contrast"
-    scn.view_settings.exposure = 0.0
-    scn.view_settings.gamma = 1.0
+    # scn.display_settings.display_device = "None"
+    scn.view_settings.look = "High Contrast"
+    # scn.view_settings.exposure = 0.0
+    # scn.view_settings.gamma = 1.0
     scn.eevee.use_ssr = True
 
 
