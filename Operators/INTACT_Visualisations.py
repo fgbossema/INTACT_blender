@@ -172,6 +172,7 @@ class Cropping_Cube_Creation(bpy.types.Operator):
         cropct.lock_scale[0] = True
         cropct.lock_scale[1] = True
         cropct.lock_scale[2] = True
+        cropct.hide_render = True
         bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name='Cropping Cubes')
 
         # Add booleans
