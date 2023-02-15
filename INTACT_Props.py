@@ -2,6 +2,7 @@ import bpy
 from os.path import abspath
 import os
 from .Operators import INTACT_Visualisations
+from .Operators import INTACT_Images
 
 from bpy.props import (
     StringProperty,
@@ -491,6 +492,12 @@ class INTACT_Props(bpy.types.PropertyGroup):
 
     Resolution_y: IntProperty(
         name='', soft_min=500, soft_max=4000, default=1080, step=10)
+
+    Set_camera_enabled: BoolProperty(name='', default=False, update=INTACT_Images.set_camera_position)
+
+    Lighting_strength: FloatProperty(name='', default=1.0, soft_min=0.1, precision=1)
+
+    Background_colour: FloatVectorProperty(name='', subtype="COLOR", default=[0.0,0.0,0.0])
 
 
 #################################################################################################

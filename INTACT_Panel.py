@@ -636,6 +636,17 @@ class OBJECT_PT_Image_Panel(bpy.types.Panel):
             layout.prop(INTACT_Props, "Resolution_x", text="Resolution x (pixels)")
             layout.prop(INTACT_Props, "Resolution_y", text="Resolution y (pixels)")
             layout.operator("intact.take_screenshot", text="Take Screenshot")
+            if not INTACT_Props.Set_camera_enabled:
+                icon = "PLAY"
+                txt = 'Set Camera Position'
+            else:
+                icon = "PAUSE"
+                txt = 'Confirm Camera Position'
+
+            layout.prop(INTACT_Props, 'Set_camera_enabled', text=txt, icon=icon, toggle=True)
+            layout.prop(INTACT_Props, 'Lighting_strength', text="Lighting strength")
+            layout.prop(INTACT_Props, 'Background_colour', text="Background colour")
+            layout.operator("intact.render_image", text="Render image")
             layout.operator("intact.camera_setup")
             layout.operator("intact.animation_path")
         
