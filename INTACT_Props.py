@@ -497,7 +497,8 @@ class INTACT_Props(bpy.types.PropertyGroup):
 
     Lighting_strength: FloatProperty(name='', default=1.0, soft_min=0.1, precision=1)
 
-    Background_colour: FloatVectorProperty(name='', subtype="COLOR", default=[0.0,0.0,0.0])
+    Background_colour: FloatVectorProperty(name='', subtype="COLOR", size=4,
+                                           min=0.0, max=1.0, default=[0.0, 0.0, 0.0, 1.0])
 
 
 #################################################################################################
