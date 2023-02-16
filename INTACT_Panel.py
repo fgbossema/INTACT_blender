@@ -647,6 +647,13 @@ class OBJECT_PT_Image_Panel(bpy.types.Panel):
             layout.prop(INTACT_Props, 'Lighting_strength', text="Lighting strength")
             layout.prop(INTACT_Props, 'Background_colour', text="Background colour")
             layout.operator("intact.render_image", text="Render image")
+            row = layout.row()
+            split = row.split()
+            col = split.column()
+            col.label(text="Movie filename:")
+            col = split.column()
+            col.prop(INTACT_Props, "Movie_filename", text="")
+            layout.operator("intact.render_turntable", text="Render turntable movie")
             layout.operator("intact.camera_setup")
             layout.operator("intact.animation_path")
         

@@ -500,6 +500,8 @@ class INTACT_Props(bpy.types.PropertyGroup):
     Background_colour: FloatVectorProperty(name='', subtype="COLOR", size=4,
                                            min=0.0, max=1.0, default=[0.0, 0.0, 0.0, 1.0])
 
+    Movie_filename: StringProperty(name='', default='movie-')
+
 
 #################################################################################################
 # Registration :

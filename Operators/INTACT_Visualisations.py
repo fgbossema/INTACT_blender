@@ -173,7 +173,10 @@ class Cropping_Cube_Creation(bpy.types.Operator):
         cropct.lock_scale[1] = True
         cropct.lock_scale[2] = True
         cropct.hide_render = True
-        bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name='Cropping Cubes')
+
+        collection = bpy.data.collections.new("Cropping Cubes")
+        bpy.context.scene.collection.children.link(collection)
+        collection.objects.link(cropct)
 
         # Add booleans
         self.cropping_cube_boolean(context)
@@ -304,8 +307,8 @@ def enable_track_slices_to_cropping_cube(context):
             solidify.thickness = 1
             solidify.offset = 0
 
-    # force planes to update by deselecting everything. Otherwise, the wrong slice will be shown on initialisation.
-    bpy.ops.object.select_all(action='DESELECT')
+    # force planes to update. Otherwise, the wrong slice will be shown on initialisation.
+    context.view_layer.update()
 
     return {'FINISHED'}
 
