@@ -116,6 +116,8 @@ class Render_turntable(bpy.types.Operator):
         # Set render resolution
         context.scene.render.resolution_x = INTACT_Props.Resolution_x
         context.scene.render.resolution_y = INTACT_Props.Resolution_y
+        # return to first frame
+        context.scene.frame_set(1)
 
         # for ease, all objects that are hidden in viewport, should be hidden in render
         hide_objects_in_render()
@@ -147,12 +149,10 @@ class Render_turntable(bpy.types.Operator):
         path.data.use_path_follow = True
         # Make circle higher resolution so camera moves smoothly with no jitter
         path.data.splines[0].resolution_u = 128
-        path.hide_viewport = True
 
         empty = bpy.data.objects.new("empty", None)
         empty.name = "rotation_empty"
         empty.empty_display_type = 'PLAIN_AXES'
-        empty.hide_viewport = True
 
         # put them all in the collection
         turntable_collection.objects.link(path)
@@ -191,6 +191,11 @@ class Render_turntable(bpy.types.Operator):
         context.scene.render.ffmpeg.codec = "H264"
         context.scene.frame_start = frame_start
         context.scene.frame_end = length
+
+        # hide empty and path to avoid cluttering viewport
+        path.hide_set(True)
+        empty.hide_set(True)
+
         bpy.ops.render.render('INVOKE_DEFAULT', animation=True)
 
         return {'FINISHED'}
