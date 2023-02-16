@@ -607,6 +607,8 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
             row = layout.row()
             row.operator("intact.multiview")
 
+            row = layout.row()
+            row.label(text="Display settings:")
             layout.prop(INTACT_Props, "Surface_scan_roughness", text="Surface scan roughness")
             layout.prop(INTACT_Props, "Slice_thickness", text="Slice thickness")
 
@@ -635,7 +637,12 @@ class OBJECT_PT_Image_Panel(bpy.types.Panel):
         else:
             layout.prop(INTACT_Props, "Resolution_x", text="Resolution x (pixels)")
             layout.prop(INTACT_Props, "Resolution_y", text="Resolution y (pixels)")
+            row = layout.row()
+            row.label(text="Quick screenshot:")
             layout.operator("intact.take_screenshot", text="Take Screenshot")
+
+            row = layout.row()
+            row.label(text="Render image / movie:")
             if not INTACT_Props.Set_camera_enabled:
                 icon = "PLAY"
                 txt = 'Set Camera Position'
@@ -654,8 +661,6 @@ class OBJECT_PT_Image_Panel(bpy.types.Panel):
             col = split.column()
             col.prop(INTACT_Props, "Movie_filename", text="")
             layout.operator("intact.render_turntable", text="Render turntable movie")
-            layout.operator("intact.camera_setup")
-            layout.operator("intact.animation_path")
         
         
 #################################################################################################

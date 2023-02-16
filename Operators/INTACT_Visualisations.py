@@ -115,10 +115,7 @@ import math
 #         return {'FINISHED'}
 
 class Cropping_Cube_Creation(bpy.types.Operator):
-    """
-    This part of the script creates a cropping cubes for all dimensions, that will allow to cut through
-    both the CT representation and the 3D surface scan, to view internal features.
-    """
+    """Create a cropping cube that cuts through the surface scan and CT"""
     bl_idname = "intact.cropping_cube_creation"
     bl_label = "Cropping Cube Creation"
 
@@ -369,68 +366,68 @@ def slice_thickness(self, context):
 #
 #         return {'FINISHED'}
     
-class Camera_Setup(bpy.types.Operator):
-    """Tooltip"""
-    bl_idname = "intact.camera_setup"
-    bl_label = "Camera Setup"
+# class Camera_Setup(bpy.types.Operator):
+#     """Tooltip"""
+#     bl_idname = "intact.camera_setup"
+#     bl_label = "Camera Setup"
+#
+#     def execute(self, context):
+#         INTACT_Props = context.scene.INTACT_Props
+#         CT_Vol = INTACT_Props.CT_Vol
+#
+#         loc = CT_Vol.location
+#         dim = CT_Vol.dimensions
+#         maxdim = max(dim)
+#
+#         path = bpy.ops.curve.primitive_bezier_circle_add(radius=maxdim * 2.5, enter_editmode=False, align='WORLD', location=loc, scale=(1, 1, 1))
+#         path = bpy.context.active_object
+#         path.name = "Std_Path"
+#         print("\nCamera path created.")
+#
+#         empty = bpy.ops.object.empty_add(type='CUBE', align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
+#         empty = bpy.context.active_object
+#         empty.name = "Std_Empty"
+#         bpy.context.scene.objects["Std_Empty"].scale = (maxdim / 4, maxdim / 4, maxdim /4)
+#
+#         cam = bpy.ops.object.camera_add(enter_editmode=False, align='VIEW', location=(0, 0, 0), rotation=(0, 0, 0), scale=(1, 1, 1))
+#         cam = bpy.context.active_object
+#         cam.name = "Std_Cam"
+#         bpy.context.scene.objects["Std_Cam"].scale = (0.1, 0.1, 0.1)
+#         bpy.context.object.data.clip_start = 0.5
+#         bpy.context.object.data.clip_end = 5000
+#
+#
+#         #put them all in a collection
+#         bpy.ops.object.select_all(action='DESELECT') #deselect all objects
+#         bpy.ops.object.select_pattern(pattern="Std_*")
+#         bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name='Standard Camera Path')
+#
+#         #parent the camera to the empty
+#         cam = bpy.context.scene.objects["Std_Cam"]
+#         empty = bpy.context.scene.objects["Std_Empty"]
+#         cam.parent = empty
+#
+#         con1 = empty.constraints.new('FOLLOW_PATH')
+#         con1.target = path
+#         con1.use_fixed_location = False
+#         con1.forward_axis = 'FORWARD_Y'
+#         con1.up_axis = 'UP_Z'
+#
+#         con2 = cam.constraints.new('TRACK_TO')
+#         con2.target = CT_Vol
+#         con2.track_axis = 'TRACK_NEGATIVE_Z'
+#         con2.up_axis = 'UP_Y'
+#         print("\nCamera following path, and following the object created.")
+#         return {'FINISHED'}
     
-    def execute(self, context):
-        INTACT_Props = context.scene.INTACT_Props
-        CT_Vol = INTACT_Props.CT_Vol
-
-        loc = CT_Vol.location
-        dim = CT_Vol.dimensions
-        maxdim = max(dim)
-        
-        path = bpy.ops.curve.primitive_bezier_circle_add(radius=maxdim * 2.5, enter_editmode=False, align='WORLD', location=loc, scale=(1, 1, 1))
-        path = bpy.context.active_object
-        path.name = "Std_Path"
-        print("\nCamera path created.")
-        
-        empty = bpy.ops.object.empty_add(type='CUBE', align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
-        empty = bpy.context.active_object
-        empty.name = "Std_Empty"
-        bpy.context.scene.objects["Std_Empty"].scale = (maxdim / 4, maxdim / 4, maxdim /4)
-        
-        cam = bpy.ops.object.camera_add(enter_editmode=False, align='VIEW', location=(0, 0, 0), rotation=(0, 0, 0), scale=(1, 1, 1))
-        cam = bpy.context.active_object
-        cam.name = "Std_Cam"
-        bpy.context.scene.objects["Std_Cam"].scale = (0.1, 0.1, 0.1)
-        bpy.context.object.data.clip_start = 0.5
-        bpy.context.object.data.clip_end = 5000
-        
-        
-        #put them all in a collection
-        bpy.ops.object.select_all(action='DESELECT') #deselect all objects
-        bpy.ops.object.select_pattern(pattern="Std_*")
-        bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name='Standard Camera Path')
-        
-        #parent the camera to the empty
-        cam = bpy.context.scene.objects["Std_Cam"]
-        empty = bpy.context.scene.objects["Std_Empty"]
-        cam.parent = empty
-        
-        con1 = empty.constraints.new('FOLLOW_PATH')
-        con1.target = path
-        con1.use_fixed_location = False
-        con1.forward_axis = 'FORWARD_Y'
-        con1.up_axis = 'UP_Z'
-        
-        con2 = cam.constraints.new('TRACK_TO')
-        con2.target = CT_Vol
-        con2.track_axis = 'TRACK_NEGATIVE_Z' 
-        con2.up_axis = 'UP_Y'
-        print("\nCamera following path, and following the object created.") 
-        return {'FINISHED'}
-    
-class Animation_Path(bpy.types.Operator):
-    """Tooltip"""
-    bl_idname = "intact.animation_path"
-    bl_label = "Animation Path"
-    
-    def execute(self, context):
-        print("\nthis still needs to be made... if. time. permits.")
-        return {'FINISHED'}            
+# class Animation_Path(bpy.types.Operator):
+#     """Tooltip"""
+#     bl_idname = "intact.animation_path"
+#     bl_label = "Animation Path"
+#
+#     def execute(self, context):
+#         print("\nthis still needs to be made... if. time. permits.")
+#         return {'FINISHED'}
     
 class Switch_Boolean_Solver(bpy.types.Operator):
     """
@@ -504,8 +501,8 @@ classes = [
     # Slices_Tracking2,
     # No_Slices_Tracking,
     # Slices_Update,
-    Camera_Setup,
-    Animation_Path,
+    # Camera_Setup,
+    # Animation_Path,
     Switch_Boolean_Solver]
     #Update_Visibilities,
     # Debug_1,

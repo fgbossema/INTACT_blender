@@ -488,10 +488,10 @@ class INTACT_Props(bpy.types.PropertyGroup):
         update=INTACT_Visualisations.slice_thickness)
 
     Resolution_x: IntProperty(
-        name='', soft_min=500, soft_max=4000, default=1920, step=10)
+        name='', soft_min=500, soft_max=4000, default=1920, step=10, update=INTACT_Images.update_render_resolution)
 
     Resolution_y: IntProperty(
-        name='', soft_min=500, soft_max=4000, default=1080, step=10)
+        name='', soft_min=500, soft_max=4000, default=1080, step=10, update=INTACT_Images.update_render_resolution)
 
     Set_camera_enabled: BoolProperty(name='', default=False, update=INTACT_Images.set_camera_position)
 

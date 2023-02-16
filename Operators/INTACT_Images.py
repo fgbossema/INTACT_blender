@@ -8,6 +8,10 @@ import os
 #          Operators
 #---------------------------------------------------------------------------
 
+def update_render_resolution(self, context):
+    context.scene.render.resolution_x = self.Resolution_x
+    context.scene.render.resolution_y = self.Resolution_y
+
 class Take_Screenshot(bpy.types.Operator):
     """Take screenshot"""
     bl_idname = "intact.take_screenshot"
@@ -81,12 +85,13 @@ def hide_objects_in_render():
 
 
 class Render_image(bpy.types.Operator):
-    """Render an image - using one of the default blender hdris for lighting, and a solid colour background via the
-    light path node"""
+    """Render an image using the current camera position"""
     bl_idname = "intact.render_image"
     bl_label = "Render image"
 
     def execute(self, context):
+        """Render image using one of the default blender hdris for lighting, and a solid colour background via the
+        light path node"""
         INTACT_Props = context.scene.INTACT_Props
 
         # Set render resolution
@@ -104,13 +109,14 @@ class Render_image(bpy.types.Operator):
 
 
 class Render_turntable(bpy.types.Operator):
-    """Render a simple turntable animation - using one of the default blender hdris for lighting, and a solid colour background via the
-    light path node. It uses the current position of the camera, and parents this to an empty rotating on a circle in the
-    xy plane. Diameter of circle is set by camera distance from origin of object."""
+    """Render and save a turntable movie using the current camera position"""
     bl_idname = "intact.render_turntable"
     bl_label = "Render turntable"
 
     def execute(self, context):
+        """Render a simple turntable animation - using one of the default blender hdris for lighting, and a solid colour background via the
+        light path node. It uses the current position of the camera, and parents this to an empty rotating on a circle in the
+        xy plane. Diameter of circle is set by camera distance from origin of object."""
         INTACT_Props = context.scene.INTACT_Props
 
         # Set render resolution
