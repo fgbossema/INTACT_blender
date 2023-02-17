@@ -1,5 +1,4 @@
 import bpy
-from os.path import abspath
 import os
 from .Operators import INTACT_Visualisations
 from .Operators import INTACT_Images
@@ -99,14 +98,14 @@ def text_underline_toggle(self, context):
             bpy.ops.font.select_all()
             bpy.ops.font.style_toggle(style="UNDERLINE")
             bpy.ops.object.mode_set(mode=mode)
-            
+
+
 def make_path_absolute(key):
     """ Prevent Blender's relative paths """
     props = bpy.context.scene.INTACT_Props
     sane_path = lambda p: os.path.abspath(bpy.path.abspath(p))
     if key in props and props[key].startswith('//'):
         props[key] = sane_path(props[key]) 
-
 
 
 class INTACT_Props(bpy.types.PropertyGroup):

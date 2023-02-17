@@ -1,15 +1,7 @@
-import os, stat, sys, shutil, math, threading
-from math import degrees, radians, pi
-import numpy as np
-from time import sleep, perf_counter as Tcounter
-from queue import Queue
-from os.path import join, dirname, abspath, exists, split
-from importlib import reload
+import stat
+from os.path import split
 
 # Blender Imports :
-import bpy
-import bmesh
-from mathutils import Matrix, Vector, Euler, kdtree
 from bpy.props import (
     StringProperty,
     IntProperty,
@@ -22,12 +14,10 @@ import SimpleITK as sitk
 import vtk
 import cv2
 
-from vtk.util import numpy_support
 from vtk import vtkCommand
 
 # Global Variables :
 
-from . import INTACT_Utils
 from .INTACT_Utils import *
 
 addon_dir = dirname(dirname(abspath(__file__)))

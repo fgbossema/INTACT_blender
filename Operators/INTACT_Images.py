@@ -1,18 +1,17 @@
 import bpy
-from mathutils import Euler
-import math
 import os
 
 
-#---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 #          Operators
-#---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 
 def update_render_resolution(self, context):
     context.scene.render.resolution_x = self.Resolution_x
     context.scene.render.resolution_y = self.Resolution_y
 
-class Take_Screenshot(bpy.types.Operator):
+
+class TakeScreenshot(bpy.types.Operator):
     """Take screenshot"""
     bl_idname = "intact.take_screenshot"
     bl_label = "Take Screenshot"
@@ -79,12 +78,13 @@ def setup_world_hdri(context):
 
 
 def hide_objects_in_render():
+    """Hide all objects that are hidden in viewport in render"""
     for obj in bpy.data.objects:
         if obj.hide_viewport or obj.hide_get():
             obj.hide_render = True
 
 
-class Render_image(bpy.types.Operator):
+class RenderImage(bpy.types.Operator):
     """Render an image using the current camera position"""
     bl_idname = "intact.render_image"
     bl_label = "Render image"
@@ -108,15 +108,16 @@ class Render_image(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class Render_turntable(bpy.types.Operator):
+class RenderTurntable(bpy.types.Operator):
     """Render and save a turntable movie using the current camera position"""
     bl_idname = "intact.render_turntable"
     bl_label = "Render turntable"
 
     def execute(self, context):
-        """Render a simple turntable animation - using one of the default blender hdris for lighting, and a solid colour background via the
-        light path node. It uses the current position of the camera, and parents this to an empty rotating on a circle in the
-        xy plane. Diameter of circle is set by camera distance from origin of object."""
+        """Render a simple turntable animation - using one of the default blender hdris for lighting, and a
+        solid colour background via the light path node. It uses the current position of the camera, and parents
+        this to an empty rotating on a circle in the xy plane.
+        Diameter of circle is set by camera distance from origin of object."""
         INTACT_Props = context.scene.INTACT_Props
 
         # Set render resolution
@@ -216,6 +217,7 @@ def lock_camera_to_view(lock_camera):
 
 
 def enable_camera_position(context):
+    """Enable interactive positioning of the camera"""
     INTACT_Props = context.scene.INTACT_Props
     context.scene.render.resolution_x = INTACT_Props.Resolution_x
     context.scene.render.resolution_y = INTACT_Props.Resolution_y
@@ -245,6 +247,7 @@ def enable_camera_position(context):
 
 
 def disable_camera_position(context):
+    """Confirm camera position, and stop interactive movement with viewport"""
     lock_camera_to_view(False)
 
     for area in bpy.context.screen.areas:
@@ -260,25 +263,27 @@ def set_camera_position(self, context):
     else:
         disable_camera_position(context)
 
-    
 
-#---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 #          Registration
-#---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 
 classes = [
-    Take_Screenshot,
-    Render_image,
-    Render_turntable
-    ]
-            
+    TakeScreenshot,
+    RenderImage,
+    RenderTurntable
+]
+
+
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-        
+
+
 def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
-  
+
+
 if __name__ == "__main__":
     register()

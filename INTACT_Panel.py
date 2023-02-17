@@ -1,14 +1,6 @@
-import bpy, os, sys
 from os.path import join, dirname, exists, abspath
 
 import bpy
-import numpy as np
-import math as mt
-import mathutils as mu
-import copy
-import os
-import blf
-from bpy_extras import view3d_utils
 
 ADDON_DIR = dirname(abspath(__file__))
 Addon_Version_Path = join(ADDON_DIR, "Resources", "INTACT_Version.txt")
@@ -541,6 +533,7 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
             layout.operator("object.icpexport")
             layout.operator("object.icpset")
 
+
 class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
     """Creates a Panel in the scene context of the properties editor"""
     bl_category = "INTACT"
@@ -603,7 +596,7 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
                           INTACT_Props.Surf_3D is not None
         
             row = layout.row()
-            row.label(text = "Open viewing in multiple directions.")
+            row.label(text="Open viewing in multiple directions.")
             row = layout.row()
             row.operator("intact.multiview")
 
@@ -626,7 +619,6 @@ class OBJECT_PT_Image_Panel(bpy.types.Panel):
         layout = self.layout
         row = layout.row()
         scene = context.scene
-        #mytool = scene.my_tool
         INTACT_Props = context.scene.INTACT_Props
         GroupNodeName = INTACT_Props.GroupNodeName
         VGS = bpy.data.node_groups.get(GroupNodeName)
@@ -706,9 +698,6 @@ def register():
         items = [("combined", "Combined Transformation", "Export the combined initial and ICP transformation"),
             ("roughAlignment", "Initial Transformation", "Export only the initial transformation"),
             ("fineAlignment", "ICP Transformation", "Export only the ICP transformation")])
-    
-    #visualisation panel
-    #bpy.types.Scene.my_tool = bpy.props.PointerProperty(type= MyProperties)
 
 
 def unregister():

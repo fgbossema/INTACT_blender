@@ -691,45 +691,6 @@ def VolumeRender(DcmInfo, GpShader, ShadersBlendFile):
 
 
 def Scene_Settings():
-    # Set World Shader node :
-    # WorldNodes = bpy.data.worlds["World"].node_tree.nodes
-    # WColor = WorldNodes["Background"].inputs[0].default_value = (0.6, 0.6, 0.6, 0.6)
-    # WStrength = WorldNodes["Background"].inputs[1].default_value = 1.5
-
-    # Override, area3D, space3D = CtxOverride(bpy.context)
-    # scene shading lights
-
-    # 3DView Shading Methode : in {'WIREFRAME', 'SOLID', 'MATERIAL', 'RENDERED'}
-    # space3D.shading.type = "RENDERED"
-
-    # 'Material' Shading Light method :
-    # space3D.shading.use_scene_lights = True
-    # space3D.shading.use_scene_world = False
-
-    # 'RENDERED' Shading Light method :
-    # space3D.shading.use_scene_lights_render = False
-    # space3D.shading.use_scene_world_render = True
-
-    # space3D.shading.studio_light = "forest.exr"
-    # space3D.shading.studiolight_rotate_z = 0
-    # space3D.shading.studiolight_intensity = 1.5
-    # space3D.shading.studiolight_background_alpha = 0.0
-    # space3D.shading.studiolight_background_blur = 0.0
-
-    # space3D.shading.render_pass = "COMBINED"
-    #
-    # space3D.shading.type = "SOLID"
-
-    # Override, area3D, space3D = CtxOverride(bpy.context)
-    # space3D.shading.color_type = "TEXTURE"
-    # space.shading.light = "MATCAP"
-    # space.shading.studio_light = "basic_side.exr"
-    # space3D.shading.light = "STUDIO"
-    # space3D.shading.studio_light = "outdoor.sl"
-    # space3D.shading.show_cavity = True
-    # space3D.shading.curvature_ridge_factor = 0.5
-    # space3D.shading.curvature_valley_factor = 0.5
-
     scn = bpy.context.scene
     scn.render.engine = "BLENDER_EEVEE"
     scn.eevee.use_gtao = True
@@ -742,10 +703,7 @@ def Scene_Settings():
     scn.eevee.shadow_cascade_size = "512"
     scn.eevee.use_soft_shadows = True
     scn.eevee.taa_samples = 16
-    # scn.display_settings.display_device = "None"
     scn.view_settings.look = "High Contrast"
-    # scn.view_settings.exposure = 0.0
-    # scn.view_settings.gamma = 1.0
     scn.eevee.use_ssr = True
 
     # boost the near clip distance, to avoid z fighting of planes on boolean 3D mesh
@@ -882,38 +840,6 @@ def SlicesUpdate(scene, slice_index):
                 # Write Image :
                 Array = sitk.GetArrayFromImage(Image2D)
                 Flipped_Array = np.flipud(Array.reshape(Array.shape[1], Array.shape[2]))
-                # print(Image2D.GetSize())
-                # print(Array.shape)
-                #
-                # # Blender needs everything in float range 0-1, so here divide by max of the 8 bit image
-                # # Flipped_Array = Flipped_Array / 255
-                #
-                # # Set image directly from the numpy array + pack it into the .blend so it gets saved
-                # # https://blender.stackexchange.com/questions/229850/apply-texture-from-numpy-array
-                # # https://blender.stackexchange.com/questions/643/is-it-possible-to-create-image-data-and-save-to-a-file-from-a-script
-                # # https://pastebin.com/embed_iframe/DQt7YmXv
-                # # blender stores pixels as a long list where every 4 values is rgba of one pixel
-                # blender_array = np.zeros(shape=(Flipped_Array.shape[0], Flipped_Array.shape[1], 4),
-                #                          dtype=np.float32)
-                # # blender_array[:, :, 0] = np.swapaxes(Flipped_Array, 0, 1)
-                # blender_array[:, :, 1] = Flipped_Array
-                # # blender_array[:, :, 2] = np.swapaxes(Flipped_Array, 0, 1)
-                # blender_array[:, :, 3] = np.ones_like(Flipped_Array)
-                # print(blender_array.shape)
-                # print(len(blender_array))
-                # print(4 * Flipped_Array.shape[0] * Flipped_Array.shape[1])
-                #
-                # BlenderImage = bpy.data.images.get(f"{Plane.name}.png")
-                # if not BlenderImage:
-                #     BlenderImage = bpy.data.images.new(f"{Plane.name}.png",
-                #                                        Flipped_Array.shape[0], Flipped_Array.shape[1], alpha=False)
-                #     BlenderImage.pack()
-                # # BlenderImage.pixels.foreach_set(blender_array.flatten())
-                # BlenderImage.pixels = blender_array.flatten()
-                # BlenderImage.update()
-                # print(blender_array.flatten()[0:20])
-                #
-                # cv2.imwrite(ImagePath, blender_array[:, :, 0:3])
 
                 cv2.imwrite(ImagePath, Flipped_Array)
                 ############################################
@@ -932,13 +858,16 @@ def SlicesUpdate(scene, slice_index):
                 if INTACT_Props.Remove_slice_outside_surface:
                     Plane.data.update()
 
+
 @persistent
 def AxialSliceUpdate(scene):
     SlicesUpdate(scene, 0)
 
+
 @persistent
 def CoronalSliceUpdate(scene):
     SlicesUpdate(scene, 1)
+
 
 @persistent
 def SagitalSliceUpdate(scene):
@@ -973,43 +902,23 @@ def Add_Cam_To_Plane(Plane, CamDistance, ClipOffset):
     Cam.select_set(False)
     return Cam
 
-
-# def Add_Cam_To_Plane(Plane, CamView, Override, ActiveSpace):
-
-#     bpy.ops.object.camera_add(Override)
-#     Cam = bpy.context.object
-#     Cam.name = f'INTACT_CAM_{CamView}'
-#     Cam.data.name = f'INTACT_CAM_{CamView}_data'
-#     Cam.data.type = 'ORTHO'
-#     Cam.data.ortho_scale = max(Plane.dimensions)*1.1
-#     Cam.data.display_size = 10
-
-#     Cam.matrix_world = Plane.matrix_world
-
-#     bpy.ops.transform.translate(Override, value=(0, 0, 100), orient_type='LOCAL', orient_matrix=Plane.matrix_world.to_3x3(), orient_matrix_type='LOCAL', constraint_axis=(False, False, True))
-#     Active_Space.camera = Cam
-#     bpy.ops.view3d.view_camera(Override)
-#     Plane.select_set(True)
-#     bpy.context.view_layer.objects.active = Plane
-#     bpy.ops.object.parent_set(Override, type='OBJECT', keep_transform=True)
-#     Cam.hide_set(True)
-#     Cam.select_set(False)
-
 ####################################################################
-def set_slice_orientation(CTVolume, slice, slice_index):
+
+
+def set_slice_orientation(ct_volume, slice, slice_index):
     """ Sets position/rotation of slices. Slice index determines which slice to set 0 = axial, 1 = Coronal,
     2 = Sagital"""
     if slice_index == 0:
         # AxialPlane.location = VC
-        slice.matrix_world = CTVolume.matrix_world
+        slice.matrix_world = ct_volume.matrix_world
     elif slice_index == 1:
         rotation_euler = Euler((pi / 2, 0.0, 0.0), "XYZ")
         RotMtx = rotation_euler.to_matrix().to_4x4()
-        slice.matrix_world = CTVolume.matrix_world @ RotMtx
+        slice.matrix_world = ct_volume.matrix_world @ RotMtx
     elif slice_index == 2:
         rotation_euler = Euler((pi / 2, 0.0, -pi / 2), "XYZ")
         RotMtx = rotation_euler.to_matrix().to_4x4()
-        slice.matrix_world = CTVolume.matrix_world @ RotMtx
+        slice.matrix_world = ct_volume.matrix_world @ RotMtx
 
 
 def AddSlice(slice_index, Preffix, DcmInfo):
@@ -1086,7 +995,6 @@ def AddSlice(slice_index, Preffix, DcmInfo):
 
     TextureCoord = AddNode(nodes, type="ShaderNodeTexCoord", name="TextureCoord")
     ImageTexture = AddNode(nodes, type="ShaderNodeTexImage", name="Image Texture")
-    print(ImageTexture)
     ImageTexture.image = BlenderImage
     BlenderImage.colorspace_settings.name = "Non-Color"
     materialOutput = nodes["Material Output"]
