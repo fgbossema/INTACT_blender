@@ -34,39 +34,63 @@ class CroppingCubeCreation(bpy.types.Operator):
     def execute(self, context):
         INTACT_Props = context.scene.INTACT_Props
         ct_vol = INTACT_Props.CT_Vol
+        surf_3d = INTACT_Props.Surf_3D
+        cropping_cube_name = "Crop CT"
+        cube_collection_name = "Cropping Cubes"
 
-        croppingcubedim = ct_vol.dimensions
-        croppingcube_x = croppingcubedim[0]
-        
-        croppingcubeloc = ct_vol.location
-        loc_x = croppingcubeloc[0]
-        loc_y = croppingcubeloc[1]
-        loc_z = croppingcubeloc[2]
-        print("\nDimensions of CT voxel representation extracted.")
+        if not ct_vol or not surf_3d:
+            message = [" Please input CT Volume and surface scan first "]
+            INTACT_Utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+            return {"CANCELLED"}
 
-        # Create one cropping cube, to use for all axes
-        bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD',
-                                        location=(loc_x + croppingcube_x, loc_y, loc_z), scale=croppingcubedim)
-        cropct = bpy.context.active_object
-        INTACT_Props.Cropping_Cube = cropct
-        cropct.name = "Crop CT"
-        # Display as bounds, so can see through the cube to the object inside
-        cropct.display_type = "BOUNDS"
-        # Lock rotation and scale, so it can only be translated along x/y/z
-        cropct.lock_rotation[0] = True
-        cropct.lock_rotation[1] = True
-        cropct.lock_rotation[2] = True
-        cropct.lock_scale[0] = True
-        cropct.lock_scale[1] = True
-        cropct.lock_scale[2] = True
-        cropct.hide_render = True
+        cropping_cube = context.scene.objects.get(cropping_cube_name)
+        cube_exists = cropping_cube and cropping_cube.users_collection[0].name == cube_collection_name
+        if not cube_exists:
+            croppingcubedim = ct_vol.dimensions
+            croppingcube_x = croppingcubedim[0]
 
-        collection = bpy.data.collections.new("Cropping Cubes")
-        bpy.context.scene.collection.children.link(collection)
-        collection.objects.link(cropct)
+            croppingcubeloc = ct_vol.location
+            loc_x = croppingcubeloc[0]
+            loc_y = croppingcubeloc[1]
+            loc_z = croppingcubeloc[2]
+            print("\nDimensions of CT voxel representation extracted.")
 
-        # Add booleans
-        self.cropping_cube_boolean(context)
+            # Create one cropping cube, to use for all axes
+            bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD',
+                                            location=(loc_x + croppingcube_x, loc_y, loc_z), scale=croppingcubedim)
+            cropct = bpy.context.active_object
+            INTACT_Props.Cropping_Cube = cropct
+            cropct.name = cropping_cube_name
+            # Display as bounds, so can see through the cube to the object inside
+            cropct.display_type = "BOUNDS"
+            # Lock rotation and scale, so it can only be translated along x/y/z
+            cropct.lock_rotation[0] = True
+            cropct.lock_rotation[1] = True
+            cropct.lock_rotation[2] = True
+            cropct.lock_scale[0] = True
+            cropct.lock_scale[1] = True
+            cropct.lock_scale[2] = True
+            cropct.hide_render = True
+
+            if cube_collection_name not in bpy.data.collections:
+                cube_collection = bpy.data.collections.new("Cropping Cubes")
+                bpy.context.scene.collection.children.link(cube_collection)
+            else:
+                cube_collection = bpy.data.collections[cube_collection_name]
+
+            # remove from default collection
+            for collection in cropct.users_collection[:]:
+                collection.objects.unlink(cropct)
+            # add to cropping cubes collection
+            cube_collection.objects.link(cropct)
+
+            # Add booleans
+            self.cropping_cube_boolean(context)
+
+            # select surface mesh, so it's easy to carry on with further operations (with all deselected the ui
+            # says 'please load data first')
+            bpy.ops.object.select_all(action="DESELECT")
+            context.view_layer.objects.active = surf_3d
 
         return {'FINISHED'}
 

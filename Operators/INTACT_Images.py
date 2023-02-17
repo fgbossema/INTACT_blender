@@ -1,5 +1,6 @@
 import bpy
 import os
+from . import INTACT_Utils
 
 
 # ---------------------------------------------------------------------------
@@ -119,6 +120,12 @@ class RenderTurntable(bpy.types.Operator):
         this to an empty rotating on a circle in the xy plane.
         Diameter of circle is set by camera distance from origin of object."""
         INTACT_Props = context.scene.INTACT_Props
+        ct_vol = INTACT_Props.CT_Vol
+
+        if not ct_vol:
+            message = [" Please input CT Volume first "]
+            INTACT_Utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+            return {"CANCELLED"}
 
         # Set render resolution
         context.scene.render.resolution_x = INTACT_Props.Resolution_x
@@ -130,7 +137,7 @@ class RenderTurntable(bpy.types.Operator):
         hide_objects_in_render()
         setup_world_hdri(context)
 
-        rotation_origin = INTACT_Props.CT_Vol.location
+        rotation_origin = ct_vol.location
         camera = context.scene.camera
 
         collection_name = "turntable"
