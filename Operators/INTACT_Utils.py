@@ -706,11 +706,13 @@ def Scene_Settings():
     scn.view_settings.look = "High Contrast"
     scn.eevee.use_ssr = True
 
-    # boost the near clip distance, to avoid z fighting of planes on boolean 3D mesh
+    # boost the near clip distance, to avoid z fighting of planes on boolean 3D mesh + the end clip distance
+    # to avoid cutting off the back end of larger meshes
     for area in bpy.context.screen.areas:
         if area.type == 'VIEW_3D':
             space = area.spaces.active
             space.clip_start = 2
+            space.clip_end = 5000
             break
 
 

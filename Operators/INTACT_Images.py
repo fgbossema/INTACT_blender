@@ -247,7 +247,7 @@ def enable_camera_position(context):
 
     # set clip distance
     context.scene.camera.data.clip_start = 2
-    context.scene.camera.data.clip_end = 1000
+    context.scene.camera.data.clip_end = 5000
 
     # lock camera to move with viewport movement
     lock_camera_to_view(True)
