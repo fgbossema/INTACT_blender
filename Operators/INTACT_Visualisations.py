@@ -191,7 +191,8 @@ def enable_boolean_slice(context):
 
     cropping_cube_collection = bpy.data.collections['Cropping Cubes']
     surface_copy_name = "Surface scan copy"
-    boolean_modifier_name = "3D scan"
+    mesh_boolean_name = "3D scan"
+    cube_boolean_name = "Cropping Cube"
 
     # Make a copy of the surface scan (if it doesn't already exist). This will be used to boolean the slices.
     # Can't use original as this is already being cut into by the cropping cube.
@@ -207,16 +208,22 @@ def enable_boolean_slice(context):
 
     # Add boolean modifier. If it already exists, just enable it in viewport and render
     for slice in slices:
-        if boolean_modifier_name not in slice.modifiers:
-            slice_bool = slice.modifiers.new(type="BOOLEAN", name=boolean_modifier_name)
-            slice_bool.operation = 'INTERSECT'
-            slice_bool.object = surf_copy
+        if mesh_boolean_name not in slice.modifiers and cube_boolean_name not in slice.modifiers:
+            mesh_bool = slice.modifiers.new(type="BOOLEAN", name=mesh_boolean_name)
+            mesh_bool.operation = 'INTERSECT'
+            mesh_bool.object = surf_copy
+
             # Move to top of modifier stack
-            bpy.ops.object.modifier_move_to_index({'object':slice}, modifier=slice_bool.name, index=0)
+            bpy.ops.object.modifier_move_to_index({'object':slice}, modifier=mesh_bool.name, index=0)
+
+            cube_bool = slice.modifiers.new(type="BOOLEAN", name=cube_boolean_name)
+            cube_bool.operation = 'INTERSECT'
+            cube_bool.object = INTACT_Props.Cropping_Cube
         else:
-            modifier = slice.modifiers.get(boolean_modifier_name)
-            modifier.show_viewport = True
-            modifier.show_render = True
+            for modifier_name in [mesh_boolean_name, cube_boolean_name]:
+                modifier = slice.modifiers.get(modifier_name)
+                modifier.show_viewport = True
+                modifier.show_render = True
 
     print("\nBoolean modifiers applied to all slices")
 
@@ -229,9 +236,10 @@ def disable_boolean_slice(context):
     slices = [INTACT_Props.Axial_Slice, INTACT_Props.Coronal_Slice, INTACT_Props.Sagital_Slice]
 
     for slice in slices:
-        modifier = slice.modifiers.get("3D scan")
-        modifier.show_viewport = False
-        modifier.show_render = False
+        for modifier_name in ["3D scan", "Cropping Cube"]:
+            modifier = slice.modifiers.get(modifier_name)
+            modifier.show_viewport = False
+            modifier.show_render = False
 
     print("\nBoolean modifiers disabled on all slices")
 

@@ -237,7 +237,7 @@ def enable_camera_position(context):
     bpy.ops.view3d.camera_to_view()
 
     # set clip distance
-    context.scene.camera.data.clip_start = 0.1
+    context.scene.camera.data.clip_start = 2
     context.scene.camera.data.clip_end = 1000
 
     # lock camera to move with viewport movement

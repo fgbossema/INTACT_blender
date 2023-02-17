@@ -696,7 +696,7 @@ def Scene_Settings():
     # WColor = WorldNodes["Background"].inputs[0].default_value = (0.6, 0.6, 0.6, 0.6)
     # WStrength = WorldNodes["Background"].inputs[1].default_value = 1.5
 
-    Override, area3D, space3D = CtxOverride(bpy.context)
+    # Override, area3D, space3D = CtxOverride(bpy.context)
     # scene shading lights
 
     # 3DView Shading Methode : in {'WIREFRAME', 'SOLID', 'MATERIAL', 'RENDERED'}
@@ -747,6 +747,13 @@ def Scene_Settings():
     # scn.view_settings.exposure = 0.0
     # scn.view_settings.gamma = 1.0
     scn.eevee.use_ssr = True
+
+    # boost the near clip distance, to avoid z fighting of planes on boolean 3D mesh
+    for area in bpy.context.screen.areas:
+        if area.type == 'VIEW_3D':
+            space = area.spaces.active
+            space.clip_start = 2
+            break
 
 
 #################################################################################################
@@ -918,6 +925,12 @@ def SlicesUpdate(scene, slice_index):
                 else:
                     BlenderImage.filepath = ImagePath
                     BlenderImage.reload()
+
+                # This is necessary, as if the cube boolean is added (while the cropping cube
+                # is outside of the 3D mesh) it leads to some of the slices being displayed solid white.
+                # This seems to be a bug within blender - potentially fixed in newer versions?
+                if INTACT_Props.Remove_slice_outside_surface:
+                    Plane.data.update()
 
 @persistent
 def AxialSliceUpdate(scene):
