@@ -1,6 +1,7 @@
 import bpy
 from mathutils import Euler
 import math
+from . import INTACT_Utils
     
 #---------------------------------------------------------------------------
 #          Operators
@@ -259,6 +260,14 @@ def calculate_slice_location(cropping_cube_location, cropping_cube_dim, ct_vol_l
     return location
 
 
+def lock_location_rotation(slice, driver_axis, lock):
+    """lock location on all axes without driver, lock rotation on all axes"""
+    for i in range(3):
+        slice.lock_rotation[i] = lock
+        if i != driver_axis:
+            slice.lock_location[i] = lock
+
+
 def enable_track_slices_to_cropping_cube(context):
     """
     These 6 blocks of code link the location and rotation of the axial slice to that of the X-cropping cube.
@@ -274,7 +283,12 @@ def enable_track_slices_to_cropping_cube(context):
     slices = [Sagital_Slice, Coronal_Slice, Axial_Slice]
     bpy.app.driver_namespace['calculate_slice_location'] = calculate_slice_location
 
-    for i in range(0, len(transforms)):
+    # reset position/rotation of all
+    INTACT_Utils.set_slice_orientation(CT_Vol, slices[0], 2)
+    INTACT_Utils.set_slice_orientation(CT_Vol, slices[1], 1)
+    INTACT_Utils.set_slice_orientation(CT_Vol, slices[2], 0)
+
+    for i in range(len(transforms)):
         location_driver = slices[i].driver_add("location", i)
         cropping_cube_location = location_driver.driver.variables.new()
         cropping_cube_location.name = "cropping_cube_location"
@@ -303,6 +317,8 @@ def enable_track_slices_to_cropping_cube(context):
         location_driver.driver.expression = "calculate_slice_location(cropping_cube_location, cropping_cube_dim, " \
                                             "ct_vol_location, ct_vol_dim)"
 
+        lock_location_rotation(slices[i], i, True)
+
     # Give slices a tiny bit of thickness, so they don't give z fighting artefacts when tracked right on top of the
     # boolean faces of meshes
     solidify_modifier_name = "Solidify"
@@ -320,13 +336,15 @@ def enable_track_slices_to_cropping_cube(context):
 
 def disable_track_slices_to_cropping_cube(context):
     """
-    This block of code removes the drivers that link the slices to the cropping cubes, to save computational power"
+    This block of code removes the drivers that link the slices to the cropping cubes, to save computational power
     """
     INTACT_Props = context.scene.INTACT_Props
     slices = [INTACT_Props.Sagital_Slice, INTACT_Props.Coronal_Slice, INTACT_Props.Axial_Slice]
 
-    for i in range(0, len(slices)):
+    for i in range(len(slices)):
         slices[i].driver_remove("location", i)
+        lock_location_rotation(slices[i], i, False)
+
     return {'FINISHED'}
 
 

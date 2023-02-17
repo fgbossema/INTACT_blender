@@ -996,6 +996,22 @@ def Add_Cam_To_Plane(Plane, CamDistance, ClipOffset):
 #     Cam.select_set(False)
 
 ####################################################################
+def set_slice_orientation(CTVolume, slice, slice_index):
+    """ Sets position/rotation of slices. Slice index determines which slice to set 0 = axial, 1 = Coronal,
+    2 = Sagital"""
+    if slice_index == 0:
+        # AxialPlane.location = VC
+        slice.matrix_world = CTVolume.matrix_world
+    elif slice_index == 1:
+        rotation_euler = Euler((pi / 2, 0.0, 0.0), "XYZ")
+        RotMtx = rotation_euler.to_matrix().to_4x4()
+        slice.matrix_world = CTVolume.matrix_world @ RotMtx
+    elif slice_index == 2:
+        rotation_euler = Euler((pi / 2, 0.0, -pi / 2), "XYZ")
+        RotMtx = rotation_euler.to_matrix().to_4x4()
+        slice.matrix_world = CTVolume.matrix_world @ RotMtx
+
+
 def AddSlice(slice_index, Preffix, DcmInfo):
     """ Add slices to the UI. Slice index determines which slice to add 0 = axial, 1 = Coronal,
         2 = Sagital
@@ -1040,17 +1056,7 @@ def AddSlice(slice_index, Preffix, DcmInfo):
     Plane.dimensions = PlaneDims
     bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 
-    if slice_index == 0:
-        # AxialPlane.location = VC
-        Plane.matrix_world = CTVolume.matrix_world
-    elif slice_index == 1:
-        rotation_euler = Euler((pi / 2, 0.0, 0.0), "XYZ")
-        RotMtx = rotation_euler.to_matrix().to_4x4()
-        Plane.matrix_world = CTVolume.matrix_world @ RotMtx
-    elif slice_index == 2:
-        rotation_euler = Euler((pi / 2, 0.0, -pi / 2), "XYZ")
-        RotMtx = rotation_euler.to_matrix().to_4x4()
-        Plane.matrix_world = CTVolume.matrix_world @ RotMtx
+    set_slice_orientation(CTVolume, Plane, slice_index)
 
     # Add Material :
     mat = bpy.data.materials.get(f"{name}_mat") or bpy.data.materials.new(f"{name}_mat")
