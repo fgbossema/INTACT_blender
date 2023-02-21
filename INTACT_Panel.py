@@ -68,19 +68,23 @@ class INTACT_PT_MainPanel(bpy.types.Panel):
         
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text="1. Loading")
+        row.label(text="1. Loading of CT and surface scan data.")
         
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text="2. Registration")
+        row.label(text="2. CT mesh generation and Registration of two data modalities.")
         
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text="3. Visualisation")
+        row.label(text="3. Interactive visualisation.")
+        
+        row = box.row()
+        row.alignment = "LEFT"
+        row.label(text="4. Images and output.")
 
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text="Designed and developed by Paul van Laar & Francien Bossema.")
+        row.label(text="Designed and developed by Paul van Laar, Francien Bossema & Kimberly Meechan.")
         
         row = box.row()
         row.alignment = "LEFT"
