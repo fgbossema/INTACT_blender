@@ -31,10 +31,10 @@ from . import INTACT_Utils
 from .INTACT_Utils import *
 
 addon_dir = dirname(dirname(abspath(__file__)))
-ShadersBlendFile = join(addon_dir, "Resources", "BlendData", "INTACT_BlendData.blend")
-GpShader = "VGS_Marcos_modified"  # 
-Wmin = -400
-Wmax = 3000
+ShadersBlendFile = join(addon_dir, "Resources", "BlendData", "INTACT_BlendData_2.blend")
+GpShader = "VGS_INTACT"  # 
+#Wmin = -400
+#Wmax = 3000
 ProgEvent = vtkCommand.ProgressEvent
 
 #######################################################################################
@@ -49,6 +49,9 @@ def rmtree(top):
         for name in dirs:
             os.rmdir(os.path.join(root, name))
     os.rmdir(top)
+
+
+
 
 class INTACT_OT_Template(bpy.types.Operator):
     """ Open INTACT workspace template """
@@ -212,6 +215,12 @@ def Load_Dicom_funtion(context, q):
         reader.ReadImageInformation()
 
         Image3D = sitk.ReadImage(DcmSerie, imageIO='GDCMImageIO')
+        minmax = sitk.MinimumMaximumImageFilter()
+        minmax.Execute(Image3D)
+        Wmax = minmax.GetMaximum()
+        Wmin = minmax.GetMinimum()
+        INTACT_Props.Wmin = Wmin 
+        INTACT_Props.Wmax = Wmax    
 
         # Get Dicom Info :
         Sp = Spacing = Image3D.GetSpacing()
@@ -401,6 +410,7 @@ def Load_Dicom_funtion(context, q):
         DcmInfo["CT_Loaded"] = True
         # Set DcmInfo property :
         DcmInfoDict = eval(INTACT_Props.DcmInfo)
+        print(INTACT_Props.DcmInfo)
         DcmInfoDict[Preffix] = DcmInfo
         INTACT_Props.DcmInfo = str(DcmInfoDict)
         INTACT_Props.UserProjectDir = RelPath(INTACT_Props.UserProjectDir)
@@ -544,6 +554,9 @@ def Load_Tiff_function(context, q):
         minmax.Execute(Image3D)
         Wmax = minmax.GetMaximum()
         Wmin = minmax.GetMinimum()
+        INTACT_Props.Wmin = Wmin 
+        INTACT_Props.Wmax = Wmax        
+        INTACT_Props.Thres1Treshold = (Wmax-Wmin)/2
 
         # calculate Informations :
         D = (1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0)
@@ -1075,8 +1088,8 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
 
         UserProjectDir = AbsPath(INTACT_Props.UserProjectDir)
         Preffix = DcmInfo["Preffix"]
-        Wmin = DcmInfo["Wmin"]
-        Wmax = DcmInfo["Wmax"]
+        Wmin = INTACT_Props.Wmin
+        Wmax = INTACT_Props.Wmax
         # PngDir = AbsPath(INTACT_Props.PngDir)
         print("\n##########################\n")
         print("Voxel Rendering START...")
@@ -1089,22 +1102,13 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
             GpNode = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
             Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
             Low_Treshold.default_value = 600
-            WminNode = GpNode.nodes["WminNode"].outputs[0]
-            WminNode.default_value = Wmin
-            WmaxNode = GpNode.nodes["WmaxNode"].outputs[0]
-            WmaxNode.default_value = Wmax
+       
            
-            GpNode.nodes["ColorPresetRamp"].color_ramp.elements[4].color = INTACT_Props.CTcolor
+        if GpShader == "VGS_INTACT":
+            GpNode = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
+            Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
+            Low_Treshold.default_value = 600
 
-            # newdriver = Low_Treshold.driver_add("default_value")
-            # newdriver.driver.type = "AVERAGE"
-            # var = newdriver.driver.variables.new()
-            # var.name = "Treshold"
-            # var.type = "SINGLE_PROP"
-            # var.targets[0].id_type = "SCENE"
-            # var.targets[0].id = bpy.context.scene
-            # var.targets[0].data_path = "INTACT_Props.Treshold"
-            # newdriver.driver.expression = "Treshold"
 
         if GpShader == "VGS_Dakir_01":
             # Add Treshold Driver :

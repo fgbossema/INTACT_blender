@@ -1,6 +1,7 @@
 import bpy
 from os.path import abspath
 import os
+from mathutils import Matrix, Vector, Euler, kdtree
 
 from bpy.props import (
     StringProperty,
@@ -11,7 +12,22 @@ from bpy.props import (
     BoolProperty,
 )
 
-
+def ColorUpdateFunction(self, context):
+    INTACT_Props = context.scene.INTACT_Props
+    GpShader = INTACT_Props.GroupNodeName
+    Treshold = INTACT_Props.Thres1Treshold
+    CtVolumeList = [
+        obj
+        for obj in bpy.context.scene.objects
+        if obj.name.startswith("IT") and obj.name.endswith("_CTVolume")
+    ]
+    if context.object in CtVolumeList:
+        Vol = context.object
+        Preffix = Vol.name[:5]
+        GpNode = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
+        
+        if GpShader == "VGS_INTACT":
+            GpNode.nodes["ColorPresetRamp"].color_ramp.elements[1].color = INTACT_Props.CTcolor
 
 def TresholdUpdateFunction(self, context):
     INTACT_Props = context.scene.INTACT_Props
@@ -34,13 +50,10 @@ def TresholdUpdateFunction(self, context):
             GpNode.nodes["ColorPresetRamp"].color_ramp.elements[4].color = INTACT_Props.CTcolor
             #GpNode.nodes["ColorPresetRamp"].color_ramp.elements[5].color = (1-INTACT_Props.CTcolor)*0.25
             
-        if GpShader == "VGS_Dakir_01":
-            DcmInfo = eval(INTACT_Props.DcmInfo)
-            Wmin = DcmInfo["Wmin"]
-            Wmax = DcmInfo["Wmax"]
-            treshramp = GpNode.nodes["TresholdRamp"].color_ramp.elements[0]
-            value = (Treshold - Wmin) / (Wmax - Wmin)
-            treshramp = value
+        if GpShader == "VGS_INTACT":
+            Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
+            Low_Treshold.default_value = Treshold
+            #GpNode.nodes["ColorPresetRamp"].color_ramp.elements[1].color = INTACT_Props.CTcolor
 
 
 def text_body_update(self, context):
@@ -224,6 +237,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
 
     Wmin: IntProperty()
     Wmax: IntProperty()
+    
     Resolution: FloatProperty(
         name="Resolution",
         default=1.0,
@@ -298,17 +312,20 @@ class INTACT_Props(bpy.types.PropertyGroup):
         step=1,
         precision=1,
     )
+
+    
     Thres1Treshold: IntProperty(
         name="Threshold 1",
         description="Threshold 1",
-        default=300,
+        default = 600,
+        step=1,
         min=-400,
         max=3000,
         soft_min=-400,
         soft_max=3000,
-        step=1,
         update=TresholdUpdateFunction,
     )
+    
     Thres2Treshold: IntProperty(
         name="Threshold 2",
         description="Threshold 2",
@@ -369,6 +386,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
         soft_max=1.0,
         size=4,
         subtype="COLOR",
+        update = ColorUpdateFunction,
     )
 
     #######################

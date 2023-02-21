@@ -28,7 +28,7 @@ yellow_icon = "COLORSET_09_VEC"
 yellow_point = "KEYTYPE_KEYFRAME_VEC"
 blue_point = "KEYTYPE_BREAKDOWN_VEC"
 
-Wmin, Wmax = -400, 3000 #Hier worden Wmin en Wmax gedefinieerd!!
+#Wmin, Wmax = -400, 3000 #Hier worden Wmin en Wmax gedefinieerd!!
 
 
 class INTACT_PT_MainPanel(bpy.types.Panel):
@@ -225,7 +225,7 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                 col.prop(INTACT_Props, "CTcolor", text="")
                 
                 row = layout.row()
-                row.label(text=f"Threshold {Wmin} to {Wmax} HU :")
+                row.label(text=f"Threshold:")
                 row = layout.row()
                 row.prop(INTACT_Props, "Thres1Treshold", text="THRESHOLD", slider=True)
                    
