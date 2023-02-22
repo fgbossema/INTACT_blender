@@ -29,6 +29,25 @@ def ColorUpdateFunction(self, context):
         if GpShader == "VGS_INTACT":
             GpNode.nodes["ColorPresetRamp"].color_ramp.elements[1].color = INTACT_Props.CTcolor
 
+def ShaderUpdateFunction(self, context):
+    INTACT_Props = context.scene.INTACT_Props
+    GpShader = INTACT_Props.GroupNodeName
+    Treshold = INTACT_Props.Thres1Treshold
+    CtVolumeList = [
+        obj
+        for obj in bpy.context.scene.objects
+        if obj.name.startswith("IT") and obj.name.endswith("_CTVolume")
+    ]
+    if context.object in CtVolumeList:
+        Vol = context.object
+        Preffix = Vol.name[:5]
+        GpNode = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
+        
+        if GpShader == "VGS_INTACT":
+            GpNode.nodes["ColorPresetRamp"].color_ramp.elements[1].position = INTACT_Props.ColorPos
+
+
+
 def TresholdUpdateFunction(self, context):
     INTACT_Props = context.scene.INTACT_Props
     GpShader = INTACT_Props.GroupNodeName
@@ -387,6 +406,15 @@ class INTACT_Props(bpy.types.PropertyGroup):
         size=4,
         subtype="COLOR",
         update = ColorUpdateFunction,
+    )
+    
+    ColorPos: FloatProperty(
+        default=0.25,
+        min=0.0,
+        max=10.0,
+        soft_min=0.0,
+        soft_max=1.0,
+        update = ShaderUpdateFunction,
     )
 
     #######################
