@@ -31,8 +31,8 @@ from . import INTACT_Utils
 from .INTACT_Utils import *
 
 addon_dir = dirname(dirname(abspath(__file__)))
-ShadersBlendFile = join(addon_dir, "Resources", "BlendData", "INTACT_BlendData.blend")
-GpShader = "VGS_Marcos_modified"  # 
+ShadersBlendFile = join(addon_dir, "Resources", "BlendData", "INTACT_BlendData_2.blend")
+GpShader = "VGS_INTACT"  # 
 #Wmin = -400
 #Wmax = 3000
 ProgEvent = vtkCommand.ProgressEvent
