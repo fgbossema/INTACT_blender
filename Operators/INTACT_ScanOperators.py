@@ -31,8 +31,8 @@ from . import INTACT_Utils
 from .INTACT_Utils import *
 
 addon_dir = dirname(dirname(abspath(__file__)))
-ShadersBlendFile = join(addon_dir, "Resources", "BlendData", "INTACT_BlendData_2.blend")
-GpShader = "VGS_INTACT"  # 
+ShadersBlendFile = join(addon_dir, "Resources", "BlendData", "INTACT_BlendData.blend")
+GpShader = "VGS_Marcos_modified"  # 
 #Wmin = -400
 #Wmax = 3000
 ProgEvent = vtkCommand.ProgressEvent
@@ -535,8 +535,9 @@ def Load_Tiff_function(context, q):
         minmax.Execute(Image3D)
         Wmax = minmax.GetMaximum()
         Wmin = minmax.GetMinimum()
-        print(Wmin, Wmax)
-        #if not (Wmin == 0.0 and Wmax == 255.0):
+        
+  
+
         if not (Wmin == 0.0) :
             fact = []    
             fact.append(4000/Wmax)
@@ -548,6 +549,7 @@ def Load_Tiff_function(context, q):
             mult_factor = 4000/Wmax
             multiply = sitk.MultiplyImageFilter()
             Image3D = multiply.Execute(Image3D, mult_factor)
+
         
         #Re-evaluate Wmin and Wmax after scaling
         minmax = sitk.MinimumMaximumImageFilter()
@@ -555,8 +557,8 @@ def Load_Tiff_function(context, q):
         Wmax = minmax.GetMaximum()
         Wmin = minmax.GetMinimum()
         INTACT_Props.Wmin = Wmin 
-        INTACT_Props.Wmax = Wmax        
-        INTACT_Props.Thres1Treshold = (Wmax-Wmin)/2
+        INTACT_Props.Wmax = Wmax 
+   
 
         # calculate Informations :
         D = (1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0)
@@ -1102,12 +1104,20 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
             GpNode = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
             Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
             Low_Treshold.default_value = 600
+            WminNode = GpNode.nodes["WminNode"].outputs[0]
+            WminNode.default_value = Wmin
+            WmaxNode = GpNode.nodes["WmaxNode"].outputs[0]
+            WmaxNode.default_value = Wmax
        
            
         if GpShader == "VGS_INTACT":
             GpNode = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
             Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
             Low_Treshold.default_value = 600
+            WminNode = GpNode.nodes["WminNode"].outputs[0]
+            WminNode.default_value = Wmin
+            WmaxNode = GpNode.nodes["WmaxNode"].outputs[0]
+            WmaxNode.default_value = Wmax
 
 
         if GpShader == "VGS_Dakir_01":

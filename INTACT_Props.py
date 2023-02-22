@@ -48,12 +48,12 @@ def TresholdUpdateFunction(self, context):
             Low_Treshold.default_value = Treshold
             
             GpNode.nodes["ColorPresetRamp"].color_ramp.elements[4].color = INTACT_Props.CTcolor
-            #GpNode.nodes["ColorPresetRamp"].color_ramp.elements[5].color = (1-INTACT_Props.CTcolor)*0.25
+
             
         if GpShader == "VGS_INTACT":
             Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
             Low_Treshold.default_value = Treshold
-            #GpNode.nodes["ColorPresetRamp"].color_ramp.elements[1].color = INTACT_Props.CTcolor
+
 
 
 def text_body_update(self, context):
