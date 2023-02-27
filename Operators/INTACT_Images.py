@@ -1,6 +1,7 @@
 import bpy
 import os
 from . import INTACT_Utils
+import math
 
 
 # ---------------------------------------------------------------------------
@@ -150,13 +151,22 @@ class RenderTurntable(bpy.types.Operator):
             for obj in turntable_collection.objects:
                 bpy.data.objects.remove(obj)
 
-        # location of camera, but setting z == rotation origin z, as we are only interested in the distance in this
-        # plane
-        camera_location_xy = camera.location.copy()
-        camera_location_xy[2] = rotation_origin[2]
-        radius = (camera_location_xy - rotation_origin).length
+        # location of camera, but setting location on rotation axis == rotation origin location on rotation axis,
+        # as we are only interested in the distance in this plane
+        camera_location_in_plane = camera.location.copy()
+        if INTACT_Props.Movie_rotation_axis == "X":
+            axis_index = 0
+            circle_rotation = (0, math.pi/2, 0)
+        elif INTACT_Props.Movie_rotation_axis == "Y":
+            axis_index = 1
+            circle_rotation = (math.pi/2, 0, 0)
+        else:
+            axis_index = 2
+            circle_rotation = (0, 0, 0)
+        camera_location_in_plane[axis_index] = rotation_origin[axis_index]
+        radius = (camera_location_in_plane - rotation_origin).length
         bpy.ops.curve.primitive_bezier_circle_add(radius=radius, enter_editmode=False, align='WORLD',
-                                                  location=rotation_origin, scale=(1, 1, 1))
+                                                  location=rotation_origin, rotation=circle_rotation, scale=(1, 1, 1))
         path = bpy.context.active_object
         path.name = "Circle_path"
         path.data.use_path = True

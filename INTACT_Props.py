@@ -559,6 +559,9 @@ class INTACT_Props(bpy.types.PropertyGroup):
     Background_colour: FloatVectorProperty(name='', subtype="COLOR", size=4,
                                            min=0.0, max=1.0, default=[0.0, 0.0, 0.0, 1.0])
 
+    Movie_rotation_axis: EnumProperty(items=(("X", ) * 3, ("Y",) * 3, ("Z",) * 3),
+                                      description="Rotation axis for turntable", default="Z")
+
     Movie_filename: StringProperty(name='', default='movie-')
 
 

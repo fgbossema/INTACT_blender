@@ -668,6 +668,11 @@ class OBJECT_PT_Image_Panel(bpy.types.Panel):
             col.label(text="Movie filename:")
             col = split.column()
             col.prop(INTACT_Props, "Movie_filename", text="")
+            row = layout.row(align=True)
+            row.label(text="Axis")
+            row.prop_enum(INTACT_Props, "Movie_rotation_axis", "X")
+            row.prop_enum(INTACT_Props, "Movie_rotation_axis", "Y")
+            row.prop_enum(INTACT_Props, "Movie_rotation_axis", "Z")
             layout.operator("intact.render_turntable", text="Render turntable movie")
         
         
