@@ -165,24 +165,6 @@ def boolean_slice(self, context):
         disable_boolean_slice(context)
 
 
-def calculate_slice_location(cropping_cube_location, cropping_cube_dim, ct_vol_location, ct_vol_dim):
-    left_ct_vol_edge = ct_vol_location - (0.5 * ct_vol_dim)
-    right_ct_vol_edge = ct_vol_location + (0.5 * ct_vol_dim)
-    left_cropping_cube_edge = cropping_cube_location - (0.5 * cropping_cube_dim)
-    right_cropping_cube_edge = cropping_cube_location + (0.5 * cropping_cube_dim)
-
-    if left_cropping_cube_edge < left_ct_vol_edge <= right_cropping_cube_edge:
-        location = right_cropping_cube_edge
-    elif right_cropping_cube_edge > right_ct_vol_edge >= left_cropping_cube_edge:
-        location = left_cropping_cube_edge
-    elif left_cropping_cube_edge < left_ct_vol_edge and right_cropping_cube_edge < left_ct_vol_edge:
-        location = left_ct_vol_edge
-    else:
-        location = right_ct_vol_edge
-
-    return location
-
-
 def lock_location_rotation(slice, driver_axis, lock):
     """lock location on all axes without driver, lock rotation on all axes"""
     for i in range(3):
@@ -213,31 +195,34 @@ def enable_track_slices_to_cropping_cube(context):
     for i in range(len(transforms)):
         location_driver = slices[i].driver_add("location", i)
         cropping_cube_location = location_driver.driver.variables.new()
-        cropping_cube_location.name = "cropping_cube_location"
+        cropping_cube_location.name = "cl"
         cropping_cube_location.type = 'TRANSFORMS'
         cropping_cube_location.targets[0].id = cropping_cube
         cropping_cube_location.targets[0].transform_type = f'LOC_{transforms[i]}'
 
         ct_vol_location = location_driver.driver.variables.new()
-        ct_vol_location.name = "ct_vol_location"
+        ct_vol_location.name = "ctl"
         ct_vol_location.type = 'TRANSFORMS'
         ct_vol_location.targets[0].id = ct_vol
         ct_vol_location.targets[0].transform_type = f'LOC_{transforms[i]}'
 
         cropping_cube_dim = location_driver.driver.variables.new()
-        cropping_cube_dim.name = "cropping_cube_dim"
+        cropping_cube_dim.name = "cd"
         cropping_cube_dim.type = 'SINGLE_PROP'
         cropping_cube_dim.targets[0].id = cropping_cube
         cropping_cube_dim.targets[0].data_path = f"dimensions[{i}]"
 
         ct_vol_dim = location_driver.driver.variables.new()
-        ct_vol_dim.name = "ct_vol_dim"
+        ct_vol_dim.name = "ctd"
         ct_vol_dim.type = 'SINGLE_PROP'
         ct_vol_dim.targets[0].id = ct_vol
         ct_vol_dim.targets[0].data_path = f"dimensions[{i}]"
 
-        location_driver.driver.expression = "calculate_slice_location(cropping_cube_location, cropping_cube_dim, " \
-                                            "ct_vol_location, ct_vol_dim)"
+        location_driver.driver.expression = \
+            "cl+0.5*cd if cl-0.5*cd < ctl-0.5*ctd <= cl+0.5*cd else " \
+            "cl-0.5*cd if cl+0.5*cd > ctl+0.5*ctd >= cl-0.5*cd else " \
+            "ctl-0.5*ctd if cl-0.5*cd < ctl-0.5*ctd and " \
+            "cl+0.5*cd < ctl-0.5*ctd else ctl+0.5*ctd"
 
         lock_location_rotation(slices[i], i, True)
 
@@ -362,22 +347,14 @@ classes = [
     CroppingCubeCreation]
 
 
-@persistent
-def load_handler(dummy):
-    # print("Loading driver function for slices")
-    bpy.app.driver_namespace['calculate_slice_location'] = calculate_slice_location
-
-
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-        bpy.app.handlers.load_post.append(load_handler)
 
 
 def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
-        bpy.app.handlers.load_post.remove(load_handler)
 
 
 if __name__ == "__main__":
