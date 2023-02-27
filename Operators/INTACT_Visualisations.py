@@ -21,25 +21,26 @@ class CroppingCubeCreation(bpy.types.Operator):
         surf_3d = INTACT_Props.Surf_3D
         cropping_cube = INTACT_Props.Cropping_Cube
 
-        ct_bool = ct_vol.modifiers.new(type="BOOLEAN", name="Cropping Cube")
-        ct_bool.operation = 'DIFFERENCE'
-        ct_bool.object = cropping_cube
+        # Add boolean to ct volume + surface scan (if it exists)
+        to_add_boolean = [ct_vol]
+        if surf_3d:
+            to_add_boolean.append(surf_3d)
 
-        surf_bool = surf_3d.modifiers.new(type="BOOLEAN", name="Cropping Cube")
-        surf_bool.operation = "DIFFERENCE"
-        surf_bool.object = cropping_cube
+        for obj in to_add_boolean:
+            obj_bool = obj.modifiers.new(type="BOOLEAN", name="Cropping Cube")
+            obj_bool.operation = 'DIFFERENCE'
+            obj_bool.object = cropping_cube
 
-        print("\nBoolean modifiers applied to both CT visualisation and 3D surface scan")
+        print("\nBoolean modifiers applied")
 
     def execute(self, context):
         INTACT_Props = context.scene.INTACT_Props
         ct_vol = INTACT_Props.CT_Vol
-        surf_3d = INTACT_Props.Surf_3D
         cropping_cube_name = "Crop CT"
         cube_collection_name = "Cropping Cubes"
 
-        if not ct_vol or not surf_3d:
-            message = [" Please input CT Volume and surface scan first "]
+        if not ct_vol:
+            message = [" Please input CT Volume first "]
             INTACT_Utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
             return {"CANCELLED"}
 
@@ -87,10 +88,10 @@ class CroppingCubeCreation(bpy.types.Operator):
             # Add booleans
             self.cropping_cube_boolean(context)
 
-            # select surface mesh, so it's easy to carry on with further operations (with all deselected the ui
+            # select ct volume, so it's easy to carry on with further operations (with all deselected the ui
             # says 'please load data first')
             bpy.ops.object.select_all(action="DESELECT")
-            context.view_layer.objects.active = surf_3d
+            context.view_layer.objects.active = ct_vol
 
         return {'FINISHED'}
 
