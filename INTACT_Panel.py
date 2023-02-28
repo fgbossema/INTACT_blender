@@ -1,14 +1,6 @@
-import bpy, os, sys
 from os.path import join, dirname, exists, abspath
 
 import bpy
-import numpy as np
-import math as mt
-import mathutils as mu
-import copy
-import os
-import blf
-from bpy_extras import view3d_utils
 
 ADDON_DIR = dirname(abspath(__file__))
 Addon_Version_Path = join(ADDON_DIR, "Resources", "INTACT_Version.txt")
@@ -556,6 +548,7 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
             layout.operator("object.icpexport")
             layout.operator("object.icpset")
 
+
 class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
     """Creates a Panel in the scene context of the properties editor"""
     bl_category = "INTACT"
@@ -579,36 +572,55 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
             row.label(text = "Please load your data first.")
         
         else:
-            if not (context.object.name.startswith("IT") and context.object.name.endswith(
-                ("CTVolume"))):
-                row = layout.row()
-                row.label(text = "Please select CT volume, to generate slices.")
-            else:
-                row = layout.row()
-                row.operator("intact.addslices", icon="EMPTY_AXIS")
+            row = layout.row()
+            split = row.split()
+            col = split.column()
+            col.label(text="CT Volume:")
+            col = split.column()
+            col.prop(INTACT_Props, "CT_Vol", text="")
+
+            row = layout.row()
+            split = row.split()
+            col = split.column()
+            col.label(text="Surface scan:")
+            col = split.column()
+            col.prop(INTACT_Props, "Surf_3D", text="")
+
+            row = layout.row()
+            split = row.split()
+            col = split.column()
+            col.label(text="CT Segmentation:")
+            col = split.column()
+            col.prop(INTACT_Props, "Seg", text="")
+
+            row = layout.row()
+            row.operator("intact.addslices", icon="EMPTY_AXIS")
         
         if context.object:
-            layout.label(text="Tool Setup:")
-            layout.operator("intact.init_setup")
-            layout.operator("intact.object_selection")
-            layout.operator("intact.cropping_cube_creation")
-            layout.operator("intact.cropping_cube_boolean")
-            layout.operator("intact.cropping_cube_drivers")
-            layout.operator("intact.slices_tracking2")
-            layout.operator("intact.no_slices_tracking")
+            layout.label(text="Make cropping cube:")
+            layout.operator("intact.cropping_cube_creation", text="Create Cropping Cube")
+
+            row = layout.row()
+            row.prop(INTACT_Props, "Track_slices_to_cropping_cube", text="Track slices")
+            # disable checkbox while there are no slices + no cropping cube
+            row.enabled = INTACT_Props.Axial_Slice is not None and INTACT_Props.Cropping_Cube is not None
+
+            row = layout.row()
+            row.prop(INTACT_Props, "Remove_slice_outside_surface", text="Crop slices outside surface scan")
+            # disable checkbox while there are no slices + no cropping cube + surface isn't set
+            row.enabled = INTACT_Props.Axial_Slice is not None and INTACT_Props.Cropping_Cube is not None and \
+                          INTACT_Props.Surf_3D is not None
         
             row = layout.row()
-            row.label(text = "Open viewing in multiple directions.")
+            row.label(text="Open viewing in multiple directions.")
             row = layout.row()
             row.operator("intact.multiview")
-            layout.operator("intact.slices_tracking2")
-            layout.operator("intact.no_slices_tracking")
 
-        
-            layout.label(text="Debugging:")
-            layout.operator("intact.switch_boolean_solver")
-            layout.operator("intact.debug_1")
-            layout.operator("intact.debug_2")
+            row = layout.row()
+            row.label(text="Display settings:")
+            layout.prop(INTACT_Props, "Surface_scan_roughness", text="Surface scan roughness")
+            layout.prop(INTACT_Props, "Slice_thickness", text="Slice thickness")
+
         
 class OBJECT_PT_Image_Panel(bpy.types.Panel):
     """Creates a Panel in the scene context of the properties editor"""
@@ -623,7 +635,6 @@ class OBJECT_PT_Image_Panel(bpy.types.Panel):
         layout = self.layout
         row = layout.row()
         scene = context.scene
-        #mytool = scene.my_tool
         INTACT_Props = context.scene.INTACT_Props
         GroupNodeName = INTACT_Props.GroupNodeName
         VGS = bpy.data.node_groups.get(GroupNodeName)
@@ -632,9 +643,37 @@ class OBJECT_PT_Image_Panel(bpy.types.Panel):
             row = layout.row()
             row.label(text = "Please load your data first.")
         else:
-            layout.label(text="Operators:")
-            layout.operator("intact.camera_setup")
-            layout.operator("intact.animation_path")
+            layout.prop(INTACT_Props, "Resolution_x", text="Resolution x (pixels)")
+            layout.prop(INTACT_Props, "Resolution_y", text="Resolution y (pixels)")
+            row = layout.row()
+            row.label(text="Quick screenshot:")
+            layout.operator("intact.take_screenshot", text="Take Screenshot")
+
+            row = layout.row()
+            row.label(text="Render image / movie:")
+            if not INTACT_Props.Set_camera_enabled:
+                icon = "PLAY"
+                txt = 'Set Camera Position'
+            else:
+                icon = "PAUSE"
+                txt = 'Confirm Camera Position'
+
+            layout.prop(INTACT_Props, 'Set_camera_enabled', text=txt, icon=icon, toggle=True)
+            layout.prop(INTACT_Props, 'Lighting_strength', text="Lighting strength")
+            layout.prop(INTACT_Props, 'Background_colour', text="Background colour")
+            layout.operator("intact.render_image", text="Render image")
+            row = layout.row()
+            split = row.split()
+            col = split.column()
+            col.label(text="Movie filename:")
+            col = split.column()
+            col.prop(INTACT_Props, "Movie_filename", text="")
+            row = layout.row(align=True)
+            row.label(text="Axis")
+            row.prop_enum(INTACT_Props, "Movie_rotation_axis", "X")
+            row.prop_enum(INTACT_Props, "Movie_rotation_axis", "Y")
+            row.prop_enum(INTACT_Props, "Movie_rotation_axis", "Z")
+            layout.operator("intact.render_turntable", text="Render turntable movie")
         
         
 #################################################################################################
@@ -680,7 +719,7 @@ def register():
         items = [("combined", "Combined Transformation", "Export the combined initial and ICP transformation"),
             ("roughAlignment", "Initial Transformation", "Export only the initial transformation"),
             ("fineAlignment", "ICP Transformation", "Export only the ICP transformation")])
-    
+
 
 def unregister():
 

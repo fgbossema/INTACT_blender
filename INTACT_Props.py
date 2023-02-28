@@ -1,6 +1,7 @@
 import bpy
-from os.path import abspath
 import os
+from .Operators import INTACT_Visualisations
+from .Operators import INTACT_Images
 from mathutils import Matrix, Vector, Euler, kdtree
 
 from bpy.props import (
@@ -10,6 +11,7 @@ from bpy.props import (
     EnumProperty,
     FloatVectorProperty,
     BoolProperty,
+    PointerProperty
 )
 
 def ColorUpdateFunction(self, context):
@@ -132,14 +134,14 @@ def text_underline_toggle(self, context):
             bpy.ops.font.select_all()
             bpy.ops.font.style_toggle(style="UNDERLINE")
             bpy.ops.object.mode_set(mode=mode)
-            
+
+
 def make_path_absolute(key):
     """ Prevent Blender's relative paths """
     props = bpy.context.scene.INTACT_Props
     sane_path = lambda p: os.path.abspath(bpy.path.abspath(p))
     if key in props and props[key].startswith('//'):
         props[key] = sane_path(props[key]) 
-
 
 
 class INTACT_Props(bpy.types.PropertyGroup):
@@ -480,6 +482,87 @@ class INTACT_Props(bpy.types.PropertyGroup):
         items.append(item)
 
     cutting_mode: EnumProperty(items=items, description="", default="Cut inner")
+
+    #########################################################################################
+    # Visualisation Props :
+    #########################################################################################
+    CT_Vol: PointerProperty(
+        name="CT_Vol",
+        type=bpy.types.Object)
+
+    Surf_3D: PointerProperty(
+        name="Surf_3D",
+        type=bpy.types.Object)
+
+    Seg: PointerProperty(
+        name="Seg",
+        type=bpy.types.Object)
+
+    Axial_Slice: PointerProperty(
+        name="Seg",
+        type=bpy.types.Object)
+
+    Coronal_Slice: PointerProperty(
+        name="Seg",
+        type=bpy.types.Object)
+
+    Sagital_Slice: PointerProperty(
+        name="Seg",
+        type=bpy.types.Object)
+
+    Cropping_Cube: PointerProperty(
+        name="Cropping_Cube",
+        type=bpy.types.Object)
+
+    Axial_Slice_Pos: FloatVectorProperty(
+        name='', size=3, subtype="TRANSLATION")
+
+    Coronal_Slice_Pos: FloatVectorProperty(
+        name='', size=3, subtype="TRANSLATION")
+
+    Sagital_Slice_Pos: FloatVectorProperty(
+        name='', size=3, subtype="TRANSLATION")
+
+    Axial_Slice_Rot: FloatVectorProperty(
+        name='', size=3, subtype="EULER")
+
+    Coronal_Slice_Rot: FloatVectorProperty(
+        name='', size=3, subtype="EULER")
+
+    Sagital_Slice_Rot: FloatVectorProperty(
+        name='', size=3, subtype="EULER")
+
+    Track_slices_to_cropping_cube: BoolProperty(
+        name='', update=INTACT_Visualisations.track_slices)
+
+    Remove_slice_outside_surface: BoolProperty(
+        name='', update=INTACT_Visualisations.boolean_slice)
+
+    Surface_scan_roughness: FloatProperty(
+        name='', soft_min=0.0, soft_max=1.0, default=0.0, precision=1,
+        update=INTACT_Visualisations.surface_scan_roughness)
+
+    Slice_thickness: FloatProperty(
+        name='', soft_min=0.0, default=1.0, precision=2,
+        update=INTACT_Visualisations.slice_thickness)
+
+    Resolution_x: IntProperty(
+        name='', soft_min=500, soft_max=4000, default=1920, step=10, update=INTACT_Images.update_render_resolution)
+
+    Resolution_y: IntProperty(
+        name='', soft_min=500, soft_max=4000, default=1080, step=10, update=INTACT_Images.update_render_resolution)
+
+    Set_camera_enabled: BoolProperty(name='', default=False, update=INTACT_Images.set_camera_position)
+
+    Lighting_strength: FloatProperty(name='', default=1.0, soft_min=0.1, precision=1)
+
+    Background_colour: FloatVectorProperty(name='', subtype="COLOR", size=4,
+                                           min=0.0, max=1.0, default=[0.0, 0.0, 0.0, 1.0])
+
+    Movie_rotation_axis: EnumProperty(items=(("X", ) * 3, ("Y",) * 3, ("Z",) * 3),
+                                      description="Rotation axis for turntable", default="Z")
+
+    Movie_filename: StringProperty(name='', default='movie-')
 
 
 #################################################################################################
