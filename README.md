@@ -1,1 +1,1 @@
-# IntACT plugin for windows
+# IntACT plugin for windows and developed for Blender 2.90.1
