@@ -134,7 +134,7 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
         if not INTACT_Props.UserProjectDir:
             row = layout.row()
             row.alignment = "LEFT"
-            row.label(text = "Please select working directory in INTACT panel")
+            row.label(text = "Please select working directory in INTACT panel.")
             
         if INTACT_Props.UserProjectDir:
 
@@ -249,7 +249,7 @@ class INTACT_PT_SurfacePanel(bpy.types.Panel):
        if not INTACT_Props.UserProjectDir:
            row = layout.row()
            row.alignment = "LEFT"
-           row.label(text = "Please select working directory in INTACT panel")
+           row.label(text = "Please select working directory in INTACT panel.")
        else: 
            row = layout.row()
            split = row.split()
@@ -413,63 +413,88 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
         GroupNodeName = INTACT_Props.GroupNodeName
         VGS = bpy.data.node_groups.get(GroupNodeName)
         
-        if not context.object:
-            row = layout.row()
-            row.label(text = "Please load your data first.")
-           
-        
+         
+        condition_CT = False
+        condition_surface = False
+
         if context.object:
-            if context.object.name.endswith("CTVolume"):
+            for obj in context.scene.objects: 
+                if obj.name.endswith("CTVolume"):
+                    condition_CT = True
+                if obj.name.startswith("IT_surface"):
+                    condition_surface = True
+            if not (condition_CT or condition_surface):
                 row = layout.row()
-                row.label(text="If the CT volume has moved, reset it's position.")
-                
+                row.label(text="Please load your data first.")
+            elif (condition_surface and not condition_CT):
                 row = layout.row()
-                row.operator("intact.reset_ctvolume_position")
-                
-                row = layout.row()
-                row.label(text="Determine the threshold to separate air and object.")
-                row = layout.row()
-                row.prop(INTACT_Props, "Threshold", text="THRESHOLD", slider=True)
-                   
-                layout.separator()
-
-                row = layout.row()
-                row.label(text="Choose color for segmentation, then click SEGMENTATION. ")
-
-                row = layout.row()
-                split = row.split()
-                col = split.column()
-                col.label(text = "Color of segmentation:")
-                col = split.column()
-
-                col.prop(INTACT_Props, "Thres1SegmentColor", text="")
-
-
-                Box = layout.box()
-                row = Box.row()
-                row.alignment = "CENTER"
-                row.scale_y = 2
-                row.operator("intact.multitresh_segment")
-
-
+                row.label(text="Please load CT scan.")
+                     
         
-        condition1 = False
-        condition2 = False
+        if condition_CT:
+            row = layout.row()
+            row.label(text="If the CT volume has moved, reset it's position.")
+                
+            row = layout.row()
+            row.operator("intact.reset_ctvolume_position")
+                
+            row = layout.row()
+            row.label(text="Determine the threshold to separate air and object.")
+            row = layout.row()
+            row.prop(INTACT_Props, "Threshold", text="THRESHOLD", slider=True)
+                   
+            layout.separator()
+
+            row = layout.row()
+            row.label(text="Choose color for segmentation, then click SEGMENTATION. ")
+
+            row = layout.row()
+            split = row.split()
+            col = split.column()
+            col.label(text = "Color of segmentation:")
+            col = split.column()
+
+            col.prop(INTACT_Props, "Thres1SegmentColor", text="")
+
+            Box = layout.box()
+            row = Box.row()
+            row.alignment = "CENTER"
+            row.scale_y = 2
+            row.operator("intact.multitresh_segment")
+        elif (condition_CT and not obj.name.endswith("CTVolume")): 
+            row = layout.row()
+            row.label(text="Please select CT volume for segmentation.")
+            
+        condition_segment = False
 
         if context.object:
             for obj in context.scene.objects: 
                 if obj.name.endswith("SEGMENTATION"):
-                    condition1 = True
-                if obj.name.startswith("IT_surface"):
-                    condition2 = True
-            if not condition1:
+                    condition_segment = True
+            if (condition_CT and condition_surface and not condition_segment):
                 row = layout.row()
-                row.label(text="Please select CT volume to create a segmentation first.")
-            if not condition2:
+                row.label(text="Please select CT volume and make segmentation.")
+            if (condition_CT and condition_segment and not condition_surface):
                 row = layout.row()
                 row.label(text="Please load a surface scan.")
             
-        if (condition1 and condition2):
+        # if (condition_surface and condition_segment):
+            
+            # row = layout.row()
+            # split = row.split()
+            # col = split.column()
+            # col.label(text="Surface scan to register:")
+            # col = split.column()
+            # col.prop(INTACT_Props, "Surf_3D", text="")
+
+            # row = layout.row()
+            # split = row.split()
+            # col = split.column()
+            # col.label(text="CT Segmentation:")
+            # col = split.column()
+            # col.prop(INTACT_Props, "Seg", text="")
+        
+        
         #rough alignment panel
             layout.label(text = "Initial Alignment")
             layout.label(text = "Either manually move the surface scan for a rough alignment or place landmarks on each object (CT first, press enter to confirm) and align.")
@@ -523,11 +548,20 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
         GroupNodeName = INTACT_Props.GroupNodeName
         VGS = bpy.data.node_groups.get(GroupNodeName)
         
-        if not context.object:
-            row = layout.row()
-            row.label(text = "Please load your data first.")
-        
-        else:
+        condition_CT = False
+        condition_surface = False
+
+        if context.object:
+            for obj in context.scene.objects: 
+                if obj.name.endswith("CTVolume"):
+                    condition_CT = True
+                if obj.name.startswith("IT_surface"):
+                    condition_surface = True
+            if not (condition_CT or condition_surface):
+                row = layout.row()
+                row.label(text="Please load your data first.")
+            
+        if (condition_CT or condition_surface):
             row = layout.row()
             split = row.split()
             col = split.column()
@@ -548,11 +582,15 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
             col.label(text="CT Segmentation:")
             col = split.column()
             col.prop(INTACT_Props, "Seg", text="")
-
-            row = layout.row()
+            
+            Box = layout.box()
+            row = Box.row()
+            row.alignment = "CENTER"
+            row.scale_y = 2
             row.operator("intact.addslices", icon="EMPTY_AXIS")
+
         
-        if context.object:
+        if (condition_CT or condition_surface):
             layout.label(text="Make cropping cube:")
             layout.operator("intact.cropping_cube_creation", text="Create Cropping Cube")
 
@@ -595,10 +633,20 @@ class OBJECT_PT_Image_Panel(bpy.types.Panel):
         GroupNodeName = INTACT_Props.GroupNodeName
         VGS = bpy.data.node_groups.get(GroupNodeName)
         
-        if not context.object:
-            row = layout.row()
-            row.label(text = "Please load your data first.")
-        else:
+        condition_CT = False
+        condition_surface = False
+
+        if context.object:
+            for obj in context.scene.objects: 
+                if obj.name.endswith("CTVolume"):
+                    condition_CT = True
+                if obj.name.startswith("IT_surface"):
+                    condition_surface = True
+            if not (condition_CT and condition_surface):
+                row = layout.row()
+                row.label(text="Please load your data first.")
+            
+        if (condition_CT or condition_surface):
             layout.prop(INTACT_Props, "Resolution_x", text="Resolution x (pixels)")
             layout.prop(INTACT_Props, "Resolution_y", text="Resolution y (pixels)")
             row = layout.row()

@@ -19,6 +19,8 @@ class CroppingCubeCreation(bpy.types.Operator):
         This part of the script ensures that the cropping cubes are in fact cropping the objects.
         """
         INTACT_Props = context.scene.INTACT_Props
+        #add the default here?
+        
         ct_vol = INTACT_Props.CT_Vol
         surf_3d = INTACT_Props.Surf_3D
         cropping_cube = INTACT_Props.Cropping_Cube

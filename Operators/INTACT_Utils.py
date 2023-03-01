@@ -73,9 +73,6 @@ def Addon_Enable(AddonName, Enable=True):
     import addon_utils as AU
 
     is_enabled, is_loaded = AU.check(AddonName)
-    # for mod in AU.modules() :
-    # Name = mod.bl_info["name"]
-    # print(Name)
     if Enable:
         if not is_enabled:
             AU.enable(AddonName, default_set=True)
@@ -84,7 +81,6 @@ def Addon_Enable(AddonName, Enable=True):
             AU.disable(AddonName, default_set=True)
 
     is_enabled, is_loaded = AU.check(AddonName)
-    # print(f"{AddonName} : (is_enabled : {is_enabled} , is_loaded : {is_loaded})")
 
 
 def CleanScanData(Preffix):
