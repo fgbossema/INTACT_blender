@@ -21,7 +21,7 @@ from vtk import vtkCommand
 from .INTACT_Utils import *
 
 addon_dir = dirname(dirname(abspath(__file__)))
-ShadersBlendFile = join(addon_dir, "Resources", "BlendData", "INTACT_BlendData_2.blend")
+ShadersBlendFile = join(addon_dir, "Resources", "BlendData", "INTACT_BlendData.blend")
 GpShader = "VGS_INTACT"  
 ProgEvent = vtkCommand.ProgressEvent
 
@@ -47,14 +47,9 @@ class INTACT_OT_Template(bpy.types.Operator):
     bl_idname = "intact.template"
     bl_label = "OPEN INTACT WORKSPACE"
 
-    SaveMainFile: BoolProperty(description="Save Main File", default=False)
-
     def execute(self, context):
 
         CurrentBlendFile = bpy.path.abspath(bpy.data.filepath)
-        BlendStartFile = join(
-            addon_dir, "Resources", "BlendData", "BlendStartFile.blend"
-        )
 
         # Install or load INTACT theme :
         ScriptsPath = dirname(dirname(addon_dir))
@@ -69,26 +64,6 @@ class INTACT_OT_Template(bpy.types.Operator):
             filepath=INTACT_Theme_installed,
             menu_idname="USERPREF_MT_interface_theme_presets",
         )
-
-        # Save Re Open current Project check :
-        if self.SaveMainFile:
-            if not CurrentBlendFile:
-                message = [" Please Save your Project ", "Or uncheck Save Main File"]
-                ShowMessageBox(message=message, icon="COLORSET_01_VEC")
-                return {"CANCELLED"}
-            else:
-                bpy.ops.wm.save_mainfile()
-                CurrentBlendFile = bpy.path.abspath(bpy.data.filepath)
-                reopen = True
-        if not self.SaveMainFile:
-            reopen = False
-
-        bpy.ops.wm.open_mainfile(filepath=BlendStartFile)
-        # context.space_data.region_3d.view_perspective = "ORTHO"
-        bpy.ops.wm.save_homefile()
-
-        if reopen and CurrentBlendFile:
-            bpy.ops.wm.open_mainfile(filepath=CurrentBlendFile)
 
         return {"FINISHED"}
 
