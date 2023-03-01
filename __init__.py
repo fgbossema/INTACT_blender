@@ -23,7 +23,7 @@
 ##############################################################################################
 bl_info = {
     "name": "IntACT",  ###################Addon name
-    "author": "Francien Bossema & Paul van Laar",
+    "author": "Francien Bossema, Paul van Laar & Kimberly Meechan",
     "version": (1, 0, 0),
     "blender": (2, 90, 1),  ################# Blender working version
     "location": "3D View -> UI SIDE PANEL ",
@@ -101,16 +101,16 @@ else:
 
     # Addon modules imports :
     from . import INTACT_Props, INTACT_Panel
-    from .Operators import INTACT_ScanOperators, INTACT_MeshesTools_Operators, INTACT_ICP, INTACT_Visualisations, INTACT_Images
+    from .Operators import INTACT_ScanLoad, INTACT_MeshesTools_Operators, INTACT_Registration, INTACT_Visualisation, INTACT_ImagesOutput
 
     addon_modules = [
         INTACT_Props,
         INTACT_Panel,
-        INTACT_ScanOperators,
+        INTACT_ScanLoad,
         INTACT_MeshesTools_Operators,
-        INTACT_ICP,
-        INTACT_Visualisations,
-        INTACT_Images
+        INTACT_Registration,
+        INTACT_Visualisation,
+        INTACT_ImagesOutput
     ]
     init_classes = []
 
