@@ -26,7 +26,7 @@ class INTACT_PT_MainPanel(bpy.types.Panel):
 
     bl_idname = "INTACT_PT_MainPanel"
     bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"  # blender 2.7 and lower = TOOLS
+    bl_region_type = "UI" 
     bl_category = "INTACT"
     bl_label = "INTACT"
     bl_options = {"DEFAULT_CLOSED"}
@@ -116,7 +116,7 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
 
     bl_idname = "INTACT_PT_ScanPanel"
     bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"  # blender 2.7 and lower = TOOLS
+    bl_region_type = "UI" 
     bl_category = "INTACT"
     bl_label = "CT SCAN LOAD"
     bl_options = {"DEFAULT_CLOSED"}
@@ -164,7 +164,6 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
 
                 if INTACT_Props.UserTiffDir:
                     Box = layout.box()
-                    # Box.alert = True
                     row = Box.row()
                     row.alignment = "CENTER"
                     row.scale_y = 2
@@ -182,7 +181,6 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                 if INTACT_Props.UserDcmDir:
 
                     Box = layout.box()
-                    # Box.alert = True
                     row = Box.row()
                     row.alignment = "CENTER"
                     row.scale_y = 2
@@ -200,7 +198,6 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                 if INTACT_Props.UserImageFile:
 
                     Box = layout.box()
-                    # Box.alert = True
                     row = Box.row()
                     row.alignment = "CENTER"
                     row.scale_y = 2
@@ -227,32 +224,8 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                 row = layout.row()
                 row.label(text=f"Threshold:")
                 row = layout.row()
-                row.prop(INTACT_Props, "Thres1Treshold", text="THRESHOLD", slider=True)
+                row.prop(INTACT_Props, "Threshold", text="THRESHOLD", slider=True)
                    
-                # layout.separator()
-
-                # row = layout.row()
-                # row.label(text="Segments :")
-
-                # Box = layout.box()
-                # row = Box.row()
-                # #row.prop(INTACT_Props, "Thres1Treshold", text="Threshold 1")
-                # row.prop(INTACT_Props, "Thres1SegmentColor", text="")
-                # #row.prop(INTACT_Props, "Thres1Bool", text="")
-                # # row = Box.row()
-                # # row.prop(INTACT_Props, "Thres2Treshold", text="Threshold 2")
-                # # row.prop(INTACT_Props, "Thres2SegmentColor", text="")
-                # # row.prop(INTACT_Props, "Thres2Bool", text="")
-
-                # # row = Box.row()
-                # # row.prop(INTACT_Props, "Thres3Treshold", text="Threshold 3")
-                # # row.prop(INTACT_Props, "Thres3SegmentColor", text="")
-                # # row.prop(INTACT_Props, "Thres3Bool", text="")
-
-                # Box = layout.box()
-                # row = Box.row()
-                # row.operator("intact.multitresh_segment")
-                
 
 
 class INTACT_PT_SurfacePanel(bpy.types.Panel):
@@ -260,7 +233,7 @@ class INTACT_PT_SurfacePanel(bpy.types.Panel):
 
     bl_idname = "INTACT_PT_SurfacePanel"
     bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"  # blender 2.7 and lower = TOOLS
+    bl_region_type = "UI"  
     bl_category = "INTACT"
     bl_label = "SURFACE SCAN LOAD"
     bl_options = {"DEFAULT_CLOSED"}
@@ -299,7 +272,7 @@ class INTACT_PT_Measurements(bpy.types.Panel):
 
     bl_idname = "INTACT_PT_Measurements"
     bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"  # blender 2.7 and lower = TOOLS
+    bl_region_type = "UI"  
     bl_category = "INTACT"
     bl_label = "MEASUREMENTS"
     bl_options = {"DEFAULT_CLOSED"}
@@ -319,7 +292,7 @@ class INTACT_PT_MeshesTools_Panel(bpy.types.Panel):
 
     bl_idname = "INTACT_PT_MeshesTools_Panel"
     bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"  # blender 2.7 and lower = TOOLS
+    bl_region_type = "UI"  
     bl_category = "INTACT"
     bl_label = "MESH TOOLS"
     bl_options = {"DEFAULT_CLOSED"}
@@ -427,7 +400,6 @@ class INTACT_PT_MeshesTools_Panel(bpy.types.Panel):
             row.operator("intact.paint_cut")
 
 class OBJECT_PT_ICP_panel(bpy.types.Panel):
-    #bl_category = "INTACT_Registration"
     bl_category = "INTACT"
     bl_label = "REGISTRATION"
     bl_space_type = "VIEW_3D"
@@ -457,7 +429,7 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
                 row = layout.row()
                 row.label(text="Determine the threshold to separate air and object.")
                 row = layout.row()
-                row.prop(INTACT_Props, "Thres1Treshold", text="THRESHOLD", slider=True)
+                row.prop(INTACT_Props, "Threshold", text="THRESHOLD", slider=True)
                    
                 layout.separator()
 
@@ -469,21 +441,9 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
                 col = split.column()
                 col.label(text = "Color of segmentation:")
                 col = split.column()
-                #row.prop(INTACT_Props, "Thres1Treshold", text="Threshold 1")
-                col.prop(INTACT_Props, "Thres1SegmentColor", text="")
-                
-                
-                
-                #row.prop(INTACT_Props, "Thres1Bool", text="")
-                # row = Box.row()
-                # row.prop(INTACT_Props, "Thres2Treshold", text="Threshold 2")
-                # row.prop(INTACT_Props, "Thres2SegmentColor", text="")
-                # row.prop(INTACT_Props, "Thres2Bool", text="")
 
-                # row = Box.row()
-                # row.prop(INTACT_Props, "Thres3Treshold", text="Threshold 3")
-                # row.prop(INTACT_Props, "Thres3SegmentColor", text="")
-                # row.prop(INTACT_Props, "Thres3Bool", text="")
+                col.prop(INTACT_Props, "Thres1SegmentColor", text="")
+
 
                 Box = layout.box()
                 row = Box.row()
@@ -509,10 +469,6 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
                 row = layout.row()
                 row.label(text="Please load a surface scan.")
             
-        # row = layout.row()
-        # row.alignment = "RIGHT"
-        # row.scale_x = 2
-        # row.operator("object.icpreadme", text = "", icon = "QUESTION")
         if (condition1 and condition2):
         #rough alignment panel
             layout.label(text = "Initial Alignment")

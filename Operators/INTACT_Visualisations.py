@@ -1,6 +1,8 @@
 import bpy
 from . import INTACT_Utils
 from bpy.app.handlers import persistent
+
+from .INTACT_Utils import *
     
 # ---------------------------------------------------------------------------
 #          Operators
@@ -282,69 +284,114 @@ def slice_thickness(self, context):
         if slice and (solidify_modifier_name in slice.modifiers):
             slice.modifiers[solidify_modifier_name].thickness = self.Slice_thickness
 
-    
-# class Switch_Boolean_Solver(bpy.types.Operator):
-#     """
-#     This part of the script switch between "Fast" and "Exact" boolean solving. The first is, as the name suggests, not very computationally heavy,
-#     making the tool very interactive and quick to use. However, this is also, at times, prone to some buggy visualisations, that are (mostly)
-#     circumvented when the "Exact" solver is switched on. This is recommended for renders and other output.
-#     """
-#     bl_idname = "intact.switch_boolean_solver"
-#     bl_label = "Switch Boolean Solver"
-#
-#     def execute(self, context):
-#         INTACT_Props = context.scene.INTACT_Props
-#         CT_Vol = INTACT_Props.CT_Vol
-#         Surf_3D = INTACT_Props.Surf_3D
-#
-#         if CT_Vol.modifiers["Crop X"].solver == 'FAST':
-#             #Select the CT scan
-#             bpy.ops.object.select_all(action='DESELECT') #deselect all objects
-#             bpy.context.view_layer.objects.active = CT_Vol #Selects the CT Volume
-#             CT_Vol.select_set(True)
-#
-#             CT_Vol.modifiers["Crop X"].solver = 'EXACT'
-#             CT_Vol.modifiers["Crop Y"].solver = 'EXACT'
-#             CT_Vol.modifiers["Crop Z"].solver = 'EXACT'
-#
-#             #Select the 3D scan
-#             bpy.ops.object.select_all(action='DESELECT') #deselect all objects
-#             bpy.context.view_layer.objects.active = Surf_3D #Selects the 3D Surface scan
-#             Surf_3D.select_set(True)
-#
-#             Surf_3D.modifiers["Crop X"].solver = 'EXACT'
-#             Surf_3D.modifiers["Crop Y"].solver = 'EXACT'
-#             Surf_3D.modifiers["Crop Z"].solver = 'EXACT'
-#
-#         elif CT_Vol.modifiers["Crop X"].solver == 'EXACT':
-#             #Select the CT scan
-#             bpy.ops.object.select_all(action='DESELECT') #deselect all objects
-#             bpy.context.view_layer.objects.active = CT_Vol #Selects the CT Volume
-#             CT_Vol.select_set(True)
-#
-#             CT_Vol.modifiers["Crop X"].solver = 'FAST'
-#             CT_Vol.modifiers["Crop Y"].solver = 'FAST'
-#             CT_Vol.modifiers["Crop Z"].solver = 'FAST'
-#
-#             #Select the 3D scan
-#             bpy.ops.object.select_all(action='DESELECT') #deselect all objects
-#             bpy.context.view_layer.objects.active = Surf_3D #Selects the 3D Surface scan
-#             Surf_3D.select_set(True)
-#
-#             Surf_3D.modifiers["Crop X"].solver = 'FAST'
-#             Surf_3D.modifiers["Crop Y"].solver = 'FAST'
-#             Surf_3D.modifiers["Crop Z"].solver = 'FAST'
-#
-#         else:
-#             print("ERROR. No boolean modifiers found. Check if you haven't renamed your CT scan and 3D-surface scan, and ensure you have gone through all prior steps.")
-#
-#         return {'FINISHED'}
+class INTACT_OT_AddSlices(bpy.types.Operator):
+    """ Add Volume Slices """
+
+    bl_idname = "intact.addslices"
+    bl_label = "SLICE VOLUME"
+
+    def execute(self, context):
+        INTACT_Props = bpy.context.scene.INTACT_Props
+
+        if not INTACT_Props.CT_Vol:
+            message = [" Please input CT Volume first "]
+            ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+            return {"CANCELLED"}
+        else:
+            Vol = INTACT_Props.CT_Vol
+            Preffix = Vol.name[:5]
+            DcmInfoDict = eval(INTACT_Props.DcmInfo)
+            DcmInfo = DcmInfoDict[Preffix]
+
+            AxialPlane = AddSlice(0, Preffix, DcmInfo)
+            MoveToCollection(obj=AxialPlane, CollName="SLICES")
+            INTACT_Props.Axial_Slice = AxialPlane
+
+            CoronalPlane = AddSlice(1, Preffix, DcmInfo)
+            MoveToCollection(obj=CoronalPlane, CollName="SLICES")
+            INTACT_Props.Coronal_Slice = CoronalPlane
+
+            SagitalPlane = AddSlice(2, Preffix, DcmInfo)
+            MoveToCollection(obj=SagitalPlane, CollName="SLICES")
+            INTACT_Props.Sagital_Slice = SagitalPlane
+
+            # Add Cameras :
+
+            bpy.context.scene.render.resolution_x = 512
+            bpy.context.scene.render.resolution_y = 512
+
+            [
+                bpy.data.cameras.remove(cam)
+                for cam in bpy.data.cameras
+                if f"{AxialPlane.name}_CAM" in cam.name
+            ]
+            AxialCam = Add_Cam_To_Plane(AxialPlane, CamDistance=100, ClipOffset=1)
+            MoveToCollection(obj=AxialCam, CollName="SLICES-CAMERAS")
+
+            [
+                bpy.data.cameras.remove(cam)
+                for cam in bpy.data.cameras
+                if f"{CoronalPlane.name}_CAM" in cam.name
+            ]
+            CoronalCam = Add_Cam_To_Plane(
+                CoronalPlane, CamDistance=100, ClipOffset=1
+            )
+            MoveToCollection(obj=CoronalCam, CollName="SLICES-CAMERAS")
+
+            [
+                bpy.data.cameras.remove(cam)
+                for cam in bpy.data.cameras
+                if f"{SagitalPlane.name}_CAM" in cam.name
+            ]
+            SagitalCam = Add_Cam_To_Plane(
+                SagitalPlane, CamDistance=100, ClipOffset=1
+            )
+            MoveToCollection(obj=SagitalCam, CollName="SLICES-CAMERAS")
+
+            for obj in bpy.data.objects:
+                if obj.name == f"{Preffix}_SLICES_POINTER":
+                    bpy.data.objects.remove(obj)
+
+            bpy.ops.object.empty_add(
+                type="PLAIN_AXES",
+                align="WORLD",
+                location=AxialPlane.location,
+                scale=(1, 1, 1),
+            )
+            SLICES_POINTER = bpy.context.object
+            SLICES_POINTER.empty_display_size = 20
+            SLICES_POINTER.show_name = True
+            SLICES_POINTER.show_in_front = True
+            SLICES_POINTER.name = f"{Preffix}_SLICES_POINTER"
+
+            Override, _, _ = CtxOverride(bpy.context)
+
+            bpy.ops.object.select_all(Override, action="DESELECT")
+            AxialPlane.select_set(True)
+            CoronalPlane.select_set(True)
+            SagitalPlane.select_set(True)
+            SLICES_POINTER.select_set(True)
+            bpy.context.view_layer.objects.active = SLICES_POINTER
+            bpy.ops.object.parent_set(type="OBJECT", keep_transform=True)
+            bpy.ops.object.select_all(Override, action="DESELECT")
+            SLICES_POINTER.select_set(True)
+            Vol.select_set(True)
+            bpy.context.view_layer.objects.active = Vol
+            bpy.ops.object.parent_set(type="OBJECT", keep_transform=True)
+
+            bpy.ops.object.select_all(Override, action="DESELECT")
+            SLICES_POINTER.select_set(True)
+            bpy.context.view_layer.objects.active = SLICES_POINTER
+            MoveToCollection(obj=SLICES_POINTER, CollName="SLICES_POINTERS")
+
+            return {"FINISHED"}    
+
         
 # ---------------------------------------------------------------------------
 #          Registration
 # ---------------------------------------------------------------------------
 
-classes = [
+classes = [INTACT_OT_AddSlices,
     CroppingCubeCreation]
 
 

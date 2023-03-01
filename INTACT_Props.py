@@ -17,7 +17,7 @@ from bpy.props import (
 def ColorUpdateFunction(self, context):
     INTACT_Props = context.scene.INTACT_Props
     GpShader = INTACT_Props.GroupNodeName
-    Treshold = INTACT_Props.Thres1Treshold
+    Treshold = INTACT_Props.Threshold
     CtVolumeList = [
         obj
         for obj in bpy.context.scene.objects
@@ -34,7 +34,7 @@ def ColorUpdateFunction(self, context):
 def ShaderUpdateFunction(self, context):
     INTACT_Props = context.scene.INTACT_Props
     GpShader = INTACT_Props.GroupNodeName
-    Treshold = INTACT_Props.Thres1Treshold
+    Treshold = INTACT_Props.Threshold
     CtVolumeList = [
         obj
         for obj in bpy.context.scene.objects
@@ -53,7 +53,7 @@ def ShaderUpdateFunction(self, context):
 def TresholdUpdateFunction(self, context):
     INTACT_Props = context.scene.INTACT_Props
     GpShader = INTACT_Props.GroupNodeName
-    Treshold = INTACT_Props.Thres1Treshold
+    Treshold = INTACT_Props.Threshold
     CtVolumeList = [
         obj
         for obj in bpy.context.scene.objects
@@ -266,7 +266,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
         precision = 4)
 
     #######################
-    # Thres1TissueMode = BoolProperty(description="Thres1Tissue Mode ", default=False)
+
 
     GroupNodeName: StringProperty(
         name="Group shader Name",
@@ -306,19 +306,6 @@ class INTACT_Props(bpy.types.PropertyGroup):
         )
 
     #######################
-       
-    
-    # Treshold: IntProperty(
-        # name="Treshold",
-        # description="Volume Treshold",
-        # default=600,
-        # min=-400,
-        # max=3000,
-        # soft_min=-400,
-        # soft_max=3000,
-        # step=1,
-        # update=TresholdUpdateFunction,
-    # )
     
     
     Progress_Bar: FloatProperty(
@@ -335,7 +322,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
     )
 
     
-    Thres1Treshold: IntProperty(
+    Threshold: IntProperty(
         name="Threshold 1",
         description="Threshold 1",
         default = 600,
@@ -347,62 +334,23 @@ class INTACT_Props(bpy.types.PropertyGroup):
         update=TresholdUpdateFunction,
     )
     
-    Thres2Treshold: IntProperty(
-        name="Threshold 2",
-        description="Threshold 2",
-        default=100,
-        min=-400,
-        max=3000,
-        soft_min=-400,
-        soft_max=3000,
-        step=1,
-    )
-    Thres3Treshold: IntProperty(
-        name="Threshold 3",
-        description="Threshold 3",
-        default=200,
-        min=-400,
-        max=3000,
-        soft_min=-400,
-        soft_max=3000,
-        step=1,
-    )
+
     Thres1Bool: BoolProperty(description="", default=True)
-    Thres2Bool: BoolProperty(description="", default=False)
-    Thres3Bool: BoolProperty(description="", default=False)
 
     Thres1SegmentColor: FloatVectorProperty(
         name="Segmentation Color 1",
         description="Color 1",
-        default=[0.07, 0.75, 0.8, 1.0],  # [0.63, 0.37, 0.30, 1.0]
+        default=[0.07, 0.75, 0.8, 1.0], 
         soft_min=0.0,
         soft_max=1.0,
         size=4,
         subtype="COLOR",
     )
-    Thres2SegmentColor: FloatVectorProperty(
-        name="Segmentation Color 2",
-        description="Color 2",
-        default=[0.44, 0.4, 0.5, 1.0],  # (0.8, 0.46, 0.4, 1.0),
-        soft_min=0.0,
-        soft_max=1.0,
-        size=4,
-        subtype="COLOR",
-    )
-    Thres3SegmentColor: FloatVectorProperty(
-        name="Segmentation Color 3",
-        description="Color 3",
-        default=[0.55, 0.645, 0.67, 1.000000],  # (0.8, 0.46, 0.4, 1.0),
-        soft_min=0.0,
-        soft_max=1.0,
-        size=4,
-        subtype="COLOR",
-    )
-    
+     
     CTcolor: FloatVectorProperty(
         name="CT volume render color",
         description="Choose a color for the volume render.",
-        default=[0.799, 0.448, 0.058, 1.000000],  # (0.8, 0.46, 0.4, 1.0),
+        default=[0.799, 0.448, 0.058, 1.000000], 
         soft_min=0.0,
         soft_max=1.0,
         size=4,
@@ -590,45 +538,3 @@ def unregister():
     del bpy.types.Scene.INTACT_Props
 
 
-# props examples :
-
-# Axial_Loc: FloatVectorProperty(
-#     name="AXIAL location",
-#     description="AXIAL location",
-#     subtype="TRANSLATION",
-#     update=AxialSliceUpdate,
-# )
-# Axial_Rot: FloatVectorProperty(
-#     name="AXIAL Rotation",
-#     description="AXIAL Rotation",
-#     subtype="EULER",
-#     update=AxialSliceUpdate,
-# )
-################################################
-# Str_Prop_Search_1: StringProperty(
-#     name="String Search Property 1",
-#     default="",
-#     description="Str_Prop_Search_1",
-# )
-# Float Props :
-#########################################################################################
-
-# F_Prop_1: FloatProperty(
-#     description="Float Property 1 ",
-#     default=0.0,
-#     min=-200.0,
-#     max=200.0,
-#     step=1,
-#     precision=1,
-#     unit="NONE",
-#     update=None,
-#     get=None,
-#     set=None,
-# )
-#########################################################################################
-# # FloatVector Props :
-#     ##############################################
-#     FloatV_Prop_1: FloatVectorProperty(
-#         name="FloatVectorProperty 1", description="FloatVectorProperty 1", size=3
-#     )
-#########################################################################################

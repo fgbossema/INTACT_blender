@@ -17,7 +17,7 @@ import os
 import blf
 from bpy_extras import view3d_utils
 
-#change read me and info on buttons (3 or 4 points), see b4d
+from .INTACT_Utils import *
 
 def placeSeed(context, event):
     #define selected objects
@@ -522,8 +522,352 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
         layout.operator("object.icpexport")
         layout.operator("object.icpset")
 
+
+###############################################################################
+####################### INTACT_FULL VOLUME to Mesh : ################################
+##############################################################################
+class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
+    """ Add a mesh Segmentation using Treshold """
+
+    bl_idname = "intact.multitresh_segment"
+    bl_label = "SEGMENTATION"
+
+    TimingDict = {}
+
+    def ImportMeshStl(self, Segment, SegmentStlPath, SegmentColor):
+
+        # import stl to blender scene :
+        bpy.ops.import_mesh.stl(filepath=SegmentStlPath)
+        obj = bpy.context.object
+        obj.name = f"{self.Preffix}_{Segment}_SEGMENTATION"
+        obj.data.name = f"{self.Preffix}_{Segment}_mesh"
+
+        bpy.ops.object.origin_set(type="ORIGIN_GEOMETRY", center="MEDIAN")
+
+        self.step7 = Tcounter()
+        self.TimingDict["Mesh Import"] = self.step7 - self.step6
+
+        ############### step 8 : Add material... #########################
+        mat = bpy.data.materials.get(obj.name) or bpy.data.materials.new(obj.name)
+        mat.diffuse_color = SegmentColor
+        obj.data.materials.append(mat)
+        MoveToCollection(obj=obj, CollName="SEGMENTS")
+        bpy.ops.object.shade_smooth()
+
+        bpy.ops.object.modifier_add(type="CORRECTIVE_SMOOTH")
+        bpy.context.object.modifiers["CorrectiveSmooth"].iterations = 2
+        bpy.context.object.modifiers["CorrectiveSmooth"].use_only_smooth = True
+        bpy.ops.object.modifier_apply(modifier="CorrectiveSmooth")
+
+        self.step8 = Tcounter()
+        self.TimingDict["Add material"] = self.step8 - self.step7
+        print(f"{Segment} Mesh Import Finished")
+
+        return obj
+
+        # self.q.put(["End"])
+
+    def DicomToStl(self, Segment, Image3D):
+        print(f"{Segment} processing ...")
+        # Load Infos :
+        #########################################################################
+        INTACT_Props = bpy.context.scene.INTACT_Props
+        UserProjectDir = AbsPath(INTACT_Props.UserProjectDir)
+        DcmInfo = self.DcmInfo
+        Origin = DcmInfo["Origin"]
+        VtkTransform_4x4 = DcmInfo["VtkTransform_4x4"]
+        TransformMatrix = DcmInfo["TransformMatrix"]
+        VtkMatrix_4x4 = (
+            self.Vol.matrix_world @ TransformMatrix.inverted() @ VtkTransform_4x4
+        )
+
+        VtkMatrix = list(np.array(VtkMatrix_4x4).ravel())
+        print(self.DcmInfo)
+        SmoothIterations = SmthIter = 5
+        Thikness = 1
+
+        SegmentTreshold = self.SegmentsDict[Segment]["Treshold"]
+        SegmentColor = self.SegmentsDict[Segment]["Color"]
+        SegmentStlPath = join(UserProjectDir, f"{Segment}_SEGMENTATION.stl")
+
+        # Convert Hu treshold value to 0-255 UINT8 :
+        Treshold255 = HuTo255(Hu=SegmentTreshold, Wmin=DcmInfo["Wmin"], Wmax=DcmInfo["Wmax"])
+        if Treshold255 == 0:
+            Treshold255 = 1
+        elif Treshold255 == 255:
+            Treshold255 = 254
+
+        ############### step 2 : Extracting mesh... #########################
+        # print("Extracting mesh...")
+        vtkImage = sitkTovtk(sitkImage=Image3D)
+
+        ExtractedMesh = vtk_MC_Func(vtkImage=vtkImage, Treshold=Treshold255)
+        Mesh = ExtractedMesh
+
+        polysCount = Mesh.GetNumberOfPolys()
+        polysLimit = 800000
+
+        self.step2 = Tcounter()
+        self.TimingDict["Mesh Extraction Time"] = self.step2 - self.step1
+        print(f"{Segment} Mesh Extraction Finished")
+        ############### step 3 : mesh Reduction... #########################
+        if polysCount > polysLimit:
+
+            Reduction = round(1 - (polysLimit / polysCount), 2)
+            ReductedMesh = vtkMeshReduction(
+                q=self.q,
+                mesh=Mesh,
+                reduction=Reduction,
+                step="Mesh Reduction",
+                start=0.11,
+                finish=0.75,
+            )
+            Mesh = ReductedMesh
+
+        self.step3 = Tcounter()
+        self.TimingDict["Mesh Reduction Time"] = self.step3 - self.step2
+        print(f"{Segment} Mesh Reduction Finished")
+        ############### step 4 : mesh Smoothing... #########################
+        SmoothedMesh = vtkSmoothMesh(
+            q=self.q,
+            mesh=Mesh,
+            Iterations=SmthIter,
+            step="Mesh Smoothing",
+            start=0.76,
+            finish=0.78,
+        )
+
+        self.step4 = Tcounter()
+        self.TimingDict["Mesh Smoothing Time"] = self.step4 - self.step3
+        print(f"{Segment} Mesh Smoothing Finished")
+        ############### step 5 : Set mesh orientation... #########################
+        TransformedMesh = vtkTransformMesh(
+            mesh=SmoothedMesh,
+            Matrix=VtkMatrix,
+        )
+        print(VtkMatrix)
+        self.step5 = Tcounter()
+        self.TimingDict["Mesh Orientation"] = self.step5 - self.step4
+        print(f"{Segment} Mesh Orientation Finished")
+        ############### step 6 : exporting mesh stl... #########################
+        writer = vtk.vtkSTLWriter()
+        writer.SetInputData(TransformedMesh)
+        writer.SetFileTypeToBinary()
+        writer.SetFileName(SegmentStlPath)
+        writer.Write()
+
+        self.step6 = Tcounter()
+        self.TimingDict["Mesh Export"] = self.step6 - self.step5
+        print(f"{Segment} Mesh Export Finished")
+        self.Exported.put([Segment, SegmentStlPath, SegmentColor])
+
+    def execute(self, context):
+
+        self.counter_start = Tcounter()
+
+        INTACT_Props = bpy.context.scene.INTACT_Props
+        Active_Obj = bpy.context.view_layer.objects.active
+
+        if not Active_Obj:
+            message = [" Please select CTVOLUME for segmentation ! "]
+            ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+            return {"CANCELLED"}
+        else:
+            Conditions = [
+                not Active_Obj.name.startswith("IT"),
+                not Active_Obj.name.endswith("_CTVolume"),
+                Active_Obj.select_get() == False,
+            ]
+
+            if Conditions[0] or Conditions[1] or Conditions[2]:
+                message = [" Please select CTVOLUME for segmentation ! "]
+                ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+                return {"CANCELLED"}
+
+            else:
+
+                self.Thres1 = INTACT_Props.Thres1Bool
+               
+                self.Thres1Tresh = INTACT_Props.Threshold
+                
+                self.Thres1SegmentColor = INTACT_Props.Thres1SegmentColor
+                
+
+                self.SegmentsDict = {
+                    "Thres1": {
+                        "State": self.Thres1,
+                        "Treshold": self.Thres1Tresh,
+                        "Color": self.Thres1SegmentColor,
+                    },
+                }
+
+                ActiveSegmentsList = [
+                    k for k, v in self.SegmentsDict.items() if v["State"]
+                ]
+
+                if not ActiveSegmentsList:
+                    message = [
+                        " Please check at least 1 segmentation ! ",
+                        "(Thres1 - Thres2 - Thres3)",
+                    ]
+                    ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+                    return {"CANCELLED"}
+                else:
+
+                    self.Vol = Active_Obj
+                    self.Preffix = self.Vol.name[:5]
+                    DcmInfoDict = eval(INTACT_Props.DcmInfo)
+                    self.DcmInfo = DcmInfoDict[self.Preffix]
+                    self.Nrrd255Path = AbsPath(self.DcmInfo["Nrrd255Path"])
+                    self.q = Queue()
+                    self.Exported = Queue()
+
+                    if not exists(self.Nrrd255Path):
+
+                        message = [" Image File not Found in Project Folder ! "]
+                        ShowMessageBox(message=message, icon="COLORSET_01_VEC")
+                        return {"CANCELLED"}
+
+                    else:
+
+                        ############### step 1 : Reading DICOM #########################
+                        self.step1 = Tcounter()
+                        self.TimingDict["Read DICOM"] = self.step1 - self.counter_start
+                        print(f"step 1 : Read DICOM ({self.step1-self.counter_start})")
+
+                        Image3D = sitk.ReadImage(self.Nrrd255Path)
+                        # Sz = Image3D.GetSize()
+                        #Sp = Image3D.GetSpacing()
+                        Sp = self.DcmInfo["Spacing"]
+                        print('Resolution', Sp)
+                        MaxSp = max(Vector(Sp))
+                        if MaxSp < 0.3:
+                            SampleRatio = round(MaxSp / 0.3, 2)
+                            ResizedImage = ResizeImage(
+                                sitkImage=Image3D, Ratio=SampleRatio
+                            )
+                            Image3D = ResizedImage
+                            print(f"Image DOWN Sampled : SampleRatio = {SampleRatio}")
+
+                        ############### step 2 : Dicom To Stl Threads #########################
+
+                        self.MeshesCount = len(ActiveSegmentsList)
+                        Imported_Meshes = []
+                        Threads = [
+                            threading.Thread(
+                                target=self.DicomToStl,
+                                args=[Segment, Image3D],
+                                daemon=True,
+                            )
+                            for Segment in ActiveSegmentsList
+                        ]
+                        for t in Threads:
+                            t.start()
+                        count = 0
+                        while count < self.MeshesCount:
+                            if not self.Exported.empty():
+                                (
+                                    Segment,
+                                    SegmentStlPath,
+                                    SegmentColor,
+                                ) = self.Exported.get()
+                                obj = self.ImportMeshStl(
+                                    Segment, SegmentStlPath, SegmentColor
+                                )
+                                Imported_Meshes.append(obj)
+                                count += 1
+                            else:
+                                sleep(0.1)
+                        for t in Threads:
+                            t.join()
+
+                        for obj in Imported_Meshes:
+                            bpy.ops.object.select_all(action="DESELECT")
+                            obj.select_set(True)
+                            bpy.context.view_layer.objects.active = obj
+                            for i in range(3):
+                                obj.lock_location[i] = True
+                                obj.lock_rotation[i] = True
+                                obj.lock_scale[i] = True
+
+                        bpy.ops.object.select_all(action="DESELECT")
+                        for obj in Imported_Meshes:
+                            obj.select_set(True)
+                        self.Vol.select_set(True)
+                        bpy.context.view_layer.objects.active = self.Vol
+                        bpy.ops.object.parent_set(type="OBJECT", keep_transform=True)
+                        bpy.ops.object.select_all(action="DESELECT")
+
+                        self.counter_finish = Tcounter()
+                        self.TimingDict["Total Time"] = (
+                            self.counter_finish - self.counter_start
+                        )
+
+                        print(self.TimingDict)
+
+                        return {"FINISHED"}
+
+class INTACT_OT_CTVolumeOrientation(bpy.types.Operator):
+    """ CtVolume Orientation according to Frankfort Plane """
+
+    bl_idname = "intact.ctvolume_orientation"
+    bl_label = "CTVolume Orientation"
+
+    def execute(self, context):
+
+        INTACT_Props = bpy.context.scene.INTACT_Props
+        Active_Obj = bpy.context.view_layer.objects.active
+
+        if not Active_Obj:
+            message = [" Please select CTVOLUME for segmentation ! "]
+            ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+            return {"CANCELLED"}
+        else:
+            Conditions = [
+                not Active_Obj.name.startswith("IT"),
+                not Active_Obj.name.endswith("_CTVolume"),
+                Active_Obj.select_get() == False,
+            ]
+
+            if Conditions[0] or Conditions[1] or Conditions[2]:
+                message = ["CTVOLUME Orientation : ", "Please select CTVOLUME ! "]
+                ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+                return {"CANCELLED"}
+
+            else:
+                Preffix = Active_Obj.name[:5]
+                DcmInfo = eval(INTACT_Props.DcmInfo)
+                if not "Frankfort" in DcmInfo[Preffix].keys():
+                    message = [
+                        "CTVOLUME Orientation : ",
+                        "Please Add Reference Planes before CTVOLUME Orientation ! ",
+                    ]
+                    ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+                    return {"CANCELLED"}
+                else:
+                    Frankfort_Plane = bpy.data.objects.get(
+                        DcmInfo[Preffix]["Frankfort"]
+                    )
+                    if not Frankfort_Plane:
+                        message = [
+                            "CTVOLUME Orientation : ",
+                            "Frankfort Reference Plane has been removed",
+                            "Please Add Reference Planes before CTVOLUME Orientation ! ",
+                        ]
+                        ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+                        return {"CANCELLED"}
+                    else:
+                        Active_Obj.matrix_world = (
+                            Frankfort_Plane.matrix_world.inverted()
+                            @ Active_Obj.matrix_world
+                        )
+                        bpy.ops.view3d.view_center_cursor()
+                        return {"FINISHED"}
+                        
 class globalVars():
     pass
+
+
 
 classes = (
     OBJECT_OT_placeLandmarks_operator,
@@ -531,9 +875,10 @@ classes = (
     OBJECT_OT_initialAlignment_operator,
     OBJECT_OT_ICP_operator,
     OBJECT_OT_ICPreadme_operator,
+    INTACT_OT_MultiTreshSegment,
     OBJECT_OT_ICPexport_operator,
-    OBJECT_OT_ICPset_operator)#,
-    #OBJECT_PT_ICP_panel)
+    INTACT_OT_CTVolumeOrientation,
+    OBJECT_OT_ICPset_operator)
 
 def register():
     for cls in classes:
@@ -562,7 +907,7 @@ def register():
         items = [("combined", "Combined Transformation", "Export the combined initial and ICP transformation"),
             ("roughAlignment", "Initial Transformation", "Export only the initial transformation"),
             ("fineAlignment", "ICP Transformation", "Export only the ICP transformation")])
-            
+
     
     
 def unregister():
