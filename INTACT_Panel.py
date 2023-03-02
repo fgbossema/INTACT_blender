@@ -432,6 +432,14 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
                      
         
         if condition_CT:
+        
+            row = layout.row()
+            split = row.split()
+            col = split.column()
+            col.label(text="CT Volume:")
+            col = split.column()
+            col.prop(INTACT_Props, "CT_Vol", text="")
+            
             row = layout.row()
             row.label(text="If the CT volume has moved, reset it's position.")
                 

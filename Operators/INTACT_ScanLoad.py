@@ -1063,14 +1063,14 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
         scn.render.engine = "BLENDER_EEVEE"
         INTACT_Props.GroupNodeName = GpShader
 
-        if GpShader == "VGS_Marcos_modified":
-            GpNode = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
-            Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
-            Low_Treshold.default_value = 600
-            WminNode = GpNode.nodes["WminNode"].outputs[0]
-            WminNode.default_value = Wmin
-            WmaxNode = GpNode.nodes["WmaxNode"].outputs[0]
-            WmaxNode.default_value = Wmax
+        # if GpShader == "VGS_Marcos_modified":
+            # GpNode = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
+            # Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
+            # Low_Treshold.default_value = 600
+            # WminNode = GpNode.nodes["WminNode"].outputs[0]
+            # WminNode.default_value = Wmin
+            # WmaxNode = GpNode.nodes["WmaxNode"].outputs[0]
+            # WmaxNode.default_value = Wmax
        
            
         if GpShader == "VGS_INTACT":
@@ -1083,13 +1083,13 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
             WmaxNode.default_value = Wmax
 
 
-        if GpShader == "VGS_Dakir_01":
-            # Add Treshold Driver :
-            print(GpShader)
-            GpNode = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
-            value = (600 - Wmin) / (Wmax - Wmin)
-            treshramp = GpNode.nodes["TresholdRamp"].color_ramp.elements[0] = value
-            #treshramp = GpNode.nodes["TresholdRamp"].color_ramp.elements[0].color = INTACT_Props.CTcolor
+        # if GpShader == "VGS_Dakir_01":
+            # # Add Treshold Driver :
+            # print(GpShader)
+            # GpNode = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
+            # value = (600 - Wmin) / (Wmax - Wmin)
+            # treshramp = GpNode.nodes["TresholdRamp"].color_ramp.elements[0] = value
+            # #treshramp = GpNode.nodes["TresholdRamp"].color_ramp.elements[0].color = INTACT_Props.CTcolor
 
             # newdriver = treshramp.driver_add("position")
             # newdriver.driver.type = "SCRIPTED"
@@ -1150,8 +1150,6 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         obj_object = bpy.context.selected_objects[0] 
         obj_object.name = "IT_surface_" + obj_object.name
         print('Imported name: ', obj_object.name)
-        
-     
 
         #INTACT_Props.Surface_Rendered = True
         bpy.context.scene.unit_settings.scale_length = 0.001

@@ -737,45 +737,6 @@ class OBJECT_OT_ICPset_operator(bpy.types.Operator):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
-class OBJECT_PT_ICP_panel(bpy.types.Panel):
-    bl_category = "INTACT_Registration"
-    bl_label = "ICP Registration"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_context = "objectmode"
-
-    def draw(self, context):
-        #readme panel
-        layout = self.layout
-        row = layout.row()
-        row.alignment = "RIGHT"
-        row.scale_x = 2
-        row.operator("object.icpreadme", text = "", icon = "QUESTION")
-        layout.separator()
-        
-        #rough alignment panel
-        layout.label(text = "Initial Alignment")
-        layout.operator("object.placelandmarks")
-        layout.operator("object.deletelandmarks")
-        layout.operator("object.initialalignment")
-        layout.prop(context.scene, "allowScaling", text = "Allow Scaling")
-        layout.separator()
-        
-        #fine alignment panel
-        layout.label(text = "ICP Alignment")
-        layout.operator("object.icp")
-        layout.prop(context.scene, "allowScaling", text = "Allow Scaling")
-        layout.prop(context.scene, "vertexSelect", text = "Use Vertex Selections")
-        layout.prop(context.scene, "iterations", text = "Iterations")
-        layout.prop(context.scene, "outlierPerc", text = "Outlier %")
-        layout.prop(context.scene, "downsamplingPerc", text = "Downsampling %")
-        
-        #transformations panel
-        layout.separator()
-        layout.label(text = "Transformations")
-        layout.prop(context.scene, "exportTransformation", text = "")
-        layout.operator("object.icpexport")
-        layout.operator("object.icpset")
 
 
 ###############################################################################
@@ -921,8 +882,12 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
         self.counter_start = Tcounter()
 
         INTACT_Props = bpy.context.scene.INTACT_Props
-        Active_Obj = bpy.context.view_layer.objects.active
-
+        #Active_Obj = bpy.context.view_layer.objects.active
+        
+        ct_vol = INTACT_Props.CT_Vol
+        ct_vol.select_set(True)
+        Active_Obj = ct_vol
+        
         if not Active_Obj:
             message = [" Please select CTVOLUME for segmentation ! "]
             ShowMessageBox(message=message, icon="COLORSET_02_VEC")

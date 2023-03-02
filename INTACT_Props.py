@@ -63,14 +63,7 @@ def TresholdUpdateFunction(self, context):
         Vol = context.object
         Preffix = Vol.name[:5]
         GpNode = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
-
-        # if GpShader == "VGS_Marcos_modified":
-            # Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
-            # Low_Treshold.default_value = Treshold
-            
-            # GpNode.nodes["ColorPresetRamp"].color_ramp.elements[4].color = INTACT_Props.CTcolor
-
-            
+          
         if GpShader == "VGS_INTACT":
             Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
             Low_Treshold.default_value = Treshold
