@@ -41,36 +41,36 @@ def rmtree(top):
 
 
 
-class INTACT_OT_Template(bpy.types.Operator):
-    """ Open INTACT workspace template """
+# class INTACT_OT_Template(bpy.types.Operator):
+    # """ Open INTACT workspace template """
 
-    bl_idname = "intact.template"
-    bl_label = "OPEN INTACT WORKSPACE"
+    # bl_idname = "intact.template"
+    # bl_label = "OPEN INTACT WORKSPACE"
 
-    def execute(self, context):
+    # def execute(self, context):
 
-        CurrentBlendFile = bpy.path.abspath(bpy.data.filepath)
+        # CurrentBlendFile = bpy.path.abspath(bpy.data.filepath)
 
-        # Install or load INTACT theme :
-        ScriptsPath = dirname(dirname(addon_dir))
-        INTACT_Theme_installed = join(
-            ScriptsPath, "presets", "interface_theme", "INTACT.xml"
-        )
-        if not exists(INTACT_Theme_installed):
-            INTACT_Theme = join(addon_dir, "Resources", "INTACT.xml")
-            bpy.ops.preferences.theme_install(filepath=INTACT_Theme)
+        # # Install or load INTACT theme :
+        # ScriptsPath = dirname(dirname(addon_dir))
+        # INTACT_Theme_installed = join(
+            # ScriptsPath, "presets", "interface_theme", "INTACT.xml"
+        # )
+        # if not exists(INTACT_Theme_installed):
+            # INTACT_Theme = join(addon_dir, "Resources", "INTACT.xml")
+            # bpy.ops.preferences.theme_install(filepath=INTACT_Theme)
 
-        bpy.ops.script.execute_preset(
-            filepath=INTACT_Theme_installed,
-            menu_idname="USERPREF_MT_interface_theme_presets",
-        )
+        # bpy.ops.script.execute_preset(
+            # filepath=INTACT_Theme_installed,
+            # menu_idname="USERPREF_MT_interface_theme_presets",
+        # )
 
-        return {"FINISHED"}
+        # return {"FINISHED"}
 
-    def invoke(self, context, event):
+    # def invoke(self, context, event):
 
-        wm = context.window_manager
-        return wm.invoke_props_dialog(self)
+        # wm = context.window_manager
+        # return wm.invoke_props_dialog(self)
 
 
 def GetMaxSerie(UserDcmDir):
@@ -1598,7 +1598,7 @@ class INTACT_OT_AddReferencePlanes(bpy.types.Operator):
 #################################################################################################
 
 classes = [
-    INTACT_OT_Template,
+    #INTACT_OT_Template,
     INTACT_OT_Volume_Render,
     INTACT_OT_Surface_Render,
     INTACT_OT_ResetCtVolumePosition,

@@ -286,20 +286,25 @@ class OBJECT_OT_initialAlignment_operator2(bpy.types.Operator):
         INTACT_Props = context.scene.INTACT_Props     
         ct_seg = INTACT_Props.Seg
         surf_3d = INTACT_Props.Surf_3D
+        ct_seg.select_set(True)
+        surf_3d.select_set(True)
+
         return ct_seg.type == 'MESH' and surf_3d.type == 'MESH'
     
     def execute(self, context):
         INTACT_Props = context.scene.INTACT_Props     
         ct_seg = INTACT_Props.Seg
         surf_3d = INTACT_Props.Surf_3D
-    
+        ct_seg.select_set(True)
+        surf_3d.select_set(True)
+
+        
         #assign fixed object
         fixedObject = ct_seg
         
         #assign moving object
         movingObject = surf_3d
-        movingObject.remove(fixedObject)
-        movingObject = movingObject[0]
+
         
         #copy T0 transformations
         transformationRoughT0 = copy.deepcopy(movingObject.matrix_world)
@@ -522,13 +527,21 @@ class OBJECT_OT_ICP_operator2(bpy.types.Operator):
         INTACT_Props = context.scene.INTACT_Props     
         ct_seg = INTACT_Props.Seg
         surf_3d = INTACT_Props.Surf_3D
+        
+        ct_seg.select_set(True)
+        surf_3d.select_set(True)
+
+        
         return ct_seg.type == 'MESH' and surf_3d.type == 'MESH'
     
     def execute(self, context):
         INTACT_Props = context.scene.INTACT_Props     
         ct_seg = INTACT_Props.Seg
         surf_3d = INTACT_Props.Surf_3D
-    
+        ct_seg.select_set(True)
+        surf_3d.select_set(True)
+
+        
         #assign fixed object
         fixedObject = ct_seg
         
@@ -551,8 +564,7 @@ class OBJECT_OT_ICP_operator2(bpy.types.Operator):
         
         #assign moving object
         movingObject = surf_3d
-        movingObject.remove(fixedObject)
-        movingObject = movingObject[0]
+
         
         #vertex selections
         if bpy.context.scene.vertexSelect:
@@ -1115,8 +1127,8 @@ class globalVars():
 classes = (
     OBJECT_OT_placeLandmarks_operator,
     OBJECT_OT_deleteLandmarks_operator,
-    OBJECT_OT_initialAlignment_operator,
-    OBJECT_OT_ICP_operator,
+    OBJECT_OT_initialAlignment_operator2,
+    OBJECT_OT_ICP_operator2,
  #   OBJECT_OT_ICPreadme_operator,
     INTACT_OT_MultiTreshSegment,
     OBJECT_OT_ICPexport_operator,

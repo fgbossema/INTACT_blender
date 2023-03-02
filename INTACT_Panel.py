@@ -103,12 +103,12 @@ class INTACT_PT_MainPanel(bpy.types.Panel):
         col = split.column()
         col.prop(INTACT_Props, "UserProjectDir", text="")
         
-        row = layout.row()
-        split = row.split()
-        col = split.column()
-        col.label(text="Optional: use a theme with light background.")
-        col = split.column()
-        col.operator("intact.template", text="INTACT THEME")
+        # row = layout.row()
+        # split = row.split()
+        # col = split.column()
+        # col.label(text="Optional: use a theme with light background.")
+        # col = split.column()
+        # col.operator("intact.template", text="INTACT THEME")
 
 
 class INTACT_PT_ScanPanel(bpy.types.Panel):
@@ -478,21 +478,21 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
                 row = layout.row()
                 row.label(text="Please load a surface scan.")
             
-        # if (condition_surface and condition_segment):
+        if (condition_surface and condition_segment):
             
-            # row = layout.row()
-            # split = row.split()
-            # col = split.column()
-            # col.label(text="Surface scan to register:")
-            # col = split.column()
-            # col.prop(INTACT_Props, "Surf_3D", text="")
+            row = layout.row()
+            split = row.split()
+            col = split.column()
+            col.label(text="Surface scan to register:")
+            col = split.column()
+            col.prop(INTACT_Props, "Surf_3D", text="")
 
-            # row = layout.row()
-            # split = row.split()
-            # col = split.column()
-            # col.label(text="CT Segmentation:")
-            # col = split.column()
-            # col.prop(INTACT_Props, "Seg", text="")
+            row = layout.row()
+            split = row.split()
+            col = split.column()
+            col.label(text="CT Segmentation:")
+            col = split.column()
+            col.prop(INTACT_Props, "Seg", text="")
         
         
         #rough alignment panel
