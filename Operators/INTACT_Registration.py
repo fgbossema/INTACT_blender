@@ -527,11 +527,9 @@ class OBJECT_OT_ICP_operator2(bpy.types.Operator):
         INTACT_Props = context.scene.INTACT_Props     
         ct_seg = INTACT_Props.Seg
         surf_3d = INTACT_Props.Surf_3D
-        
         ct_seg.select_set(True)
         surf_3d.select_set(True)
 
-        
         return ct_seg.type == 'MESH' and surf_3d.type == 'MESH'
     
     def execute(self, context):

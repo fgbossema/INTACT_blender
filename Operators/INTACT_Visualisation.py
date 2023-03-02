@@ -94,7 +94,7 @@ class CroppingCubeCreation(bpy.types.Operator):
 
             # select ct volume, so it's easy to carry on with further operations (with all deselected the ui
             # says 'please load data first')
-            bpy.ops.object.select_all(action="DESELECT")
+            #bpy.ops.object.select_all(action="DESELECT")
             #ct_vol.select_set(True)
 
         return {'FINISHED'}

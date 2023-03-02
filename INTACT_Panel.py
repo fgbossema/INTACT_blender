@@ -417,18 +417,18 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
         condition_CT = False
         condition_surface = False
 
-        if context.object:
-            for obj in context.scene.objects: 
-                if obj.name.endswith("CTVolume"):
-                    condition_CT = True
-                if obj.name.startswith("IT_surface"):
-                    condition_surface = True
-            if not (condition_CT or condition_surface):
-                row = layout.row()
-                row.label(text="Please load your data first.")
-            elif (condition_surface and not condition_CT):
-                row = layout.row()
-                row.label(text="Please load CT scan.")
+
+        for obj in context.scene.objects: 
+            if obj.name.endswith("CTVolume"):
+                condition_CT = True
+            if obj.name.startswith("IT_surface"):
+                condition_surface = True
+        if not (condition_CT or condition_surface):
+            row = layout.row()
+            row.label(text="Please load your data first.")
+        elif (condition_surface and not condition_CT):
+            row = layout.row()
+            row.label(text="Please load CT scan.")
                      
         
         if condition_CT:
@@ -559,15 +559,15 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
         condition_CT = False
         condition_surface = False
 
-        if context.object:
-            for obj in context.scene.objects: 
-                if obj.name.endswith("CTVolume"):
-                    condition_CT = True
-                if obj.name.startswith("IT_surface"):
-                    condition_surface = True
-            if not (condition_CT or condition_surface):
-                row = layout.row()
-                row.label(text="Please load your data first.")
+
+        for obj in context.scene.objects: 
+            if obj.name.endswith("CTVolume"):
+                condition_CT = True
+            if obj.name.startswith("IT_surface"):
+                condition_surface = True
+        if not (condition_CT or condition_surface):
+            row = layout.row()
+            row.label(text="Please load your data first.")
             
         if (condition_CT or condition_surface):
             row = layout.row()
@@ -644,15 +644,15 @@ class OBJECT_PT_Image_Panel(bpy.types.Panel):
         condition_CT = False
         condition_surface = False
 
-        if context.object:
-            for obj in context.scene.objects: 
-                if obj.name.endswith("CTVolume"):
-                    condition_CT = True
-                if obj.name.startswith("IT_surface"):
-                    condition_surface = True
-            if not (condition_CT and condition_surface):
-                row = layout.row()
-                row.label(text="Please load your data first.")
+
+        for obj in context.scene.objects: 
+            if obj.name.endswith("CTVolume"):
+                condition_CT = True
+            if obj.name.startswith("IT_surface"):
+                 condition_surface = True
+        if not (condition_CT and condition_surface):
+            row = layout.row()
+            row.label(text="Please load your data first.")
             
         if (condition_CT or condition_surface):
             layout.prop(INTACT_Props, "Resolution_x", text="Resolution x (pixels)")
