@@ -106,6 +106,7 @@ class RenderImage(bpy.types.Operator):
         # Set up lighting
         setup_world_hdri(context)
 
+
         bpy.ops.render.render('INVOKE_DEFAULT')
         return {'FINISHED'}
 

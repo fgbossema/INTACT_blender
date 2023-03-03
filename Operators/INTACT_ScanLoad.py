@@ -363,6 +363,10 @@ def Load_Dicom_funtion(context, q):
            bpy.data.objects.remove(bpy.data.objects["Light"], do_unlink=True)
         if bpy.data.collections["Collection"]:
            bpy.data.collections.remove(bpy.data.collections["Collection"])
+        # Fetch the area
+        outliner = next(a for a in bpy.context.screen.areas if a.type == "OUTLINER") 
+        # Fetch the space
+        outliner.spaces[0].show_restrict_column_render = True
 
         return DcmInfo
     ####### End Load_Dicom_fuction ##############
@@ -668,6 +672,10 @@ def Load_Tiff_function(context, q):
            bpy.data.objects.remove(bpy.data.objects["Light"], do_unlink=True)
         if bpy.data.collections["Collection"]:
            bpy.data.collections.remove(bpy.data.collections["Collection"])
+        # Fetch the area
+        outliner = next(a for a in bpy.context.screen.areas if a.type == "OUTLINER") 
+        # Fetch the space
+        outliner.spaces[0].show_restrict_column_render = True
 
         return DcmInfo
     ####### End Load_Tiff_function ##############
@@ -972,6 +980,10 @@ def Load_3DImage_function(context, q):
            bpy.data.objects.remove(bpy.data.objects["Light"], do_unlink=True)
         if bpy.data.collections["Collection"]:
            bpy.data.collections.remove(bpy.data.collections["Collection"])
+        # Fetch the area
+        outliner = next(a for a in bpy.context.screen.areas if a.type == "OUTLINER") 
+        # Fetch the space
+        outliner.spaces[0].show_restrict_column_render = True
            
         return DcmInfo
 
@@ -1113,7 +1125,10 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         
         bpy.data.collections['Surface'].objects.link(obj_object)
         bpy.context.scene.collection.objects.unlink(obj_object)
-
+        # Fetch the area
+        outliner = next(a for a in bpy.context.screen.areas if a.type == "OUTLINER") 
+        # Fetch the space
+        outliner.spaces[0].show_restrict_column_render = True
 
         #INTACT_Props.Surface_Rendered = True
         bpy.context.scene.unit_settings.scale_length = 0.001
