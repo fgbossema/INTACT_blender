@@ -38,41 +38,6 @@ def rmtree(top):
             os.rmdir(os.path.join(root, name))
     os.rmdir(top)
 
-
-
-
-# class INTACT_OT_Template(bpy.types.Operator):
-    # """ Open INTACT workspace template """
-
-    # bl_idname = "intact.template"
-    # bl_label = "OPEN INTACT WORKSPACE"
-
-    # def execute(self, context):
-
-        # CurrentBlendFile = bpy.path.abspath(bpy.data.filepath)
-
-        # # Install or load INTACT theme :
-        # ScriptsPath = dirname(dirname(addon_dir))
-        # INTACT_Theme_installed = join(
-            # ScriptsPath, "presets", "interface_theme", "INTACT.xml"
-        # )
-        # if not exists(INTACT_Theme_installed):
-            # INTACT_Theme = join(addon_dir, "Resources", "INTACT.xml")
-            # bpy.ops.preferences.theme_install(filepath=INTACT_Theme)
-
-        # bpy.ops.script.execute_preset(
-            # filepath=INTACT_Theme_installed,
-            # menu_idname="USERPREF_MT_interface_theme_presets",
-        # )
-
-        # return {"FINISHED"}
-
-    # def invoke(self, context, event):
-
-        # wm = context.window_manager
-        # return wm.invoke_props_dialog(self)
-
-
 def GetMaxSerie(UserDcmDir):
 
     SeriesDict = {}
@@ -378,22 +343,7 @@ def Load_Dicom_funtion(context, q):
         INTACT_Props.DcmInfo = str(DcmInfoDict)
         INTACT_Props.UserProjectDir = RelPath(INTACT_Props.UserProjectDir)
         bpy.ops.wm.save_mainfile() 
-        		
-        # #################################### debug_04 ####################################
-        # debug_04 = Tcounter()
-        # message = (
-        #     f"PNG images exported (Time : {debug_04-debug_03} secondes)"
-        # )
-        # print(message)
-        # # q.put("PNG images saved...")
-        # ##################################################################################
 
-        # #################################### debug_05 ####################################
-        # debug_05 = Tcounter()
-        # message = f"{Preffix}_CT-SCAN.blend saved (Time = {debug_05-debug_04} secondes)"
-        # print(message)
-        # q.put("Blender project saved...")
-        ##################################################################################
 
         #############################################################################################
         finish = Tcounter()
@@ -403,6 +353,16 @@ def Load_Dicom_funtion(context, q):
         #############################################################################################
         message = ["DICOM loaded successfully. "]
         ShowMessageBox(message=message, icon="COLORSET_03_VEC")
+        
+        #Remove Blenders default objects. 
+        if bpy.data.objects["Camera"]:
+           bpy.data.objects.remove(bpy.data.objects["Camera"], do_unlink=True)
+        if bpy.data.objects["Cube"]:
+           bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)   
+        if bpy.data.objects["Light"]:
+           bpy.data.objects.remove(bpy.data.objects["Light"], do_unlink=True)
+        if bpy.data.collections["Collection"]:
+           bpy.data.collections.remove(bpy.data.collections["Collection"])
 
         return DcmInfo
     ####### End Load_Dicom_fuction ##############
@@ -595,23 +555,12 @@ def Load_Tiff_function(context, q):
             "WinCenter": "0028|1050",
             "WinWidth": "0028|1051",
         }
-        # for k, tag in tags.items():
 
-            # if tag in reader.GetMetaDataKeys():#current problem
-                # v = reader.GetMetaData(tag) 
-
-            # else:
-                # v = ""
-
-            # DcmInfo[k] = v
-            # Image3D.SetMetaData(tag, v)
 
         ###################################### debug_02 ##################################
         debug_02 = Tcounter()
         message = f"DcmInfo {Preffix} set (Time : {debug_02-debug_01} secondes)"
 
-        # q.put("Dicom Info extracted...")
-        ##################################################################################
 
         #######################################################################################
         # Add directories :
@@ -670,18 +619,10 @@ def Load_Tiff_function(context, q):
             image.pack()
             # print(f"{img_Name} was processed...")
 
-        #########################################################################################
-        # Get slices list :
-        # MaxSp = max(Vector(Sp))
-        # if MaxSp < 0.25:
-            # SampleRatio = round(MaxSp / 0.25, 2)
-            # Image3D_255 = ResizeImage(sitkImage=Image3D_255, Ratio=SampleRatio)
-            # DcmInfo["RenderSz"] = Image3D_255.GetSize()
-            # DcmInfo["RenderSp"] = Image3D_255.GetSpacing()
 
         Array = sitk.GetArrayFromImage(Image3D_255)
         slices = [np.flipud(Array[i, :, :]) for i in range(Array.shape[0])]
-        # slices = [Image3D_255[:, :, i] for i in range(Image3D_255.GetDepth())]
+
 
         threads = [
             threading.Thread(
@@ -707,22 +648,7 @@ def Load_Tiff_function(context, q):
         INTACT_Props.DcmInfo = str(DcmInfoDict)
         INTACT_Props.UserProjectDir = RelPath(INTACT_Props.UserProjectDir)
         bpy.ops.wm.save_mainfile() 
-        		
-        # #################################### debug_04 ####################################
-        # debug_04 = Tcounter()
-        # message = (
-        #     f"PNG images exported (Time : {debug_04-debug_03} secondes)"
-        # )
-        # print(message)
-        # # q.put("PNG images saved...")
-        # ##################################################################################
 
-        # #################################### debug_05 ####################################
-        # debug_05 = Tcounter()
-        # message = f"{Preffix}_CT-SCAN.blend saved (Time = {debug_05-debug_04} secondes)"
-        # print(message)
-        # q.put("Blender project saved...")
-        ##################################################################################
 
         #############################################################################################
         finish = Tcounter()
@@ -732,6 +658,16 @@ def Load_Tiff_function(context, q):
         #############################################################################################
         message = ["DICOM loaded successfully. "]
         ShowMessageBox(message=message, icon="COLORSET_03_VEC")
+        
+        #Remove Blenders default objects. 
+        if bpy.data.objects["Camera"]:
+           bpy.data.objects.remove(bpy.data.objects["Camera"], do_unlink=True)
+        if bpy.data.objects["Cube"]:
+           bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)   
+        if bpy.data.objects["Light"]:
+           bpy.data.objects.remove(bpy.data.objects["Light"], do_unlink=True)
+        if bpy.data.collections["Collection"]:
+           bpy.data.collections.remove(bpy.data.collections["Collection"])
 
         return DcmInfo
     ####### End Load_Tiff_function ##############
@@ -941,6 +877,13 @@ def Load_3DImage_function(context, q):
         Image3D.SetSpacing(Sp)
         Image3D.SetDirection(D)
         Image3D.SetOrigin(O)
+        
+        minmax = sitk.MinimumMaximumImageFilter()
+        minmax.Execute(Image3D)
+        Wmax = minmax.GetMaximum()
+        Wmin = minmax.GetMinimum()
+        INTACT_Props.Wmin = Wmin 
+        INTACT_Props.Wmax = Wmax
 
         if INTACT_nrrd:
             Image3D_255 = Image3D
@@ -962,6 +905,8 @@ def Load_3DImage_function(context, q):
         # Convert Dicom to nrrd file :
         # sitk.WriteImage(Image3D, NrrdHuPath)
         sitk.WriteImage(Image3D_255, Nrrd255Path)
+        
+ 
 
         #############################################################################################
         # MultiThreading PNG Writer:
@@ -1018,7 +963,16 @@ def Load_3DImage_function(context, q):
         finish = Tcounter()
         print(f"Data Loaded in {finish-start} second(s)")
         #############################################################################################
-
+        #Remove Blenders default objects. 
+        if bpy.data.objects["Camera"]:
+           bpy.data.objects.remove(bpy.data.objects["Camera"], do_unlink=True)
+        if bpy.data.objects["Cube"]:
+           bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)   
+        if bpy.data.objects["Light"]:
+           bpy.data.objects.remove(bpy.data.objects["Light"], do_unlink=True)
+        if bpy.data.collections["Collection"]:
+           bpy.data.collections.remove(bpy.data.collections["Collection"])
+           
         return DcmInfo
 
 
@@ -1146,10 +1100,14 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         print("\n##########################\n")
         print("Loading Surface scan...")
         
+        if not bpy.data.collections('Surface'):
+            bpy.data.collections.new('Surface')
         imported_object = bpy.ops.import_scene.obj(filepath=UserOBjDir, filter_glob="*.obj;*.mtl")
         obj_object = bpy.context.selected_objects[0] 
         obj_object.name = "IT_surface_" + obj_object.name
-        print('Imported name: ', obj_object.name)
+        
+        bpy.data.collections['Surface'].objects.link(obj_object)
+
 
         #INTACT_Props.Surface_Rendered = True
         bpy.context.scene.unit_settings.scale_length = 0.001
@@ -1184,42 +1142,7 @@ class INTACT_OT_TresholdUpdate(bpy.types.Operator):
 
 
 
-class INTACT_OT_ResetCtVolumePosition(bpy.types.Operator):
-    """ Reset the CtVolume to its original Patient Position """
 
-    bl_idname = "intact.reset_ctvolume_position"
-    bl_label = "RESET CTVolume POSITION"
-
-    def execute(self, context):
-
-        INTACT_Props = bpy.context.scene.INTACT_Props
-        Active_Obj = bpy.context.view_layer.objects.active
-
-        if not Active_Obj:
-            message = [" Please select CTVOLUME for segmentation ! "]
-            ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-            return {"CANCELLED"}
-        else:
-            Conditions = [
-                not Active_Obj.name.startswith("IT"),
-                not Active_Obj.name.endswith("_CTVolume"),
-                Active_Obj.select_get() == False,
-            ]
-
-            if Conditions[0] or Conditions[1] or Conditions[2]:
-                message = ["Reset Position : ", "Please select CTVOLUME ! "]
-                ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-                return {"CANCELLED"}
-
-            else:
-                Vol = Active_Obj
-                Preffix = Vol.name[:5]
-                DcmInfoDict = eval(INTACT_Props.DcmInfo)
-                DcmInfo = DcmInfoDict[Preffix]
-                TransformMatrix = DcmInfo["TransformMatrix"]
-                Vol.matrix_world = TransformMatrix
-
-                return {"FINISHED"}
 
 
 class INTACT_OT_AddMarkupPoint(bpy.types.Operator):
@@ -1596,10 +1519,8 @@ class INTACT_OT_AddReferencePlanes(bpy.types.Operator):
 #################################################################################################
 
 classes = [
-    #INTACT_OT_Template,
     INTACT_OT_Volume_Render,
     INTACT_OT_Surface_Render,
-    INTACT_OT_ResetCtVolumePosition,
     INTACT_OT_TresholdUpdate,
     INTACT_OT_MultiView,
     INTACT_OT_AddReferencePlanes,

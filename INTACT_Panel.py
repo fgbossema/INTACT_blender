@@ -103,6 +103,7 @@ class INTACT_PT_MainPanel(bpy.types.Panel):
         col = split.column()
         col.prop(INTACT_Props, "UserProjectDir", text="")
         
+        
         # row = layout.row()
         # split = row.split()
         # col = split.column()

@@ -51,7 +51,7 @@ class CroppingCubeCreation(bpy.types.Operator):
         cropping_cube = context.scene.objects.get(cropping_cube_name)
         cube_exists = cropping_cube and cropping_cube.users_collection[0].name == cube_collection_name
         if not cube_exists:
-            croppingcubedim = ct_vol.dimensions
+            croppingcubedim = ct_vol.dimensions*1.001
             croppingcube_x = croppingcubedim[0]
 
             croppingcubeloc = ct_vol.location

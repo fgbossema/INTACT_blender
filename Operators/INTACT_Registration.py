@@ -90,31 +90,6 @@ def drawTextCallback(context, dummy):
                 blf.draw(0, '·' + landmark)
     return
 
-# class OBJECT_OT_ICPreadme_operator(bpy.types.Operator):
-    # """Export read me"""
-    # bl_idname = "object.icpreadme"
-    # bl_label = "Export read me"
-    # filepath: bpy.props.StringProperty(subtype = "FILE_PATH")
-
-    # def execute(self, context):
-        # readme = '*** ICP REGISTRATION READ ME ***' + '\n\n' 'The ICP Registration addon is visible in Object Mode in the Sidebar (hotkey N) > ICP Registration.' + '\n\n' 'INITIAL ALIGNMENT' + '\n' 'If the two objects differ substantially in location or rotation, a pre-alignment should be performed. Select two objects with mesh data (first selected object = moving, second selected object = fixed). Press "Place Landmarks" and place 4 or more landmarks on corresponding positions on both objects. Make sure the number of landmarks is equal. Press ENTER/RETURN to confirm. Landmarks of selected objects can be deleted by pressing the "Delete Landmarks" button. After placing landmarks on both objects, perform initial alignment by selecting "Perform Initial Alignment".' + '\n' '* Allow Scaling' + '\n' 'When ticked, the moving object is allowed to scale uniformly. Otherwise, only location and rotation are taken into account.' + '\n\n' 'ICP ALIGNMENT' + '\n' 'Select two objects with mesh data (first selected object = moving, second selected object = fixed). Make sure the settings are as desired and press "Perform ICP" to start the alignment process.' + '\n' '* Allow Scaling' + '\n' 'When ticked, the moving object is allowed to scale uniformly. Otherwise, only location and rotation are taken into account.' + '\n' '* Use Vertex Selections' + '\n' 'When ticked, only the selected vertices (in Edit Mode) are used for registration. As such, the registration can be focused on a specific region of interest.' + '\n' + '* Iterations' + '\n' 'The number of iterations used for registration. Increase to improve accuracy, decrease to improve alignment time.' + '\n' '* Outlier Percentage' + '\n' 'Fraction of outliers (non-corresponding points between the two objects). For example: when set to 25%, 75% of the best matching point pairs between the two objects is used for registration. Increase to improve registration accuracy in noisy objects, decrease if the meshes correspond to a large extent.' + '\n' '* Downsampling Percentage' + '\n' 'Fraction of downsampling for both objects. For example: when set to 25%, 75% of the total (or selected) vertex count is used for registration by means of a random sample. Increase to improve speed in objects with large meshes, decrease to improve accuracy.' + '\n\n' 'TRANSFORMATIONS' + '\n' '* Export Transformation' + '\n' 'Export the transformation matrix (location, rotation and scale) to a .txt file. The drop-down menu gives the choice to export the combined initial and ICP transformation, or only either of these.' + '\n' '* Set Transformations' + '\n' 'Set transformation of an object from .txt file. Select the object that should be transformed, press "Set Transformations" and browse for the desired .txt file.'
-        
-        # #write readme
-        # file = open(self.filepath, 'w')
-        # file.write(readme)
-        
-        # #reset filepath
-        # self.filepath = os.path.split(self.filepath)[0] + "\\"
-        # return {'FINISHED'}
-        
-    # def invoke(self, context, event):
-        # #open explorer
-        # context.window_manager.fileselect_add(self)
-        
-        # #set path and file name
-        # defaultFileName = 'readme.txt'
-        # self.filepath += defaultFileName
-        # return {'RUNNING_MODAL'}
 
 class OBJECT_OT_placeLandmarks_operator(bpy.types.Operator):
     """Place at least 4 landmarks on two selected objects for initial alignment. Press ENTER/RETURN to confirm"""
@@ -180,102 +155,9 @@ class OBJECT_OT_deleteLandmarks_operator(bpy.types.Operator):
         #redraw scene
         bpy.ops.wm.redraw_timer(type = 'DRAW_WIN_SWAP', iterations = 1)
         return {'FINISHED'}
-    
+   
+        
 class OBJECT_OT_initialAlignment_operator(bpy.types.Operator):
-    """Perform initial alignment (first selected object = moving, last selected object = fixed)"""
-    bl_idname = "object.initialalignment"
-    bl_label = "Perform Initial Alignment"
-    bl_options = {'REGISTER', 'UNDO'}
-    
-    @classmethod
-    def poll(cls, context):
-        return len(bpy.context.selected_objects) == 2 and bpy.context.selected_objects[0].type == 'MESH' and bpy.context.selected_objects[1].type == 'MESH'
-    
-    def execute(self, context):
-        #assign fixed object
-        fixedObject = bpy.context.active_object
-        
-        #assign moving object
-        movingObject = bpy.context.selected_objects
-        movingObject.remove(fixedObject)
-        movingObject = movingObject[0]
-        
-        #copy T0 transformations
-        transformationRoughT0 = copy.deepcopy(movingObject.matrix_world)
-        
-        #error messages if no or inequal amount of landmarks is detected
-        if fixedObject.get('landmarkDictionary') is None or movingObject.get('landmarkDictionary') is None:
-            self.report({'ERROR'}, "No landmarks detected on one or both objects. Place at least 4 landmarks on both objects.")
-            return {'FINISHED'}
-        if len(fixedObject['landmarkDictionary']) is not len(movingObject['landmarkDictionary']):
-            self.report({'ERROR'}, "Inequal amount of landmarks detected. Place at least 4 landmarks on both objects.")
-            return {'FINISHED'}
-        
-        #build landmark matrix
-        fixedArray = np.array([fixedObject.matrix_world @ fixedObject.data.vertices[index].co for index in fixedObject['landmarkDictionary'].values()])
-        movingArray = np.array([movingObject.matrix_world @ movingObject.data.vertices[index].co for index in movingObject['landmarkDictionary'].values()])
-        
-        #calculate centroids
-        fixedCentroid = np.mean(fixedArray, axis = 0)
-        movingCentroid = np.mean(movingArray, axis = 0)
-        
-        #move arrays to origin
-        fixedOrigin = fixedArray - fixedCentroid
-        movingOrigin = movingArray - movingCentroid
-        
-        #calculate sum of squares
-        fixedSumSquared = np.sum(fixedOrigin ** 2)
-        movingSumSquared = np.sum(movingOrigin ** 2)
-        
-        #normalize arrays
-        fixedNormalized = np.sqrt(fixedSumSquared)
-        fixedNormOrigin = fixedOrigin / fixedNormalized
-        movingNormalized = np.sqrt(movingSumSquared)
-        movingNormOrigin = movingOrigin / movingNormalized
-        
-        #singular value decomposition
-        covMatrix = np.matrix.transpose(movingNormOrigin) @ fixedNormOrigin
-        U, s, Vt = np.linalg.svd(covMatrix)
-        
-        #scaling
-        if bpy.context.scene.allowScaling:
-            scalingFactor = np.sum(s) * fixedNormalized / movingNormalized
-            scalingMatrix = np.eye(4)
-            for i in range(3):
-                scalingMatrix[i,i] *= scalingFactor
-            normMatrix = np.eye(4)
-            normMatrix[0:3,3] = -np.matrix.transpose(movingCentroid)
-            movingObject.matrix_world = mu.Matrix(normMatrix) @ movingObject.matrix_world
-            movingObject.matrix_world = mu.Matrix(scalingMatrix) @ movingObject.matrix_world
-            normMatrix[0:3,3] = -normMatrix[0:3,3]
-            movingObject.matrix_world = mu.Matrix(normMatrix) @ movingObject.matrix_world
-                
-        #rotation
-        rotation3x3 = np.matrix.transpose(Vt) @ np.matrix.transpose(U)
-        rotationMatrix = np.eye(4)
-        rotationMatrix[0:3,0:3] = rotation3x3
-        movingObject.matrix_world = mu.Matrix(rotationMatrix) @ movingObject.matrix_world
-        
-        #translation
-        translationMatrix = np.eye(4)
-        translation = movingCentroid - np.dot(fixedCentroid, rotation3x3)
-        translationMatrix[0:3,3] = np.matrix.transpose(fixedCentroid - rotation3x3 @ movingCentroid)
-        movingObject.matrix_world = mu.Matrix(translationMatrix) @ movingObject.matrix_world
-        
-        #redraw scene
-        bpy.ops.wm.redraw_timer(type = 'DRAW_WIN_SWAP', iterations = 1)
-        
-        #remove landmark dictionaries
-        bpy.ops.object.deletelandmarks()
-        
-        #copy T1 transformations
-        transformationRoughT1 = copy.deepcopy(movingObject.matrix_world)
-        
-        #compute transformation matrix
-        globalVars.transformationRough = transformationRoughT1 @ transformationRoughT0.inverted_safe()
-        return {'FINISHED'}
-        
-class OBJECT_OT_initialAlignment_operator2(bpy.types.Operator):
     """Perform initial alignment (first selected object = moving, last selected object = fixed)"""
     bl_idname = "object.initialalignment"
     bl_label = "Perform Initial Alignment"
@@ -380,141 +262,8 @@ class OBJECT_OT_initialAlignment_operator2(bpy.types.Operator):
         #compute transformation matrix
         globalVars.transformationRough = transformationRoughT1 @ transformationRoughT0.inverted_safe()
         return {'FINISHED'}
-
+     
 class OBJECT_OT_ICP_operator(bpy.types.Operator):
-    """Start iterative closest point registration (first selected object = moving, last selected object = fixed)"""
-    bl_idname = "object.icp"
-    bl_label = "Perform Registration"
-    bl_options = {'REGISTER', 'UNDO'}
-    
-    @classmethod
-    def poll(cls, context):
-        return len(context.selected_objects) == 2 and bpy.context.selected_objects[0].type == 'MESH' and bpy.context.selected_objects[1].type == 'MESH'
-    
-    def execute(self, context):
-        #assign fixed object
-        fixedObject = bpy.context.active_object
-        
-        #vertex selections
-        if bpy.context.scene.vertexSelect:
-            fixedVerts = [fixedObject.matrix_world @ v.co for v in fixedObject.data.vertices if v.select]
-        else:
-            fixedVerts = [fixedObject.matrix_world @ v.co for v in fixedObject.data.vertices]
-        
-        #downsampling
-        fixedDownsampleNumber = mt.ceil(((100 - bpy.context.scene.downsamplingPerc) / 100) * len(fixedVerts))
-        fixedDownsampleIndices = np.random.choice(range(len(fixedVerts)), fixedDownsampleNumber, replace = False)
-        fixedVerts = [fixedVerts[idx] for idx in fixedDownsampleIndices]
-        
-        #build kdtree
-        fixedVertsTree = mu.kdtree.KDTree(len(fixedVerts))
-        for fixedIndex, fixedVertex in enumerate(fixedVerts):
-            fixedVertsTree.insert(fixedVertex, fixedIndex)
-        fixedVertsTree.balance()
-        
-        #assign moving object
-        movingObject = bpy.context.selected_objects
-        movingObject.remove(fixedObject)
-        movingObject = movingObject[0]
-        
-        #vertex selections
-        if bpy.context.scene.vertexSelect:
-            movingVertsCount = len([v for v in movingObject.data.vertices if v.select])
-        else:
-            movingVertsCount = len(movingObject.data.vertices)
-        
-        #error message if no vertices are selected
-        if len(fixedVerts) == 0 or movingVertsCount == 0:
-            self.report({'ERROR'}, 'No vertices selected on one or both objects. Disable "Use Vertex Selections" or make a vertex selection in Edit Mode.')
-            return {'FINISHED'} 
-        
-        #downsampling
-        movingDownsampleNumber = mt.ceil(((100 - bpy.context.scene.downsamplingPerc) / 100) * movingVertsCount)
-        movingDownsampleIndices = np.random.choice(range(movingVertsCount), movingDownsampleNumber, replace = False)
-        
-        #copy T0 transformations
-        transformationFineT0 = copy.deepcopy(movingObject.matrix_world)
-        
-        #icp loop
-        for iteration in range(bpy.context.scene.iterations):
-            #vertex selections
-            if bpy.context.scene.vertexSelect:
-                movingVerts = [movingObject.matrix_world @ v.co for v in movingObject.data.vertices if v.select]
-            else:
-                movingVerts = [movingObject.matrix_world @ v.co for v in movingObject.data.vertices]
-            
-            #downsampling
-            movingVerts = [movingVerts[idx] for idx in movingDownsampleIndices]
-            
-            #nearest neighbor search
-            fixedPairIndices = []
-            movingPairIndices = range(len(movingVerts))
-            pairDistances = []
-            for vertex in range(len(movingVerts)):
-                _, minIndex, minDist = fixedVertsTree.find(movingVerts[vertex])
-                fixedPairIndices.append(minIndex)
-                pairDistances.append(minDist)
-            
-            #select inliers
-            pairDistancesSorted = np.argsort(pairDistances)
-            pairInliers = pairDistancesSorted[range(mt.ceil((100 - bpy.context.scene.outlierPerc) / 100 * len(pairDistancesSorted)))]
-            fixedPairIndices = [fixedPairIndices[idx] for idx in pairInliers]
-            movingPairIndices = [movingPairIndices[idx] for idx in pairInliers]
-            fixedPairVerts = [fixedVerts[idx] for idx in fixedPairIndices]
-            movingPairVerts = [movingVerts[idx] for idx in movingPairIndices]
-            
-            #calculate centroids
-            fixedCentroid = np.mean(fixedPairVerts, axis = 0)
-            movingCentroid = np.mean(movingPairVerts, axis = 0)
-            
-            #normalize vertices
-            fixedVertsNorm = fixedPairVerts - fixedCentroid
-            movingVertsNorm = movingPairVerts - movingCentroid        
-            
-            #singular value decomposition
-            covMatrix = np.matrix.transpose(movingVertsNorm) @ fixedVertsNorm
-            try:
-                U, _, Vt = np.linalg.svd(covMatrix)
-            except:
-                self.report({'ERROR'}, 'Singular value decomposition did not converge. Disable "Allow Scaling" or ensure a better initial alignment.')
-                movingObject.matrix_world = transformationFineT0
-                return {'FINISHED'}
-                
-            #scaling
-            if bpy.context.scene.allowScaling:
-                scalingMatrix = np.eye(4)
-                scalingFactor = mt.sqrt(np.sum(fixedVertsNorm ** 2) / np.sum(movingVertsNorm ** 2))
-                for i in range(3):
-                    scalingMatrix[i,i] *= scalingFactor
-                normMatrix = np.eye(4)
-                normMatrix[0:3,3] = -np.matrix.transpose(movingCentroid)
-                movingObject.matrix_world = mu.Matrix(normMatrix) @ movingObject.matrix_world
-                movingObject.matrix_world = mu.Matrix(scalingMatrix) @ movingObject.matrix_world
-                normMatrix[0:3,3] = -normMatrix[0:3,3]
-                movingObject.matrix_world = mu.Matrix(normMatrix) @ movingObject.matrix_world
-            
-            #rotation
-            rotation3x3 = np.matrix.transpose(Vt) @ np.matrix.transpose(U)
-            rotationMatrix = np.eye(4)
-            rotationMatrix[0:3,0:3] = rotation3x3
-            movingObject.matrix_world = mu.Matrix(rotationMatrix) @ movingObject.matrix_world
-            
-            #translation
-            translationMatrix = np.eye(4)
-            translationMatrix[0:3,3] = np.matrix.transpose(fixedCentroid - rotation3x3 @ movingCentroid)
-            movingObject.matrix_world = mu.Matrix(translationMatrix) @ movingObject.matrix_world
-            
-            #redraw scene
-            bpy.ops.wm.redraw_timer(type = 'DRAW_WIN_SWAP', iterations = 1)
-            
-        #copy T1 transformations
-        transformationFineT1 = copy.deepcopy(movingObject.matrix_world)
-        
-        #compute transformation matrix
-        globalVars.transformationFine = transformationFineT1 @ transformationFineT0.inverted_safe()
-        return {'FINISHED'}
-        
-class OBJECT_OT_ICP_operator2(bpy.types.Operator):
     """Start iterative closest point registration (first selected object = moving, last selected object = fixed)"""
     bl_idname = "object.icp"
     bl_label = "Perform Registration"
@@ -883,7 +632,6 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
         #Active_Obj = bpy.context.view_layer.objects.active
         
         ct_vol = INTACT_Props.CT_Vol
-        ct_vol.select_set(True)
         Active_Obj = ct_vol
         
         if not Active_Obj:
@@ -1024,7 +772,27 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
                         print(self.TimingDict)
 
                         return {"FINISHED"}
+                        
+class INTACT_OT_ResetCtVolumePosition(bpy.types.Operator):
+    """ Reset the CtVolume to its original Patient Position """
 
+    bl_idname = "intact.reset_ctvolume_position"
+    bl_label = "RESET CTVolume POSITION"
+
+    def execute(self, context):
+
+
+        INTACT_Props = bpy.context.scene.INTACT_Props
+        ct_vol = INTACT_Props.CT_Vol
+        Preffix = ct_vol.name[:5]
+        DcmInfo = eval(INTACT_Props.DcmInfo)
+
+        TransformMatrix = DcmInfo["TransformMatrix"]
+        ct_vol.matrix_world = TransformMatrix
+
+        return {"FINISHED"}
+                
+                
 class INTACT_OT_CTVolumeOrientation(bpy.types.Operator):
     """ CtVolume Orientation according to Frankfort Plane """
 
@@ -1034,53 +802,55 @@ class INTACT_OT_CTVolumeOrientation(bpy.types.Operator):
     def execute(self, context):
 
         INTACT_Props = bpy.context.scene.INTACT_Props
-        Active_Obj = bpy.context.view_layer.objects.active
-
-        if not Active_Obj:
-            message = [" Please select CTVOLUME for segmentation ! "]
+        ct_vol = INTACT_Props.CT_Vol
+        Active_Obj = ct_vol
+        Preffix = Active_Obj.name[:5]
+        DcmInfo = eval(INTACT_Props.DcmInfo)
+        if not "Frankfort" in DcmInfo[Preffix].keys():
+            message = ["CTVOLUME Orientation : ",
+                        "Please Add Reference Planes before CTVOLUME Orientation ! ",]
             ShowMessageBox(message=message, icon="COLORSET_02_VEC")
             return {"CANCELLED"}
         else:
-            Conditions = [
-                not Active_Obj.name.startswith("IT"),
-                not Active_Obj.name.endswith("_CTVolume"),
-                Active_Obj.select_get() == False,
-            ]
+            Frankfort_Plane = bpy.data.objects.get(
+                  DcmInfo[Preffix]["Frankfort"])
 
-            if Conditions[0] or Conditions[1] or Conditions[2]:
-                message = ["CTVOLUME Orientation : ", "Please select CTVOLUME ! "]
-                ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-                return {"CANCELLED"}
-
-            else:
-                Preffix = Active_Obj.name[:5]
-                DcmInfo = eval(INTACT_Props.DcmInfo)
-                if not "Frankfort" in DcmInfo[Preffix].keys():
-                    message = [
-                        "CTVOLUME Orientation : ",
-                        "Please Add Reference Planes before CTVOLUME Orientation ! ",
-                    ]
-                    ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-                    return {"CANCELLED"}
-                else:
-                    Frankfort_Plane = bpy.data.objects.get(
-                        DcmInfo[Preffix]["Frankfort"]
-                    )
-                    if not Frankfort_Plane:
-                        message = [
+            if not Frankfort_Plane:
+                 message = [
                             "CTVOLUME Orientation : ",
                             "Frankfort Reference Plane has been removed",
                             "Please Add Reference Planes before CTVOLUME Orientation ! ",
                         ]
-                        ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-                        return {"CANCELLED"}
-                    else:
-                        Active_Obj.matrix_world = (
-                            Frankfort_Plane.matrix_world.inverted()
-                            @ Active_Obj.matrix_world
-                        )
-                        bpy.ops.view3d.view_center_cursor()
-                        return {"FINISHED"}
+                 ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+                 return {"CANCELLED"}
+            else:
+                 Active_Obj.matrix_world = (
+                      Frankfort_Plane.matrix_world.inverted()
+                      @ Active_Obj.matrix_world)
+                 bpy.ops.view3d.view_center_cursor()
+                 return {"FINISHED"}
+        
+        # Active_Obj = bpy.context.view_layer.objects.active
+
+        # if not Active_Obj:
+            # message = [" Please select CTVOLUME for segmentation ! "]
+            # ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+            # return {"CANCELLED"}
+        # else:
+            # Conditions = [
+                # not Active_Obj.name.startswith("IT"),
+                # not Active_Obj.name.endswith("_CTVolume"),
+                # Active_Obj.select_get() == False,
+            # ]
+
+            # if Conditions[0] or Conditions[1] or Conditions[2]:
+                # message = ["CTVOLUME Orientation : ", "Please select CTVOLUME ! "]
+                # ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+                # return {"CANCELLED"}
+
+           # else:
+         
+         
                         
 class globalVars():
     pass
@@ -1090,9 +860,9 @@ class globalVars():
 classes = (
     OBJECT_OT_placeLandmarks_operator,
     OBJECT_OT_deleteLandmarks_operator,
-    OBJECT_OT_initialAlignment_operator2,
-    OBJECT_OT_ICP_operator2,
- #   OBJECT_OT_ICPreadme_operator,
+    OBJECT_OT_initialAlignment_operator,
+    OBJECT_OT_ICP_operator,
+    INTACT_OT_ResetCtVolumePosition,
     INTACT_OT_MultiTreshSegment,
     OBJECT_OT_ICPexport_operator,
     INTACT_OT_CTVolumeOrientation,
