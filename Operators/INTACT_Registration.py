@@ -774,19 +774,17 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
                         return {"FINISHED"}
                         
 class INTACT_OT_ResetCtVolumePosition(bpy.types.Operator):
-    """ Reset the CtVolume to its original Patient Position """
+    """ Reset the CtVolume to its original position """
 
     bl_idname = "intact.reset_ctvolume_position"
     bl_label = "RESET CTVolume POSITION"
 
     def execute(self, context):
-
-
         INTACT_Props = bpy.context.scene.INTACT_Props
         ct_vol = INTACT_Props.CT_Vol
         Preffix = ct_vol.name[:5]
-        DcmInfo = eval(INTACT_Props.DcmInfo)
-
+        DcmInfoDict = eval(INTACT_Props.DcmInfo)
+        DcmInfo = DcmInfoDict[Preffix]
         TransformMatrix = DcmInfo["TransformMatrix"]
         ct_vol.matrix_world = TransformMatrix
 

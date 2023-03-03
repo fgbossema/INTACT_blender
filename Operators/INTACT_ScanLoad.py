@@ -1100,13 +1100,19 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         print("\n##########################\n")
         print("Loading Surface scan...")
         
-        if not bpy.data.collections('Surface'):
+        if 'Surface' not in bpy.data.collections: 
+            print('Make surface collection')
             bpy.data.collections.new('Surface')
+            coll = bpy.data.collections.get('Surface')
+            context.collection.children.link(coll)
+            
+            
         imported_object = bpy.ops.import_scene.obj(filepath=UserOBjDir, filter_glob="*.obj;*.mtl")
         obj_object = bpy.context.selected_objects[0] 
         obj_object.name = "IT_surface_" + obj_object.name
         
         bpy.data.collections['Surface'].objects.link(obj_object)
+        bpy.context.scene.collection.objects.unlink(obj_object)
 
 
         #INTACT_Props.Surface_Rendered = True
