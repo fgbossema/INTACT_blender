@@ -828,27 +828,6 @@ class INTACT_OT_CTVolumeOrientation(bpy.types.Operator):
                  bpy.ops.view3d.view_center_cursor()
                  return {"FINISHED"}
         
-        # Active_Obj = bpy.context.view_layer.objects.active
-
-        # if not Active_Obj:
-            # message = [" Please select CTVOLUME for segmentation ! "]
-            # ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-            # return {"CANCELLED"}
-        # else:
-            # Conditions = [
-                # not Active_Obj.name.startswith("IT"),
-                # not Active_Obj.name.endswith("_CTVolume"),
-                # Active_Obj.select_get() == False,
-            # ]
-
-            # if Conditions[0] or Conditions[1] or Conditions[2]:
-                # message = ["CTVOLUME Orientation : ", "Please select CTVOLUME ! "]
-                # ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-                # return {"CANCELLED"}
-
-           # else:
-         
-         
                         
 class globalVars():
     pass

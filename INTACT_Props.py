@@ -474,18 +474,18 @@ class INTACT_Props(bpy.types.PropertyGroup):
         name='', size=3, subtype="EULER")
 
     Track_slices_to_cropping_cube: BoolProperty(
-        name='', update=INTACT_Visualisations.track_slices)
+        name='', update=INTACT_Visualisation.track_slices)
 
     Remove_slice_outside_surface: BoolProperty(
-        name='', update=INTACT_Visualisations.boolean_slice)
+        name='', update=INTACT_Visualisation.boolean_slice)
 
     Surface_scan_roughness: FloatProperty(
         name='', soft_min=0.0, soft_max=1.0, default=0.0, precision=1,
-        update=INTACT_Visualisations.surface_scan_roughness)
+        update=INTACT_Visualisation.surface_scan_roughness)
 
     Slice_thickness: FloatProperty(
         name='', soft_min=0.0, default=1.0, precision=2,
-        update=INTACT_Visualisations.slice_thickness)
+        update=INTACT_Visualisation.slice_thickness)
 
     Resolution_x: IntProperty(
         name='', soft_min=500, soft_max=4000, default=1920, step=10, update=INTACT_Images.update_render_resolution)

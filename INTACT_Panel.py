@@ -266,139 +266,7 @@ class INTACT_PT_SurfacePanel(bpy.types.Panel):
            row.scale_y = 2
            row.operator("intact.obj_render", icon="IMPORT")
         
-        
 
-class INTACT_PT_Measurements(bpy.types.Panel):
-    """ INTACT_FULL Scan Panel"""
-
-    bl_idname = "INTACT_PT_Measurements"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"  
-    bl_category = "INTACT"
-    bl_label = "MEASUREMENTS"
-    bl_options = {"DEFAULT_CLOSED"}
-
-    def draw(self, context):
-        layout = self.layout
-        Box = layout.box()
-        row = Box.row()
-        row.operator("intact.add_markup_point")
-        row.operator("intact.add_reference_planes")
-        row = Box.row()
-        row.operator("intact.ctvolume_orientation")
-
-
-class INTACT_PT_MeshesTools_Panel(bpy.types.Panel):
-    """ INTACT Meshes Tools Panel"""
-
-    bl_idname = "INTACT_PT_MeshesTools_Panel"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"  
-    bl_category = "INTACT"
-    bl_label = "MESH TOOLS"
-    bl_options = {"DEFAULT_CLOSED"}
-
-    def draw(self, context):
-        INTACT_Props = context.scene.INTACT_Props
-        layout = self.layout
-
-        # Join / Link ops :
-
-        row = layout.row()
-        row.label(text="PARENT / JOIN :")
-        row = layout.row()
-        row.operator("intact.parent_object", text="Parent", icon="LINKED")
-        row.operator(
-            "intact.unparent_objects", text="Un-Parent", icon="LIBRARY_DATA_OVERRIDE"
-        )
-        row.operator("intact.join_objects", text="Join", icon="SNAP_FACE")
-        row.operator("intact.separate_objects", text="Separate", icon="SNAP_VERTEX")
-
-        # Align Tools :
-        layout.row().separator()
-        row = layout.row()
-        row.label(text="Align Tools")
-        row = layout.row()
-        row.operator("intact.align_to_front", text="ALIGN FRONT", icon="AXIS_FRONT")
-        row.operator("intact.to_center", text="TO CENTER", icon="SNAP_FACE_CENTER")
-        row.operator("intact.center_cursor", text="Center Cursor", icon="PIVOT_CURSOR")
-
-        split = layout.split(factor=2 / 3, align=False)
-        col = split.column()
-        row = col.row()
-        row.operator("intact.occlusalplane", text="OCCLUSAL PLANE")
-        col = split.column()
-        row = col.row()
-        row.alert = True
-        row.operator("intact.occlusalplaneinfo", text="INFO", icon="INFO")
-
-        # Model Repair Tools :
-        layout.row().separator()
-        row = layout.row()
-        row.label(text="REPAIR TOOLS", icon=yellow_point)
-
-        split = layout.split(factor=2 / 3, align=False)
-        col = split.column()
-
-        row = col.row(align=True)
-        row.operator("intact.decimate", text="DECIMATE", icon="MOD_DECIM")
-        row.prop(INTACT_Props, "decimate_ratio", text="")
-        row = col.row()
-        row.operator("intact.fill", text="FILL", icon="OUTLINER_OB_LIGHTPROBE")
-        row.operator("intact.retopo_smooth", text="RETOPO SMOOTH", icon="BRUSH_SMOOTH")
-        try:
-            ActiveObject = bpy.context.view_layer.objects.active
-            if ActiveObject:
-                if ActiveObject.mode == "SCULPT":
-                    row.operator(
-                        "sculpt.sample_detail_size", text="", icon="EYEDROPPER"
-                    )
-        except Exception:
-            pass
-
-        col = split.column()
-        row = col.row()
-        # row.scale_y = 2
-        row.operator("intact.clean_mesh", text="CLEAN MESH", icon="BRUSH_DATA")
-        row = col.row()
-        row.operator("intact.voxelremesh")
-
-        # Cutting Tools :
-        layout.row().separator()
-        row = layout.row()
-        row.label(text="Cutting Tools :", icon=yellow_point)
-        row = layout.row()
-        row.prop(INTACT_Props, "Cutting_Tools_Types_Prop", text="")
-        if INTACT_Props.Cutting_Tools_Types_Prop == "Curve Cutter 1":
-            row = layout.row()
-            row.operator("intact.curvecutteradd", icon="GP_SELECT_STROKES")
-            row.operator("intact.curvecuttercut", icon="GP_MULTIFRAME_EDITING")
-
-        elif INTACT_Props.Cutting_Tools_Types_Prop == "Curve Cutter 2":
-            row = layout.row()
-            row.operator("intact.curvecutteradd2", icon="GP_SELECT_STROKES")
-            row.operator("intact.curvecutter2_shortpath", icon="GP_MULTIFRAME_EDITING")
-
-        elif INTACT_Props.Cutting_Tools_Types_Prop == "Square Cutting Tool":
-
-            # Cutting mode column :
-            row = layout.row()
-            row.label(text="Select Cutting Mode :")
-            row.prop(INTACT_Props, "cutting_mode", text="")
-
-            row = layout.row()
-            row.operator("intact.square_cut")
-            row.operator("intact.square_cut_confirm")
-            row.operator("intact.square_cut_exit")
-
-        elif INTACT_Props.Cutting_Tools_Types_Prop == "Paint Cutter":
-
-            row = layout.row()
-            row.operator("intact.paintarea_toggle")
-            row.operator("intact.paintarea_plus", text="", icon="ADD")
-            row.operator("intact.paintarea_minus", text="", icon="REMOVE")
-            row = layout.row()
-            row.operator("intact.paint_cut")
 
 class OBJECT_PT_ICP_panel(bpy.types.Panel):
     bl_category = "INTACT"
@@ -697,7 +565,6 @@ classes = [
     INTACT_PT_MainPanel,
     INTACT_PT_ScanPanel,
     INTACT_PT_SurfacePanel,
-    #INTACT_PT_MeshesTools_Panel,
     OBJECT_PT_ICP_panel,
     OBJECT_PT_Visualisation_Panel,
     OBJECT_PT_Image_Panel

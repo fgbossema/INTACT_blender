@@ -1029,14 +1029,6 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
         scn.render.engine = "BLENDER_EEVEE"
         INTACT_Props.GroupNodeName = GpShader
 
-        # if GpShader == "VGS_Marcos_modified":
-            # GpNode = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
-            # Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
-            # Low_Treshold.default_value = 600
-            # WminNode = GpNode.nodes["WminNode"].outputs[0]
-            # WminNode.default_value = Wmin
-            # WmaxNode = GpNode.nodes["WmaxNode"].outputs[0]
-            # WmaxNode.default_value = Wmax
        
            
         if GpShader == "VGS_INTACT":
@@ -1049,39 +1041,12 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
             WmaxNode.default_value = Wmax
 
 
-        # if GpShader == "VGS_Dakir_01":
-            # # Add Treshold Driver :
-            # print(GpShader)
-            # GpNode = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
-            # value = (600 - Wmin) / (Wmax - Wmin)
-            # treshramp = GpNode.nodes["TresholdRamp"].color_ramp.elements[0] = value
-            # #treshramp = GpNode.nodes["TresholdRamp"].color_ramp.elements[0].color = INTACT_Props.CTcolor
-
-            # newdriver = treshramp.driver_add("position")
-            # newdriver.driver.type = "SCRIPTED"
-            # var = newdriver.driver.variables.new()
-            # var.name = "Treshold"
-            # var.type = "SINGLE_PROP"
-            # var.targets[0].id_type = "SCENE"
-            # var.targets[0].id = bpy.context.scene
-            # var.targets[0].data_path = "INTACT_Props.Treshold"
-            # newdriver.driver.expression = f"(Treshold-{Wmin})/{Wmax-Wmin}"
-
         INTACT_Props.CT_Rendered = True
         bpy.context.scene.unit_settings.scale_length = 0.001
         bpy.context.scene.unit_settings.length_unit = "MILLIMETERS"
         bpy.ops.view3d.view_selected(use_all_regions=False)
         bpy.ops.wm.save_mainfile()
 
-        # post_handlers = bpy.app.handlers.depsgraph_update_post
-        # [
-        #     post_handlers.remove(h)
-        #     for h in post_handlers
-        #     if h.__name__ == "INTACT_TresholdUpdate"
-        # ]
-        # post_handlers.append(INTACT_TresholdUpdate)
-
-        # bpy.ops.wm.save_mainfile()
 
         Finish = Tcounter()
 
