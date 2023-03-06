@@ -1,7 +1,7 @@
 import bpy
 import os
-from .Operators import INTACT_Visualisations
-from .Operators import INTACT_Images
+from .Operators import INTACT_Visualisation
+from .Operators import INTACT_ImagesOutput
 from mathutils import Matrix, Vector, Euler, kdtree
 
 from bpy.props import (
