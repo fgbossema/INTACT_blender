@@ -107,7 +107,6 @@ else:
         INTACT_Props,
         INTACT_Panel,
         INTACT_ScanLoad,
-        INTACT_MeshesTools_Operators,
         INTACT_Registration,
         INTACT_Visualisation,
         INTACT_ImagesOutput
