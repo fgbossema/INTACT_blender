@@ -20,9 +20,9 @@ from vtk import vtkCommand
 
 from .INTACT_Utils import *
 
-addon_dir = dirname(dirname(abspath(__file__)))
-ShadersBlendFile = join(addon_dir, "Resources", "BlendData", "INTACT_BlendData.blend")
-GpShader = "VGS_INTACT"  
+# addon_dir = dirname(dirname(abspath(__file__)))
+# ShadersBlendFile = join(addon_dir, "Resources", "BlendData", "INTACT_BlendData.blend")
+# GpShader = "VGS_INTACT"
 ProgEvent = vtkCommand.ProgressEvent
 
 #######################################################################################
@@ -1004,8 +1004,13 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
         Start = Tcounter()
         print("Data Loading START...")
 
-        global ShadersBlendFile
-        global GpShader
+        GpShader = "VGS_INTACT"
+        GpThresholdShader = "VGS_Threshold"
+        addon_dir = dirname(dirname(abspath(__file__)))
+        ShadersBlendFile = join(addon_dir, "Resources", "BlendData", "INTACT_BlendData.blend")
+
+        # global ShadersBlendFile
+        # global GpShader
 
         INTACT_Props = context.scene.INTACT_Props
 
@@ -1028,7 +1033,7 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
         scn = bpy.context.scene
         scn.render.engine = "BLENDER_EEVEE"
         INTACT_Props.GroupNodeName = GpShader
-
+        INTACT_Props.ThresholdNodeName = GpThresholdShader
        
            
         if GpShader == "VGS_INTACT":
@@ -1067,8 +1072,8 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         Start = Tcounter()
         print("Data Loading START...")
 
-        global ShadersBlendFile
-        global GpShader
+        # global ShadersBlendFile
+        # global GpShader
 
         INTACT_Props = context.scene.INTACT_Props
 

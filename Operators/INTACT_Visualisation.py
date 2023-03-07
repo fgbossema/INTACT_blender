@@ -100,6 +100,19 @@ class CroppingCubeCreation(bpy.types.Operator):
         return {'FINISHED'}
 
 
+def add_cube_boolean(obj, cropping_cube, cube_boolean_name):
+    cube_bool = obj.modifiers.new(type="BOOLEAN", name=cube_boolean_name)
+    cube_bool.operation = 'INTERSECT'
+    cube_bool.object = cropping_cube
+
+
+def set_modifier_visibility(obj, modifier_names, is_visible):
+    for modifier_name in modifier_names:
+        modifier = obj.modifiers.get(modifier_name)
+        modifier.show_viewport = is_visible
+        modifier.show_render = is_visible
+
+
 def enable_boolean_slice(context):
     """
     This part of the script ensures that the surface scan mesh acts as a boolean to cut into the slices.
@@ -109,40 +122,41 @@ def enable_boolean_slice(context):
     slices = [INTACT_Props.Axial_Slice, INTACT_Props.Coronal_Slice, INTACT_Props.Sagital_Slice]
 
     cropping_cube_collection = bpy.data.collections['Cropping Cubes']
-    surface_copy_name = "Surface scan copy"
-    mesh_boolean_name = "3D scan"
     cube_boolean_name = "Cropping Cube"
 
-    # Make a copy of the surface scan (if it doesn't already exist). This will be used to boolean the slices.
-    # Can't use original as this is already being cut into by the cropping cube.
-    surf_copy = context.scene.objects.get(surface_copy_name)
-    surf_copy_exists = surf_copy and surf_copy.users_collection[0] == cropping_cube_collection
-    if not surf_copy_exists:
-        surf_copy = surf_3d.copy()
-        surf_copy.name = surface_copy_name
-        surf_copy.modifiers.clear()
-        surf_copy.hide_viewport = True
-        surf_copy.hide_render = True
-        cropping_cube_collection.objects.link(surf_copy)
+    if surf_3d:
+        surface_copy_name = "Surface scan copy"
+        mesh_boolean_name = "3D scan"
 
-    # Add boolean modifier. If it already exists, just enable it in viewport and render
-    for slice in slices:
-        if mesh_boolean_name not in slice.modifiers and cube_boolean_name not in slice.modifiers:
-            mesh_bool = slice.modifiers.new(type="BOOLEAN", name=mesh_boolean_name)
-            mesh_bool.operation = 'INTERSECT'
-            mesh_bool.object = surf_copy
+        # Make a copy of the surface scan (if it doesn't already exist). This will be used to boolean the slices.
+        # Can't use original as this is already being cut into by the cropping cube.
+        surf_copy = context.scene.objects.get(surface_copy_name)
+        surf_copy_exists = surf_copy and surf_copy.users_collection[0] == cropping_cube_collection
+        if not surf_copy_exists:
+            surf_copy = surf_3d.copy()
+            surf_copy.name = surface_copy_name
+            surf_copy.modifiers.clear()
+            surf_copy.hide_viewport = True
+            surf_copy.hide_render = True
+            cropping_cube_collection.objects.link(surf_copy)
 
-            # Move to top of modifier stack
-            bpy.ops.object.modifier_move_to_index({'object':slice}, modifier=mesh_bool.name, index=0)
+        # Add boolean modifier. If it already exists, just enable it in viewport and render
+        for slice in slices:
+            if mesh_boolean_name not in slice.modifiers and cube_boolean_name not in slice.modifiers:
+                mesh_bool = slice.modifiers.new(type="BOOLEAN", name=mesh_boolean_name)
+                mesh_bool.operation = 'INTERSECT'
+                mesh_bool.object = surf_copy
 
-            cube_bool = slice.modifiers.new(type="BOOLEAN", name=cube_boolean_name)
-            cube_bool.operation = 'INTERSECT'
-            cube_bool.object = INTACT_Props.Cropping_Cube
-        else:
-            for modifier_name in [mesh_boolean_name, cube_boolean_name]:
-                modifier = slice.modifiers.get(modifier_name)
-                modifier.show_viewport = True
-                modifier.show_render = True
+                # Move to top of modifier stack
+                bpy.ops.object.modifier_move_to_index({'object':slice}, modifier=mesh_bool.name, index=0)
+                add_cube_boolean(slice, INTACT_Props.Cropping_Cube, cube_boolean_name)
+            else:
+                set_modifier_visibility(slice, [mesh_boolean_name, cube_boolean_name], True)
+
+    else:
+        # Create material with alpha. If already exists, just switch to that material slot
+
+        # add cube boolean. If already exists, just enable it.
 
     print("\nBoolean modifiers applied to all slices")
 
@@ -155,10 +169,7 @@ def disable_boolean_slice(context):
     slices = [INTACT_Props.Axial_Slice, INTACT_Props.Coronal_Slice, INTACT_Props.Sagital_Slice]
 
     for slice in slices:
-        for modifier_name in ["3D scan", "Cropping Cube"]:
-            modifier = slice.modifiers.get(modifier_name)
-            modifier.show_viewport = False
-            modifier.show_render = False
+        set_modifier_visibility(slice, ["3D scan", "Cropping Cube"], False)
 
     print("\nBoolean modifiers disabled on all slices")
 

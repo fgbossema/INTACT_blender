@@ -52,7 +52,7 @@ def ShaderUpdateFunction(self, context):
 
 def TresholdUpdateFunction(self, context):
     INTACT_Props = context.scene.INTACT_Props
-    GpShader = INTACT_Props.GroupNodeName
+    GpShader = INTACT_Props.ThresholdNodeName
     Treshold = INTACT_Props.Threshold
     CtVolumeList = [
         obj
@@ -265,6 +265,11 @@ class INTACT_Props(bpy.types.PropertyGroup):
         name="Group shader Name",
         default="",
         description="Group shader Name",
+    )
+    ThresholdNodeName: StringProperty(
+        name="Threshold shader Name",
+        default="",
+        description="Threshold shader Name",
     )
     ####################### Intact_vis props
     ct_vis : bpy.props.BoolProperty(

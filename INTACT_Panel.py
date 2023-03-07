@@ -125,8 +125,6 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
     def draw(self, context):
 
         INTACT_Props = context.scene.INTACT_Props
-        GroupNodeName = INTACT_Props.GroupNodeName
-        VGS = bpy.data.node_groups.get(GroupNodeName)
 
         # Draw Addon UI :
         layout = self.layout
@@ -242,8 +240,6 @@ class INTACT_PT_SurfacePanel(bpy.types.Panel):
     def draw(self, context):
 
        INTACT_Props = context.scene.INTACT_Props
-       GroupNodeName = INTACT_Props.GroupNodeName
-       VGS = bpy.data.node_groups.get(GroupNodeName)
         # Draw Addon UI :
        layout = self.layout
        
@@ -279,9 +275,6 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         INTACT_Props = context.scene.INTACT_Props
-        GroupNodeName = INTACT_Props.GroupNodeName
-        VGS = bpy.data.node_groups.get(GroupNodeName)
-        
          
         condition_CT = False
         condition_surface = False
@@ -422,8 +415,6 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
         scene = context.scene
 
         INTACT_Props = context.scene.INTACT_Props
-        GroupNodeName = INTACT_Props.GroupNodeName
-        VGS = bpy.data.node_groups.get(GroupNodeName)
         
         condition_CT = False
         condition_surface = False
@@ -507,8 +498,6 @@ class OBJECT_PT_Image_Panel(bpy.types.Panel):
         row = layout.row()
         scene = context.scene
         INTACT_Props = context.scene.INTACT_Props
-        GroupNodeName = INTACT_Props.GroupNodeName
-        VGS = bpy.data.node_groups.get(GroupNodeName)
         
         condition_CT = False
         condition_surface = False
