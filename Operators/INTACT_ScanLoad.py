@@ -20,9 +20,6 @@ from vtk import vtkCommand
 
 from .INTACT_Utils import *
 
-# addon_dir = dirname(dirname(abspath(__file__)))
-# ShadersBlendFile = join(addon_dir, "Resources", "BlendData", "INTACT_BlendData.blend")
-# GpShader = "VGS_INTACT"
 ProgEvent = vtkCommand.ProgressEvent
 
 #######################################################################################
@@ -1010,9 +1007,6 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
         addon_dir = dirname(dirname(abspath(__file__)))
         ShadersBlendFile = join(addon_dir, "Resources", "BlendData", "INTACT_BlendData.blend")
 
-        # global ShadersBlendFile
-        # global GpShader
-
         INTACT_Props = context.scene.INTACT_Props
 
         DataType = INTACT_Props.DataType
@@ -1070,9 +1064,6 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         Start = Tcounter()
         print("Data Loading START...")
 
-        # global ShadersBlendFile
-        # global GpShader
-
         INTACT_Props = context.scene.INTACT_Props
 
         #UserProjectDir = AbsPath(INTACT_Props.UserProjectDir)
@@ -1109,29 +1100,6 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         print(f"Finished (Time : {Finish-Start}")
 
         return {"FINISHED"}
-
-
-
-# class INTACT_OT_TresholdUpdate(bpy.types.Operator):
-#     """ Add treshold Update Handler  """
-#
-#     bl_idname = "intact.tresholdupdate"
-#     bl_label = "Update Treshold"
-#
-#     def execute(self, context):
-#         post_handlers = bpy.app.handlers.depsgraph_update_post
-#         [
-#             post_handlers.remove(h)
-#             for h in post_handlers
-#             if h.__name__ == "INTACT_TresholdUpdate"
-#         ]
-#         post_handlers.append(INTACT_TresholdUpdate)
-#
-#         return {"FINISHED"}
-
-
-
-
 
 
 class INTACT_OT_AddMarkupPoint(bpy.types.Operator):
@@ -1510,7 +1478,6 @@ class INTACT_OT_AddReferencePlanes(bpy.types.Operator):
 classes = [
     INTACT_OT_Volume_Render,
     INTACT_OT_Surface_Render,
-    # INTACT_OT_TresholdUpdate,
     INTACT_OT_MultiView,
     INTACT_OT_AddReferencePlanes,
     INTACT_OT_AddMarkupPoint,
@@ -1523,7 +1490,6 @@ def register():
         bpy.utils.register_class(cls)
     post_handlers = bpy.app.handlers.depsgraph_update_post
     MyPostHandlers = [
-        # "INTACT_TresholdUpdate",
         "AxialSliceUpdate",
         "CoronalSliceUpdate",
         "SagitalSliceUpdate",
@@ -1536,7 +1502,6 @@ def register():
             bpy.app.handlers.depsgraph_update_post.remove(h)
 
     handlers_To_Add = [
-        # INTACT_TresholdUpdate,
         AxialSliceUpdate,
         CoronalSliceUpdate,
         SagitalSliceUpdate,
@@ -1550,7 +1515,6 @@ def unregister():
 
     post_handlers = bpy.app.handlers.depsgraph_update_post
     MyPostHandlers = [
-        # "INTACT_TresholdUpdate",
         "AxialSliceUpdate",
         "CoronalSliceUpdate",
         "SagitalSliceUpdate",

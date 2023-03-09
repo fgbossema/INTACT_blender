@@ -156,18 +156,18 @@ def enable_ct_alpha_slice(context):
     """Show areas of slices below the threshold as transparent. This uses the same threshold as the volume render +
     also adds a boolean for the cropping cube, so areas outside the cube are hidden"""
 
-    alpha_material_name = "Threshold_alpha"
     INTACT_Props = context.scene.INTACT_Props
     slices = [INTACT_Props.Axial_Slice, INTACT_Props.Coronal_Slice, INTACT_Props.Sagital_Slice]
     cube_boolean_name = "Cropping Cube"
 
     # Create alpha material + cube boolean. If already exists, just enable material + boolean.
-    if alpha_material_name not in slices[0].material_slots.keys():
+    for slice in slices:
+        default_material_name = f"{slice.name}_mat"
+        alpha_material_name = f"{default_material_name}_transparency"
 
-        for slice in slices:
-            old_material = slice.material_slots[0].material
-            old_material_image_node = old_material.node_tree.nodes["Image Texture"]
-            alpha_material_name = f"{old_material.name}_transparency"
+        if alpha_material_name not in bpy.data.materials:
+            default_material = bpy.data.materials[default_material_name]
+            default_material_image_node = default_material.node_tree.nodes["Image Texture"]
 
             # make material
             alpha_material = bpy.data.materials.new(name=alpha_material_name)
@@ -181,7 +181,7 @@ def enable_ct_alpha_slice(context):
             tex_coord_node.location = -257, 121
 
             image_node = tree_nodes.new(type='ShaderNodeTexImage')
-            image_node.image = old_material_image_node.image
+            image_node.image = default_material_image_node.image
             image_node.location = -49, 136
 
             transparency_node = tree_nodes.new(type="ShaderNodeBsdfTransparent")
@@ -213,10 +213,10 @@ def enable_ct_alpha_slice(context):
             slice.material_slots[0].material = alpha_material
 
             add_cube_boolean(slice, INTACT_Props.Cropping_Cube, cube_boolean_name)
-    else:
-        for slice in slices:
-            slice.material_slots[0].material = bpy.data.materials[alpha_material_name]
-            set_modifier_visibility(slice, ["Cropping Cube"], True)
+
+        else:
+                slice.material_slots[0].material = bpy.data.materials[alpha_material_name]
+                set_modifier_visibility(slice, ["Cropping Cube"], True)
 
 
 def enable_boolean_slice(context):
@@ -245,7 +245,9 @@ def disable_boolean_slice(context):
     for slice in slices:
         set_modifier_visibility(slice, ["3D scan", "Cropping Cube"], False)
 
-        # TODO - if alpha material active, reset to the old one
+        default_slice_material = f"{slice.name}_mat"
+        if slice.material_slots[0].material.name != default_slice_material:
+            slice.material_slots[0].material = bpy.data.materials[default_slice_material]
 
     print("\nBoolean modifiers disabled on all slices")
 

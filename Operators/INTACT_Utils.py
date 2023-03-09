@@ -460,35 +460,6 @@ def MoveToCollection(obj, CollName):
                 Coll.objects.unlink(obj)
 
 
-# @persistent
-# def INTACT_TresholdUpdate(scene):
-#
-#     CtVolumeList = [
-#         obj
-#         for obj in bpy.context.scene.objects
-#         if (obj.name.startswith("IT") and obj.name.endswith("_CTVolume"))
-#     ]
-#     if CtVolumeList:
-#         INTACT_Props = bpy.context.scene.INTACT_Props
-#         GpShader = INTACT_Props.GroupNodeName
-#         Active_Obj = bpy.context.view_layer.objects.active
-#         if Active_Obj and Active_Obj in CtVolumeList:
-#             # print("Treshold Update trigred!")
-#             Vol = Active_Obj
-#             Preffix = Vol.name[:5]
-#             GpNode = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
-#
-#             if GpShader == "VGS_Marcos_modified":
-#                 Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
-#                 INTACT_Props.Thres1Treshold = Low_Treshold.default_value
-#             if GpShader == "VGS_Dakir_01":
-#                 DcmInfo = eval(INTACT_Props.DcmInfo)
-#                 Wmin = DcmInfo["Wmin"]
-#                 Wmax = DcmInfo["Wmax"]
-#                 treshramp = GpNode.nodes["TresholdRamp"].color_ramp.elements[0]
-#                 INTACT_Props.Thres1Treshold = treshramp.default_value * (Wmax - Wmin) + Wmin
-
-
 def VolumeRender(DcmInfo, GpShader, GpThreshold, GpTransparency, ShadersBlendFile):
 
     INTACT_Props = bpy.context.scene.INTACT_Props
