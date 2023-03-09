@@ -17,42 +17,33 @@ from bpy.props import (
 def ColorUpdateFunction(self, context):
     INTACT_Props = context.scene.INTACT_Props
     GpShader = INTACT_Props.GroupNodeName
-    Treshold = INTACT_Props.Threshold
     CtVolumeList = [
         obj
         for obj in bpy.context.scene.objects
         if obj.name.startswith("IT") and obj.name.endswith("_CTVolume")
     ]
     if context.object in CtVolumeList:
-        Vol = context.object
-        Preffix = Vol.name[:5]
-        GpNode = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
-        
-        if GpShader == "VGS_INTACT":
-            GpNode.nodes["ColorPresetRamp"].color_ramp.elements[1].color = INTACT_Props.CTcolor
+        GpNode = bpy.data.node_groups.get(GpShader)
+        GpNode.nodes["ColorPresetRamp"].color_ramp.elements[1].color = INTACT_Props.CTcolor
+
 
 def ShaderUpdateFunction(self, context):
     INTACT_Props = context.scene.INTACT_Props
     GpShader = INTACT_Props.GroupNodeName
-    Treshold = INTACT_Props.Threshold
     CtVolumeList = [
         obj
         for obj in bpy.context.scene.objects
         if obj.name.startswith("IT") and obj.name.endswith("_CTVolume")
     ]
     if context.object in CtVolumeList:
-        Vol = context.object
-        Preffix = Vol.name[:5]
-        GpNode = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
-        
-        if GpShader == "VGS_INTACT":
-            GpNode.nodes["ColorPresetRamp"].color_ramp.elements[1].position = INTACT_Props.ColorPos
+        GpNode = bpy.data.node_groups.get(GpShader)
+        GpNode.nodes["ColorPresetRamp"].color_ramp.elements[1].position = INTACT_Props.ColorPos
 
 
 
 def TresholdUpdateFunction(self, context):
     INTACT_Props = context.scene.INTACT_Props
-    GpShader = INTACT_Props.ThresholdNodeName
+    GpShader = INTACT_Props.ThresholdGroupNodeName
     Treshold = INTACT_Props.Threshold
     CtVolumeList = [
         obj
@@ -60,13 +51,9 @@ def TresholdUpdateFunction(self, context):
         if obj.name.startswith("IT") and obj.name.endswith("_CTVolume")
     ]
     if context.object in CtVolumeList:
-        Vol = context.object
-        Preffix = Vol.name[:5]
-        GpNode = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
-          
-        if GpShader == "VGS_INTACT":
-            Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
-            Low_Treshold.default_value = Treshold
+        GpNode = bpy.data.node_groups.get(GpShader)
+        Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
+        Low_Treshold.default_value = Treshold
 
 
 
@@ -266,11 +253,12 @@ class INTACT_Props(bpy.types.PropertyGroup):
         default="",
         description="Group shader Name",
     )
-    ThresholdNodeName: StringProperty(
-        name="Threshold shader Name",
+    ThresholdGroupNodeName: StringProperty(
+        name="Threshold node group Name",
         default="",
-        description="Threshold shader Name",
+        description="Threshold node group Name",
     )
+
     ####################### Intact_vis props
     ct_vis : bpy.props.BoolProperty(
         name="Enable CT-scan",
@@ -481,7 +469,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
     Track_slices_to_cropping_cube: BoolProperty(
         name='', update=INTACT_Visualisation.track_slices)
 
-    Remove_slice_outside_surface: BoolProperty(
+    Remove_slice_outside_object: BoolProperty(
         name='', update=INTACT_Visualisation.boolean_slice)
 
     Surface_scan_roughness: FloatProperty(

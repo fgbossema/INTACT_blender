@@ -19,8 +19,7 @@ class CroppingCubeCreation(bpy.types.Operator):
         This part of the script ensures that the cropping cubes are in fact cropping the objects.
         """
         INTACT_Props = context.scene.INTACT_Props
-        
-        
+
         ct_vol = INTACT_Props.CT_Vol
         surf_3d = INTACT_Props.Surf_3D
         cropping_cube = INTACT_Props.Cropping_Cube
@@ -108,9 +107,116 @@ def add_cube_boolean(obj, cropping_cube, cube_boolean_name):
 
 def set_modifier_visibility(obj, modifier_names, is_visible):
     for modifier_name in modifier_names:
-        modifier = obj.modifiers.get(modifier_name)
-        modifier.show_viewport = is_visible
-        modifier.show_render = is_visible
+        if modifier_name in obj.modifiers:
+            modifier = obj.modifiers.get(modifier_name)
+            modifier.show_viewport = is_visible
+            modifier.show_render = is_visible
+
+
+def enable_surf3d_slice(context):
+    """Cut areas outside the surf3d mesh using a boolean modifier - two booleans are added, one for the surface mesh
+    and one for the cropping cube. This ensures that only the parts of the slices inside the mesh + inside the cube
+    are shown"""
+
+    surface_copy_name = "Surface scan copy"
+    mesh_boolean_name = "3D scan"
+    INTACT_Props = context.scene.INTACT_Props
+    surf_3d = INTACT_Props.Surf_3D
+    slices = [INTACT_Props.Axial_Slice, INTACT_Props.Coronal_Slice, INTACT_Props.Sagital_Slice]
+    cropping_cube_collection = bpy.data.collections['Cropping Cubes']
+    cube_boolean_name = "Cropping Cube"
+
+    # Make a copy of the surface scan (if it doesn't already exist). This will be used to boolean the slices.
+    # Can't use original as this is already being cut into by the cropping cube.
+    surf_copy = context.scene.objects.get(surface_copy_name)
+    surf_copy_exists = surf_copy and surf_copy.users_collection[0] == cropping_cube_collection
+    if not surf_copy_exists:
+        surf_copy = surf_3d.copy()
+        surf_copy.name = surface_copy_name
+        surf_copy.modifiers.clear()
+        surf_copy.hide_viewport = True
+        surf_copy.hide_render = True
+        cropping_cube_collection.objects.link(surf_copy)
+
+    # Add boolean modifier. If it already exists, just enable it in viewport and render
+    for slice in slices:
+        if mesh_boolean_name not in slice.modifiers and cube_boolean_name not in slice.modifiers:
+            mesh_bool = slice.modifiers.new(type="BOOLEAN", name=mesh_boolean_name)
+            mesh_bool.operation = 'INTERSECT'
+            mesh_bool.object = surf_copy
+
+            # Move to top of modifier stack
+            bpy.ops.object.modifier_move_to_index({'object': slice}, modifier=mesh_bool.name, index=0)
+            add_cube_boolean(slice, INTACT_Props.Cropping_Cube, cube_boolean_name)
+        else:
+            set_modifier_visibility(slice, [mesh_boolean_name, cube_boolean_name], True)
+
+
+def enable_ct_alpha_slice(context):
+    """Show areas of slices below the threshold as transparent. This uses the same threshold as the volume render +
+    also adds a boolean for the cropping cube, so areas outside the cube are hidden"""
+
+    alpha_material_name = "Threshold_alpha"
+    INTACT_Props = context.scene.INTACT_Props
+    slices = [INTACT_Props.Axial_Slice, INTACT_Props.Coronal_Slice, INTACT_Props.Sagital_Slice]
+    cube_boolean_name = "Cropping Cube"
+
+    # Create alpha material + cube boolean. If already exists, just enable material + boolean.
+    if alpha_material_name not in slices[0].material_slots.keys():
+
+        for slice in slices:
+            old_material = slice.material_slots[0].material
+            old_material_image_node = old_material.node_tree.nodes["Image Texture"]
+            alpha_material_name = f"{old_material.name}_transparency"
+
+            # make material
+            alpha_material = bpy.data.materials.new(name=alpha_material_name)
+            alpha_material.use_nodes = True
+            alpha_material.use_fake_user = True
+            alpha_material.blend_method = "HASHED"
+            tree_nodes = alpha_material.node_tree.nodes
+            tree_nodes.clear()
+
+            tex_coord_node = tree_nodes.new(type="ShaderNodeTexCoord")
+            tex_coord_node.location = -257, 121
+
+            image_node = tree_nodes.new(type='ShaderNodeTexImage')
+            image_node.image = old_material_image_node.image
+            image_node.location = -49, 136
+
+            transparency_node = tree_nodes.new(type="ShaderNodeBsdfTransparent")
+            transparency_node.location = 331, 89
+            emission_node = tree_nodes.new(type="ShaderNodeEmission")
+            emission_node.location = 337, -49
+            mix_node = tree_nodes.new(type="ShaderNodeMixShader")
+            mix_node.location = 580, 144
+
+            # threshold node group from resources blend file
+            threshold_node = tree_nodes.new("ShaderNodeGroup")
+            threshold_node.node_tree = bpy.data.node_groups[INTACT_Props.ThresholdGroupNodeName]
+            threshold_node.location = 325, 266
+
+            node_output = tree_nodes.new(type='ShaderNodeOutputMaterial')
+            node_output.name = "Output"
+            node_output.location = 776, 139
+
+            # Link all nodes
+            links = alpha_material.node_tree.links
+            links.new(tex_coord_node.outputs["Generated"], image_node.inputs["Vector"])
+            links.new(image_node.outputs["Color"], threshold_node.inputs["Value"])
+            links.new(threshold_node.outputs["Value"], mix_node.inputs["Fac"])
+            links.new(image_node.outputs["Color"], emission_node.inputs["Color"])
+            links.new(transparency_node.outputs["BSDF"], mix_node.inputs[1])
+            links.new(emission_node.outputs["Emission"], mix_node.inputs[2])
+            links.new(mix_node.outputs["Shader"], node_output.inputs["Surface"])
+
+            slice.material_slots[0].material = alpha_material
+
+            add_cube_boolean(slice, INTACT_Props.Cropping_Cube, cube_boolean_name)
+    else:
+        for slice in slices:
+            slice.material_slots[0].material = bpy.data.materials[alpha_material_name]
+            set_modifier_visibility(slice, ["Cropping Cube"], True)
 
 
 def enable_boolean_slice(context):
@@ -119,44 +225,12 @@ def enable_boolean_slice(context):
     """
     INTACT_Props = context.scene.INTACT_Props
     surf_3d = INTACT_Props.Surf_3D
-    slices = [INTACT_Props.Axial_Slice, INTACT_Props.Coronal_Slice, INTACT_Props.Sagital_Slice]
-
-    cropping_cube_collection = bpy.data.collections['Cropping Cubes']
-    cube_boolean_name = "Cropping Cube"
 
     if surf_3d:
-        surface_copy_name = "Surface scan copy"
-        mesh_boolean_name = "3D scan"
-
-        # Make a copy of the surface scan (if it doesn't already exist). This will be used to boolean the slices.
-        # Can't use original as this is already being cut into by the cropping cube.
-        surf_copy = context.scene.objects.get(surface_copy_name)
-        surf_copy_exists = surf_copy and surf_copy.users_collection[0] == cropping_cube_collection
-        if not surf_copy_exists:
-            surf_copy = surf_3d.copy()
-            surf_copy.name = surface_copy_name
-            surf_copy.modifiers.clear()
-            surf_copy.hide_viewport = True
-            surf_copy.hide_render = True
-            cropping_cube_collection.objects.link(surf_copy)
-
-        # Add boolean modifier. If it already exists, just enable it in viewport and render
-        for slice in slices:
-            if mesh_boolean_name not in slice.modifiers and cube_boolean_name not in slice.modifiers:
-                mesh_bool = slice.modifiers.new(type="BOOLEAN", name=mesh_boolean_name)
-                mesh_bool.operation = 'INTERSECT'
-                mesh_bool.object = surf_copy
-
-                # Move to top of modifier stack
-                bpy.ops.object.modifier_move_to_index({'object':slice}, modifier=mesh_bool.name, index=0)
-                add_cube_boolean(slice, INTACT_Props.Cropping_Cube, cube_boolean_name)
-            else:
-                set_modifier_visibility(slice, [mesh_boolean_name, cube_boolean_name], True)
+        enable_surf3d_slice(context)
 
     else:
-        # Create material with alpha. If already exists, just switch to that material slot
-
-        # add cube boolean. If already exists, just enable it.
+        enable_ct_alpha_slice(context)
 
     print("\nBoolean modifiers applied to all slices")
 
@@ -171,11 +245,13 @@ def disable_boolean_slice(context):
     for slice in slices:
         set_modifier_visibility(slice, ["3D scan", "Cropping Cube"], False)
 
+        # TODO - if alpha material active, reset to the old one
+
     print("\nBoolean modifiers disabled on all slices")
 
 
 def boolean_slice(self, context):
-    if self.Remove_slice_outside_surface:
+    if self.Remove_slice_outside_object:
         enable_boolean_slice(context)
     else:
         disable_boolean_slice(context)

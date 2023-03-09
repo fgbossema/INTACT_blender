@@ -1005,7 +1005,8 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
         print("Data Loading START...")
 
         GpShader = "VGS_INTACT"
-        GpThresholdShader = "VGS_Threshold"
+        GpThreshold = "VGS_Threshold"
+        GpTransparency = "VGS_slice_transparency"
         addon_dir = dirname(dirname(abspath(__file__)))
         ShadersBlendFile = join(addon_dir, "Resources", "BlendData", "INTACT_BlendData.blend")
 
@@ -1029,22 +1030,19 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
         # PngDir = AbsPath(INTACT_Props.PngDir)
         print("\n##########################\n")
         print("Voxel Rendering START...")
-        VolumeRender(DcmInfo, GpShader, ShadersBlendFile)
+        VolumeRender(DcmInfo, GpShader, GpThreshold, GpTransparency, ShadersBlendFile)
         scn = bpy.context.scene
         scn.render.engine = "BLENDER_EEVEE"
         INTACT_Props.GroupNodeName = GpShader
-        INTACT_Props.ThresholdNodeName = GpThresholdShader
-       
-           
-        if GpShader == "VGS_INTACT":
-            GpNode = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
-            Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
-            Low_Treshold.default_value = 600
-            WminNode = GpNode.nodes["WminNode"].outputs[0]
-            WminNode.default_value = Wmin
-            WmaxNode = GpNode.nodes["WmaxNode"].outputs[0]
-            WmaxNode.default_value = Wmax
+        INTACT_Props.ThresholdGroupNodeName = GpThreshold
 
+        GpNode = bpy.data.node_groups.get(GpThreshold)
+        Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
+        Low_Treshold.default_value = 600
+        WminNode = GpNode.nodes["WminNode"].outputs[0]
+        WminNode.default_value = Wmin
+        WmaxNode = GpNode.nodes["WmaxNode"].outputs[0]
+        WmaxNode.default_value = Wmax
 
         INTACT_Props.CT_Rendered = True
         bpy.context.scene.unit_settings.scale_length = 0.001
@@ -1114,22 +1112,22 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
 
 
 
-class INTACT_OT_TresholdUpdate(bpy.types.Operator):
-    """ Add treshold Update Handler  """
-
-    bl_idname = "intact.tresholdupdate"
-    bl_label = "Update Treshold"
-
-    def execute(self, context):
-        post_handlers = bpy.app.handlers.depsgraph_update_post
-        [
-            post_handlers.remove(h)
-            for h in post_handlers
-            if h.__name__ == "INTACT_TresholdUpdate"
-        ]
-        post_handlers.append(INTACT_TresholdUpdate)
-
-        return {"FINISHED"}
+# class INTACT_OT_TresholdUpdate(bpy.types.Operator):
+#     """ Add treshold Update Handler  """
+#
+#     bl_idname = "intact.tresholdupdate"
+#     bl_label = "Update Treshold"
+#
+#     def execute(self, context):
+#         post_handlers = bpy.app.handlers.depsgraph_update_post
+#         [
+#             post_handlers.remove(h)
+#             for h in post_handlers
+#             if h.__name__ == "INTACT_TresholdUpdate"
+#         ]
+#         post_handlers.append(INTACT_TresholdUpdate)
+#
+#         return {"FINISHED"}
 
 
 
@@ -1512,7 +1510,7 @@ class INTACT_OT_AddReferencePlanes(bpy.types.Operator):
 classes = [
     INTACT_OT_Volume_Render,
     INTACT_OT_Surface_Render,
-    INTACT_OT_TresholdUpdate,
+    # INTACT_OT_TresholdUpdate,
     INTACT_OT_MultiView,
     INTACT_OT_AddReferencePlanes,
     INTACT_OT_AddMarkupPoint,
@@ -1525,7 +1523,7 @@ def register():
         bpy.utils.register_class(cls)
     post_handlers = bpy.app.handlers.depsgraph_update_post
     MyPostHandlers = [
-        "INTACT_TresholdUpdate",
+        # "INTACT_TresholdUpdate",
         "AxialSliceUpdate",
         "CoronalSliceUpdate",
         "SagitalSliceUpdate",
@@ -1538,7 +1536,7 @@ def register():
             bpy.app.handlers.depsgraph_update_post.remove(h)
 
     handlers_To_Add = [
-        INTACT_TresholdUpdate,
+        # INTACT_TresholdUpdate,
         AxialSliceUpdate,
         CoronalSliceUpdate,
         SagitalSliceUpdate,
@@ -1552,7 +1550,7 @@ def unregister():
 
     post_handlers = bpy.app.handlers.depsgraph_update_post
     MyPostHandlers = [
-        "INTACT_TresholdUpdate",
+        # "INTACT_TresholdUpdate",
         "AxialSliceUpdate",
         "CoronalSliceUpdate",
         "SagitalSliceUpdate",

@@ -468,10 +468,9 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
             row.enabled = INTACT_Props.Axial_Slice is not None and INTACT_Props.Cropping_Cube is not None
 
             row = layout.row()
-            row.prop(INTACT_Props, "Remove_slice_outside_surface", text="Crop slices outside surface scan")
-            # disable checkbox while there are no slices + no cropping cube + surface isn't set
-            row.enabled = INTACT_Props.Axial_Slice is not None and INTACT_Props.Cropping_Cube is not None and \
-                          INTACT_Props.Surf_3D is not None
+            row.prop(INTACT_Props, "Remove_slice_outside_object", text="Crop slices outside object")
+            # disable checkbox while there are no slices + no cropping cube
+            row.enabled = INTACT_Props.Axial_Slice is not None and INTACT_Props.Cropping_Cube is not None
         
             row = layout.row()
             row.label(text="Open viewing in multiple directions.")
