@@ -1003,7 +1003,6 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
 
         GpShader = "VGS_INTACT"
         GpThreshold = "VGS_Threshold"
-        GpTransparency = "VGS_slice_transparency"
         addon_dir = dirname(dirname(abspath(__file__)))
         ShadersBlendFile = join(addon_dir, "Resources", "BlendData", "INTACT_BlendData.blend")
 
@@ -1024,7 +1023,7 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
         # PngDir = AbsPath(INTACT_Props.PngDir)
         print("\n##########################\n")
         print("Voxel Rendering START...")
-        VolumeRender(DcmInfo, GpShader, GpThreshold, GpTransparency, ShadersBlendFile)
+        VolumeRender(DcmInfo, GpShader, ShadersBlendFile)
         scn = bpy.context.scene
         scn.render.engine = "BLENDER_EEVEE"
         INTACT_Props.GroupNodeName = GpShader

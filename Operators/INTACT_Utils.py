@@ -460,7 +460,7 @@ def MoveToCollection(obj, CollName):
                 Coll.objects.unlink(obj)
 
 
-def VolumeRender(DcmInfo, GpShader, GpThreshold, GpTransparency, ShadersBlendFile):
+def VolumeRender(DcmInfo, GpShader, ShadersBlendFile):
 
     INTACT_Props = bpy.context.scene.INTACT_Props
 
