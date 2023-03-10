@@ -460,35 +460,6 @@ def MoveToCollection(obj, CollName):
                 Coll.objects.unlink(obj)
 
 
-@persistent
-def INTACT_TresholdUpdate(scene):
-
-    CtVolumeList = [
-        obj
-        for obj in bpy.context.scene.objects
-        if (obj.name.startswith("IT") and obj.name.endswith("_CTVolume"))
-    ]
-    if CtVolumeList:
-        INTACT_Props = bpy.context.scene.INTACT_Props
-        GpShader = INTACT_Props.GroupNodeName
-        Active_Obj = bpy.context.view_layer.objects.active
-        if Active_Obj and Active_Obj in CtVolumeList:
-            # print("Treshold Update trigred!")
-            Vol = Active_Obj
-            Preffix = Vol.name[:5]
-            GpNode = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
-
-            if GpShader == "VGS_Marcos_modified":
-                Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
-                INTACT_Props.Thres1Treshold = Low_Treshold.default_value
-            if GpShader == "VGS_Dakir_01":
-                DcmInfo = eval(INTACT_Props.DcmInfo)
-                Wmin = DcmInfo["Wmin"]
-                Wmax = DcmInfo["Wmax"]
-                treshramp = GpNode.nodes["TresholdRamp"].color_ramp.elements[0]
-                INTACT_Props.Thres1Treshold = treshramp.default_value * (Wmax - Wmin) + Wmin
-
-
 def VolumeRender(DcmInfo, GpShader, ShadersBlendFile):
 
     INTACT_Props = bpy.context.scene.INTACT_Props
@@ -610,15 +581,13 @@ def VolumeRender(DcmInfo, GpShader, ShadersBlendFile):
         links.new(TextureCoord.outputs[0], ImageTexture.inputs[0])
 
         # Load VGS Group Node :
-        VGS = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
+        VGS = bpy.data.node_groups.get(GpShader)
         if not VGS:
             filepath = join(ShadersBlendFile, "NodeTree", GpShader)
             directory = join(ShadersBlendFile, "NodeTree")
             filename = GpShader
             bpy.ops.wm.append(filepath=filepath, filename=filename, directory=directory)
             VGS = bpy.data.node_groups.get(GpShader)
-            VGS.name = f"{Preffix}_{GpShader}"
-            VGS = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
 
         GroupNode = nodes.new("ShaderNodeGroup")
         GroupNode.node_tree = VGS
@@ -853,7 +822,7 @@ def SlicesUpdate(scene, slice_index):
                 # This is necessary, as if the cube boolean is added (while the cropping cube
                 # is outside of the 3D mesh) it leads to some of the slices being displayed solid white.
                 # This seems to be a bug within blender - potentially fixed in newer versions?
-                if INTACT_Props.Remove_slice_outside_surface:
+                if INTACT_Props.Remove_slice_outside_object:
                     Plane.data.update()
 
 
@@ -967,6 +936,7 @@ def AddSlice(slice_index, Preffix, DcmInfo):
 
     # Add Material :
     mat = bpy.data.materials.get(f"{name}_mat") or bpy.data.materials.new(f"{name}_mat")
+    mat.use_fake_user = True
 
     for slot in Plane.material_slots:
         bpy.ops.object.material_slot_remove()

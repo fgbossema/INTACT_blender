@@ -20,9 +20,6 @@ from vtk import vtkCommand
 
 from .INTACT_Utils import *
 
-addon_dir = dirname(dirname(abspath(__file__)))
-ShadersBlendFile = join(addon_dir, "Resources", "BlendData", "INTACT_BlendData.blend")
-GpShader = "VGS_INTACT"  
 ProgEvent = vtkCommand.ProgressEvent
 
 #######################################################################################
@@ -1004,8 +1001,10 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
         Start = Tcounter()
         print("Data Loading START...")
 
-        global ShadersBlendFile
-        global GpShader
+        GpShader = "VGS_INTACT"
+        GpThreshold = "VGS_Threshold"
+        addon_dir = dirname(dirname(abspath(__file__)))
+        ShadersBlendFile = join(addon_dir, "Resources", "BlendData", "INTACT_BlendData.blend")
 
         INTACT_Props = context.scene.INTACT_Props
 
@@ -1028,18 +1027,15 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
         scn = bpy.context.scene
         scn.render.engine = "BLENDER_EEVEE"
         INTACT_Props.GroupNodeName = GpShader
+        INTACT_Props.ThresholdGroupNodeName = GpThreshold
 
-       
-           
-        if GpShader == "VGS_INTACT":
-            GpNode = bpy.data.node_groups.get(f"{Preffix}_{GpShader}")
-            Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
-            Low_Treshold.default_value = 600
-            WminNode = GpNode.nodes["WminNode"].outputs[0]
-            WminNode.default_value = Wmin
-            WmaxNode = GpNode.nodes["WmaxNode"].outputs[0]
-            WmaxNode.default_value = Wmax
-
+        GpNode = bpy.data.node_groups.get(GpThreshold)
+        Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
+        Low_Treshold.default_value = 600
+        WminNode = GpNode.nodes["WminNode"].outputs[0]
+        WminNode.default_value = Wmin
+        WmaxNode = GpNode.nodes["WmaxNode"].outputs[0]
+        WmaxNode.default_value = Wmax
 
         INTACT_Props.CT_Rendered = True
         bpy.context.scene.unit_settings.scale_length = 0.001
@@ -1066,9 +1062,6 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
 
         Start = Tcounter()
         print("Data Loading START...")
-
-        global ShadersBlendFile
-        global GpShader
 
         INTACT_Props = context.scene.INTACT_Props
 
@@ -1106,29 +1099,6 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         print(f"Finished (Time : {Finish-Start}")
 
         return {"FINISHED"}
-
-
-
-class INTACT_OT_TresholdUpdate(bpy.types.Operator):
-    """ Add treshold Update Handler  """
-
-    bl_idname = "intact.tresholdupdate"
-    bl_label = "Update Treshold"
-
-    def execute(self, context):
-        post_handlers = bpy.app.handlers.depsgraph_update_post
-        [
-            post_handlers.remove(h)
-            for h in post_handlers
-            if h.__name__ == "INTACT_TresholdUpdate"
-        ]
-        post_handlers.append(INTACT_TresholdUpdate)
-
-        return {"FINISHED"}
-
-
-
-
 
 
 class INTACT_OT_AddMarkupPoint(bpy.types.Operator):
@@ -1507,7 +1477,6 @@ class INTACT_OT_AddReferencePlanes(bpy.types.Operator):
 classes = [
     INTACT_OT_Volume_Render,
     INTACT_OT_Surface_Render,
-    INTACT_OT_TresholdUpdate,
     INTACT_OT_MultiView,
     INTACT_OT_AddReferencePlanes,
     INTACT_OT_AddMarkupPoint,
@@ -1520,7 +1489,6 @@ def register():
         bpy.utils.register_class(cls)
     post_handlers = bpy.app.handlers.depsgraph_update_post
     MyPostHandlers = [
-        "INTACT_TresholdUpdate",
         "AxialSliceUpdate",
         "CoronalSliceUpdate",
         "SagitalSliceUpdate",
@@ -1533,7 +1501,6 @@ def register():
             bpy.app.handlers.depsgraph_update_post.remove(h)
 
     handlers_To_Add = [
-        INTACT_TresholdUpdate,
         AxialSliceUpdate,
         CoronalSliceUpdate,
         SagitalSliceUpdate,
@@ -1547,7 +1514,6 @@ def unregister():
 
     post_handlers = bpy.app.handlers.depsgraph_update_post
     MyPostHandlers = [
-        "INTACT_TresholdUpdate",
         "AxialSliceUpdate",
         "CoronalSliceUpdate",
         "SagitalSliceUpdate",
