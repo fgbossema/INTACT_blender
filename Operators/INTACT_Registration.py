@@ -629,28 +629,25 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
         self.counter_start = Tcounter()
 
         INTACT_Props = bpy.context.scene.INTACT_Props
-        #Active_Obj = bpy.context.view_layer.objects.active
         
-        ct_vol = INTACT_Props.CT_Vol
-        Active_Obj = ct_vol
+        Active_Obj = INTACT_Props.CT_Vol
         
         if not Active_Obj:
-            message = [" Please select CTVOLUME for segmentation ! "]
+            message = [" Please select CT VOLUME for segmentation! "]
             ShowMessageBox(message=message, icon="COLORSET_02_VEC")
             return {"CANCELLED"}
         else:
-            Conditions = [
-                not Active_Obj.name.startswith("IT"),
-                not Active_Obj.name.endswith("_CTVolume"),
-                Active_Obj.select_get() == False,
-            ]
+            # Conditions = [
+                # not Active_Obj.name.startswith("IT"),
+                # not Active_Obj.name.endswith("_CTVolume"),
+            # ]
 
-            if Conditions[0] or Conditions[1] or Conditions[2]:
-                message = [" Please select CTVOLUME for segmentation ! "]
-                ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-                return {"CANCELLED"}
+            # if Conditions[0] or Conditions[1] or Conditions[2]:
+                # message = [" Please select CT VOLUME for segmentation ! 2"]
+                # ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+                # return {"CANCELLED"}
 
-            else:
+            if Active_Obj:
 
                 self.Thres1 = INTACT_Props.Thres1Bool
                
@@ -671,14 +668,14 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
                     k for k, v in self.SegmentsDict.items() if v["State"]
                 ]
 
-                if not ActiveSegmentsList:
-                    message = [
-                        " Please check at least 1 segmentation ! ",
-                        "(Thres1 - Thres2 - Thres3)",
-                    ]
-                    ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-                    return {"CANCELLED"}
-                else:
+                # if not ActiveSegmentsList:
+                    # message = [
+                        # " Please check at least 1 segmentation ! ",
+                        # "(Thres1 - Thres2 - Thres3)",
+                    # ]
+                    # ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+                    # return {"CANCELLED"}
+                if Active_Obj:
 
                     self.Vol = Active_Obj
                     self.Preffix = self.Vol.name[:5]
