@@ -267,6 +267,20 @@ def lock_location_rotation(slice, driver_axis, lock):
             slice.lock_location[i] = lock
 
 
+def get_original_dimensions(obj):
+    """Get original dimensions, before any modifiers"""
+    coords = np.empty(3 * len(obj.data.vertices))
+    obj.data.vertices.foreach_get("co", coords)
+
+    x, y, z = coords.reshape((-1, 3)).T
+
+    return (
+        x.max() - x.min(),
+        y.max() - y.min(),
+        z.max() - z.min()
+    )
+
+
 def enable_track_slices_to_cropping_cube(context):
     """
     Link the location / rotation of slices to the cropping cube
@@ -306,17 +320,16 @@ def enable_track_slices_to_cropping_cube(context):
         cropping_cube_dim.targets[0].id = cropping_cube
         cropping_cube_dim.targets[0].data_path = f"dimensions[{i}]"
 
-        ct_vol_dim = location_driver.driver.variables.new()
-        ct_vol_dim.name = "ctd"
-        ct_vol_dim.type = 'SINGLE_PROP'
-        ct_vol_dim.targets[0].id = ct_vol
-        ct_vol_dim.targets[0].data_path = f"dimensions[{i}]"
+        # The CT volume dimensions will change dynamically as it is cut into with the boolean. Therefore we need to put
+        # the original CT dimensions directly into the driver expression
+        original_ct_dim = get_original_dimensions(ct_vol)
+        half_ct_vol_dim = 0.5*original_ct_dim[i]
 
         location_driver.driver.expression = \
-            "cl+0.5*cd if cl-0.5*cd < ctl-0.5*ctd <= cl+0.5*cd else " \
-            "cl-0.5*cd if cl+0.5*cd > ctl+0.5*ctd >= cl-0.5*cd else " \
-            "ctl-0.5*ctd if cl-0.5*cd < ctl-0.5*ctd and " \
-            "cl+0.5*cd < ctl-0.5*ctd else ctl+0.5*ctd"
+            f"cl+0.5*cd if cl-0.5*cd < ctl-{half_ct_vol_dim} <= cl+0.5*cd else " \
+            f"cl-0.5*cd if cl+0.5*cd > ctl+{half_ct_vol_dim} >= cl-0.5*cd else " \
+            f"ctl-{half_ct_vol_dim} if cl-0.5*cd < ctl-{half_ct_vol_dim} and " \
+            f"cl+0.5*cd < ctl-{half_ct_vol_dim} else ctl+{half_ct_vol_dim}"
 
         lock_location_rotation(slices[i], i, True)
 
