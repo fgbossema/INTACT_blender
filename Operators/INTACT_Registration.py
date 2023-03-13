@@ -637,16 +637,6 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
             ShowMessageBox(message=message, icon="COLORSET_02_VEC")
             return {"CANCELLED"}
         else:
-            # Conditions = [
-                # not Active_Obj.name.startswith("IT"),
-                # not Active_Obj.name.endswith("_CTVolume"),
-            # ]
-
-            # if Conditions[0] or Conditions[1] or Conditions[2]:
-                # message = [" Please select CT VOLUME for segmentation ! 2"]
-                # ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-                # return {"CANCELLED"}
-
             if Active_Obj:
 
                 self.Thres1 = INTACT_Props.Thres1Bool
@@ -667,14 +657,6 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
                 ActiveSegmentsList = [
                     k for k, v in self.SegmentsDict.items() if v["State"]
                 ]
-
-                # if not ActiveSegmentsList:
-                    # message = [
-                        # " Please check at least 1 segmentation ! ",
-                        # "(Thres1 - Thres2 - Thres3)",
-                    # ]
-                    # ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-                    # return {"CANCELLED"}
                 if Active_Obj:
 
                     self.Vol = Active_Obj
@@ -699,8 +681,6 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
                         print(f"step 1 : Read DICOM ({self.step1-self.counter_start})")
 
                         Image3D = sitk.ReadImage(self.Nrrd255Path)
-                        # Sz = Image3D.GetSize()
-                        #Sp = Image3D.GetSpacing()
                         Sp = self.DcmInfo["Spacing"]
                         print('Resolution', Sp)
                         MaxSp = max(Vector(Sp))
