@@ -512,24 +512,30 @@ class OBJECT_PT_Image_Panel(bpy.types.Panel):
             row.label(text="Please load your data first.")
             
         if (condition_CT or condition_surface):
-            layout.prop(INTACT_Props, "Resolution_x", text="Resolution x (pixels)")
-            layout.prop(INTACT_Props, "Resolution_y", text="Resolution y (pixels)")
             row = layout.row()
             row.label(text="Quick screenshot:")
             layout.operator("intact.take_screenshot", text="Take Screenshot")
-
+            
             row = layout.row()
-            row.label(text="Render image / movie:")
+            row.label(text="Camera setup:")
+            layout.prop(INTACT_Props, "Resolution_x", text="Resolution x (pixels)")
+            layout.prop(INTACT_Props, "Resolution_y", text="Resolution y (pixels)")
+           
             if not INTACT_Props.Set_camera_enabled:
                 icon = "PLAY"
                 txt = 'Set Camera Position'
             else:
                 icon = "PAUSE"
                 txt = 'Confirm Camera Position'
-
+            
             layout.prop(INTACT_Props, 'Set_camera_enabled', text=txt, icon=icon, toggle=True)
+            
+            row = layout.row()
+            row.label(text="Render options:")
             layout.prop(INTACT_Props, 'Lighting_strength', text="Lighting strength")
             layout.prop(INTACT_Props, 'Background_colour', text="Background colour")
+            row = layout.row()
+            row.label(text="Render image/movie:")
             layout.operator("intact.render_image", text="Render image")
             row = layout.row()
             split = row.split()
