@@ -39,6 +39,7 @@ class CroppingCubeCreation(bpy.types.Operator):
     def execute(self, context):
         INTACT_Props = context.scene.INTACT_Props
         ct_vol = INTACT_Props.CT_Vol
+        surf_3d = INTACT_Props.Surf_3D
         cropping_cube_name = "Crop CT"
         cube_collection_name = "Cropping Cubes"
 
@@ -50,6 +51,8 @@ class CroppingCubeCreation(bpy.types.Operator):
         cropping_cube = context.scene.objects.get(cropping_cube_name)
         cube_exists = cropping_cube and cropping_cube.users_collection[0].name == cube_collection_name
         if not cube_exists:
+            # Make cropping cube slightly larger than the CT volume to avoid glitchy artefacts caused by the cube
+            # faces exactly matching the CT volume edges.
             croppingcubedim = ct_vol.dimensions*1.001
             croppingcube_x = croppingcubedim[0]
 
@@ -67,6 +70,20 @@ class CroppingCubeCreation(bpy.types.Operator):
             cropct.name = cropping_cube_name
             # Display as bounds, so can see through the cube to the object inside
             cropct.display_type = "BOUNDS"
+
+            # If there's a surface scan, add a material with alpha of 0. This will make the surface mesh's boolean faces
+            # transparent, as long as it has a material slot with the same material
+            if surf_3d:
+                cropct_material_name = "crop_transparent"
+                cropct_material = bpy.data.materials.new(name=cropct_material_name)
+                cropct_material.use_nodes = True
+                cropct_material.blend_method = "HASHED"
+                tree_nodes = cropct_material.node_tree.nodes
+                tree_nodes['Principled BSDF'].inputs["Alpha"].default_value = 0
+
+                cropct.data.materials.append(cropct_material)
+                surf_3d.data.materials.append(cropct_material)
+
             # Lock rotation and scale, so it can only be translated along x/y/z
             cropct.lock_rotation[0] = True
             cropct.lock_rotation[1] = True
