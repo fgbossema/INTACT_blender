@@ -2,6 +2,7 @@ import bpy
 import os
 from .Operators import INTACT_Visualisation
 from .Operators import INTACT_ImagesOutput
+from .Operators import INTACT_Utils
 from mathutils import Matrix, Vector, Euler, kdtree
 
 from bpy.props import (
@@ -55,7 +56,9 @@ def TresholdUpdateFunction(self, context):
         Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
         Low_Treshold.default_value = Treshold
 
-
+def SliceIntensityUpdate(self, scene):
+    INTACT_Utils.SlicesUpdateAll(scene)
+    return False
 
 def text_body_update(self, context):
     props = context.scene.ODC_modops_props
@@ -238,6 +241,23 @@ class INTACT_Props(bpy.types.PropertyGroup):
 
     Wmin: IntProperty()
     Wmax: IntProperty()
+    
+    Slice_min: FloatProperty(
+        name="Slice min",
+        description="Choose a minimum for slice visualisation.",
+        default=0, 
+        soft_min=0.0,
+        soft_max=255,
+        update = SliceIntensityUpdate,
+    )
+    Slice_max: FloatProperty(
+        name="Slice min",
+        description="Choose a minimum for slice visualisation.",
+        default=255, 
+        soft_min=0.0,
+        soft_max=255,
+        update = SliceIntensityUpdate,
+    )
     
     Resolution: FloatProperty(
         name="Resolution",

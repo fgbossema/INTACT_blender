@@ -456,6 +456,18 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
             row.alignment = "CENTER"
             row.scale_y = 2
             row.operator("intact.addslices", icon="EMPTY_AXIS")
+            
+            row = layout.row()
+            row.label(text="Slices contrast adjustment")
+            row = layout.row()
+            row.label(text="Slice min value:")
+            row = layout.row()
+            row.prop(INTACT_Props, "Slice_min", text="Minimum value", slider=True)
+            row = layout.row()
+            row.label(text="Slice max value:")
+            row = layout.row()
+            row.prop(INTACT_Props, "Slice_max", text="Maximum value", slider=True)
+                
 
         
         if (condition_CT or condition_surface):

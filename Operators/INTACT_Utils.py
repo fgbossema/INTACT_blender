@@ -688,7 +688,7 @@ def SlicesUpdate(scene, slice_index):
     """ Update slices when moved in UI. Slice index determines which slice to update 0 = axial, 1 = Coronal,
     2 = Sagital
     """
-    INTACT_Props = scene.INTACT_Props
+    INTACT_Props = bpy.context.scene.INTACT_Props
     slice_name_suffixes = ["_AXIAL_SLICE", "_CORONAL_SLICE", "_SAGITAL_SLICE"]
     position_properties = ["Axial_Slice_Pos", "Coronal_Slice_Pos", "Sagital_Slice_Pos"]
     rotation_properties = ["Axial_Slice_Rot", "Coronal_Slice_Rot", "Sagital_Slice_Rot"]
@@ -792,6 +792,17 @@ def SlicesUpdate(scene, slice_index):
                 Euler3D.SetTranslation(Tvec)
                 Euler3D.ComputeZYXOn()
                 #########################################
+                # set IntensityWindowing  :
+                Image3D_255 = sitk.Cast(
+                sitk.IntensityWindowing(
+                Image3D_255,
+                windowMinimum=INTACT_Props.Slice_min,
+                windowMaximum=INTACT_Props.Slice_max,
+                outputMinimum=0.0,
+                outputMaximum=255.0,
+                ),
+                sitk.sitkUInt8,
+                )
 
                 Image2D = sitk.Resample(
                     Image3D_255,
@@ -839,6 +850,13 @@ def CoronalSliceUpdate(scene):
 @persistent
 def SagitalSliceUpdate(scene):
     SlicesUpdate(scene, 2)
+    
+def SlicesUpdateAll(scene):
+    SlicesUpdate(scene, 0)
+    SlicesUpdate(scene, 1)
+    SlicesUpdate(scene, 2)
+
+    
 
 ####################################################################
 def Add_Cam_To_Plane(Plane, CamDistance, ClipOffset):
