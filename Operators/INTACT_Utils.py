@@ -793,16 +793,16 @@ def SlicesUpdate(scene, slice_index):
                 Euler3D.ComputeZYXOn()
                 #########################################
                 # set IntensityWindowing  :
-                Image3D_255 = sitk.Cast(
-                sitk.IntensityWindowing(
-                Image3D_255,
-                windowMinimum=INTACT_Props.Slice_min,
-                windowMaximum=INTACT_Props.Slice_max,
-                outputMinimum=0.0,
-                outputMaximum=255.0,
-                ),
-                sitk.sitkUInt8,
-                )
+                # Image3D_255 = sitk.Cast(
+                # sitk.IntensityWindowing(
+                # Image3D_255,
+                # windowMinimum=INTACT_Props.Slice_min,
+                # windowMaximum=INTACT_Props.Slice_max,
+                # outputMinimum=0.0,
+                # outputMaximum=255.0,
+                # ),
+                # sitk.sitkUInt8,
+                # )
 
                 Image2D = sitk.Resample(
                     Image3D_255,
@@ -814,6 +814,17 @@ def SlicesUpdate(scene, slice_index):
                     Out_Direction,
                     0,
                 )
+                Image2D = sitk.Cast(
+                sitk.IntensityWindowing(
+                Image2D,
+                windowMinimum=INTACT_Props.Slice_min,
+                windowMaximum=INTACT_Props.Slice_max,
+                outputMinimum=0.0,
+                outputMaximum=255.0,
+                ),
+                sitk.sitkUInt8,
+                )
+                
                 #############################################
                 # Write Image :
                 Array = sitk.GetArrayFromImage(Image2D)
