@@ -241,13 +241,16 @@ def enable_camera_position(context):
     context.scene.render.resolution_y = INTACT_Props.Resolution_y
 
     # If no active camera, make one + set to be active
-    if context.scene.camera is None:
+    if "Camera" not in bpy.data.collections:
+        collection = bpy.data.collections.new("Camera")
+        bpy.context.scene.collection.children.link(collection)
+        
+    if not 'Camera' in bpy.data.collections['Camera'].all_objects:
         camera_data = bpy.data.cameras.new(name='Camera')
         camera_object = bpy.data.objects.new('Camera', camera_data)
         context.scene.camera = camera_object
-        collection = bpy.data.collections.new("Camera")
-        bpy.context.scene.collection.children.link(collection)
         collection.objects.link(camera_object)
+    
 
     # Make sure camera has no parent, so it can move freely, this is necessary if e.g. it was previously being
     # controlled by a follow path constraint

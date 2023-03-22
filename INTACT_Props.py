@@ -58,7 +58,7 @@ def TresholdUpdateFunction(self, context):
 
 def SliceIntensityUpdate(self, scene):
     INTACT_Utils.SlicesUpdateAll(scene)
-    return False
+
 
 def text_body_update(self, context):
     props = context.scene.ODC_modops_props

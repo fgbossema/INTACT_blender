@@ -792,17 +792,6 @@ def SlicesUpdate(scene, slice_index):
                 Euler3D.SetTranslation(Tvec)
                 Euler3D.ComputeZYXOn()
                 #########################################
-                # set IntensityWindowing  :
-                # Image3D_255 = sitk.Cast(
-                # sitk.IntensityWindowing(
-                # Image3D_255,
-                # windowMinimum=INTACT_Props.Slice_min,
-                # windowMaximum=INTACT_Props.Slice_max,
-                # outputMinimum=0.0,
-                # outputMaximum=255.0,
-                # ),
-                # sitk.sitkUInt8,
-                # )
 
                 Image2D = sitk.Resample(
                     Image3D_255,
@@ -814,6 +803,8 @@ def SlicesUpdate(scene, slice_index):
                     Out_Direction,
                     0,
                 )
+                
+                #Change contrast based on user input#
                 Image2D = sitk.Cast(
                 sitk.IntensityWindowing(
                 Image2D,
@@ -843,7 +834,7 @@ def SlicesUpdate(scene, slice_index):
 
                 # This is necessary, as if the cube boolean is added (while the cropping cube
                 # is outside of the 3D mesh) it leads to some of the slices being displayed solid white.
-                # This seems to be a bug within blender - potentially fixed in newer versions?
+                # This seems to be a bug within blender.
                 if INTACT_Props.Remove_slice_outside_object:
                     Plane.data.update()
 
