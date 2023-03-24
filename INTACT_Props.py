@@ -176,10 +176,6 @@ class INTACT_Props(bpy.types.PropertyGroup):
         subtype="FILE_PATH",
     )
     
-    # my_filepath: StringProperty(
-        # name = 'Absolute filepath',
-        # update = lambda s,c: make_path_absolute('my_filepath'),
-        # subtype = 'FILE_PATH')
     #####################
 
     Data_Types = ["TIFF Stack", "DICOM Series", "NRRD File", ""]
@@ -219,11 +215,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
     )
     #######################
 
-    NrrdHuPath: StringProperty(
-        name="NrrdHuPath",
-        default="",
-        description="Nrrd image3D file Path",
-    )
+
     Nrrd255Path: StringProperty(
         name="Nrrd255Path",
         default="",
@@ -378,63 +370,6 @@ class INTACT_Props(bpy.types.PropertyGroup):
     CT_Rendered: BoolProperty(description="CT Rendered ", default=False)
     sceneUpdate: BoolProperty(description="scene update ", default=True)
     AlignModalState: BoolProperty(description="Align Modal state ", default=False)
-
-    #######################
-
-    #########################################################################################
-    # Mesh Tools Props :
-    #########################################################################################
-
-    # Decimate ratio prop :
-    #######################
-    decimate_ratio: FloatProperty(
-        description="Enter decimate ratio ", default=0.5, step=1, precision=2
-    )
-    #########################################################################################
-
-    CurveCutterNameProp: StringProperty(
-        name="Cutter Name",
-        default="",
-        description="Current Cutter Object Name",
-    )
-
-    #####################
-
-    CuttingTargetNameProp: StringProperty(
-        name="Cutting Target Name",
-        default="",
-        description="Current Cutting Target Object Name",
-    )
-
-    #####################
-
-    Cutting_Tools_Types = [
-        "Curve Cutter 1",
-        "Curve Cutter 2",
-        "Square Cutting Tool",
-        "Paint Cutter",
-    ]
-    items = []
-    for i in range(len(Cutting_Tools_Types)):
-        item = (
-            str(Cutting_Tools_Types[i]),
-            str(Cutting_Tools_Types[i]),
-            str(""),
-            int(i),
-        )
-        items.append(item)
-
-    Cutting_Tools_Types_Prop: EnumProperty(
-        items=items, description="Select a cutting tool", default="Curve Cutter 1"
-    )
-
-    cutting_mode_list = ["Cut inner", "Keep inner"]
-    items = []
-    for i in range(len(cutting_mode_list)):
-        item = (str(cutting_mode_list[i]), str(cutting_mode_list[i]), str(""), int(i))
-        items.append(item)
-
-    cutting_mode: EnumProperty(items=items, description="", default="Cut inner")
 
     #########################################################################################
     # Visualisation Props :

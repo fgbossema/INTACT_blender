@@ -141,6 +141,7 @@ def Load_function(context, image_type, q):
             reader.ReadImageInformation()
 
             Image3D = sitk.ReadImage(DcmSerie, imageIO='GDCMImageIO')
+            Sp = Spacing = Image3D.GetSpacing()
         
         if image_type == 'Tiff':
             TiffSerie = os.listdir(UserTiffDir)
@@ -160,6 +161,7 @@ def Load_function(context, image_type, q):
             TiffSerie = [os.path.join(UserTiffDir,s) for s in TiffSerie]
         
             Image3D = sitk.ReadImage(TiffSerie, imageIO='TIFFImageIO')
+            Sp = Spacing = (INTACT_Props.Resolution, INTACT_Props.Resolution, INTACT_Props.Resolution)
             
         if image_type == 'Nrrd':
             reader = sitk.ImageFileReader()
@@ -175,6 +177,8 @@ def Load_function(context, image_type, q):
                 return {"CANCELLED"}
 
             Image3D = sitk.ReadImage(UserImageFile)
+            Sp = Spacing = Image3D.GetSpacing()
+            
             Depth = Image3D.GetDepth()
 
             if Depth == 0:
@@ -203,7 +207,7 @@ def Load_function(context, image_type, q):
         Imin = minmax.GetMinimum()
 
         # Get Dicom Info :
-        Sp = Spacing = Image3D.GetSpacing()
+        
         Sz = Size = Image3D.GetSize()
 		
         Dims = Dimensions = Image3D.GetDimension()
@@ -348,20 +352,21 @@ def Load_function(context, image_type, q):
             cv2.imwrite(image_path, img_Slice)
             image = bpy.data.images.load(image_path)
             image.pack()
-            # print(f"{img_Name} was processed...")
 
         #########################################################################################
         # Get slices list :
         MaxSp = max(Vector(Sp))
+        print(MaxSp)
         if MaxSp < 0.25:
             SampleRatio = round(MaxSp / 0.25, 2)
             Image3D_255 = ResizeImage(sitkImage=Image3D_255, Ratio=SampleRatio)
             DcmInfo["RenderSz"] = Image3D_255.GetSize()
             DcmInfo["RenderSp"] = Image3D_255.GetSpacing()
-            print(sample_ratio)
+            print('Reducing number of slices for visualisation by ratio:', sample_ratio)
 
         Array = sitk.GetArrayFromImage(Image3D_255)
         slices = [np.flipud(Array[i, :, :]) for i in range(Array.shape[0])]
+        print('Number of slices', len(slices))
  
         threads = [
             threading.Thread(
