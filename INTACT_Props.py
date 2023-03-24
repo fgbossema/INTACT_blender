@@ -182,7 +182,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
         # subtype = 'FILE_PATH')
     #####################
 
-    Data_Types = ["TIFF Stack", "DICOM Series", "3D Image File", ""]
+    Data_Types = ["TIFF Stack", "DICOM Series", "NRRD File", ""]
     items = []
     for i in range(len(Data_Types)):
         item = (str(Data_Types[i]), str(Data_Types[i]), str(""), int(i))
@@ -331,12 +331,12 @@ class INTACT_Props(bpy.types.PropertyGroup):
     Threshold: IntProperty(
         name="Threshold 1",
         description="Threshold 1",
-        default = 600,
+        default = 100,
         step=1,
-        min=-400,
-        max=3000,
-        soft_min=-400,
-        soft_max=3000,
+        min=0,
+        max=255,
+        soft_min=0,
+        soft_max=255,
         update=TresholdUpdateFunction,
     )
     

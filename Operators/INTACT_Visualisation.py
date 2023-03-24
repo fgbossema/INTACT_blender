@@ -507,12 +507,120 @@ class INTACT_OT_AddSlices(bpy.types.Operator):
 
             return {"FINISHED"}    
 
+class INTACT_OT_MultiView(bpy.types.Operator):
+    """ MultiView Toggle """
+
+    bl_idname = "intact.multiview"
+    bl_label = "MULTI-VIEW"
+
+    def execute(self, context):
+
+        INTACT_Props = bpy.context.scene.INTACT_Props
+        Vol = INTACT_Props.CT_Vol
+        AxialPlane = INTACT_Props.Axial_Slice
+        CoronalPlane = INTACT_Props.Coronal_Slice
+        SagitalPlane = INTACT_Props.Sagital_Slice
+
+        if not Vol:
+            message = [" Please input CT Volume first "]
+            ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+            return {"CANCELLED"}
+        elif not AxialPlane or not CoronalPlane or not SagitalPlane:
+            message = [" Please click 'Slice Volume' first "]
+            ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+            return {"CANCELLED"}
+        else:
+            Preffix = INTACT_Props.CT_Vol.name[:5]
+            SLICES_POINTER = bpy.data.objects.get(f"{Preffix}_SLICES_POINTER")
+
+            bpy.context.scene.unit_settings.scale_length = 0.001
+            bpy.context.scene.unit_settings.length_unit = "MILLIMETERS"
+
+            (
+                MultiView_Window,
+                OUTLINER,
+                PROPERTIES,
+                AXIAL,
+                CORONAL,
+                SAGITAL,
+                VIEW_3D,
+            ) = INTACT_MultiView_Toggle(Preffix)
+            MultiView_Screen = MultiView_Window.screen
+            AXIAL_Space3D = [
+                Space for Space in AXIAL.spaces if Space.type == "VIEW_3D"
+            ][0]
+            AXIAL_Region = [
+                reg for reg in AXIAL.regions if reg.type == "WINDOW"
+            ][0]
+
+            CORONAL_Space3D = [
+                Space for Space in CORONAL.spaces if Space.type == "VIEW_3D"
+            ][0]
+            CORONAL_Region = [
+                reg for reg in CORONAL.regions if reg.type == "WINDOW"
+            ][0]
+
+            SAGITAL_Space3D = [
+                Space for Space in SAGITAL.spaces if Space.type == "VIEW_3D"
+            ][0]
+            SAGITAL_Region = [
+                reg for reg in SAGITAL.regions if reg.type == "WINDOW"
+            ][0]
+            # AXIAL Cam view toggle :
+
+            AxialCam = bpy.data.objects.get(f"{AxialPlane.name}_CAM")
+            AXIAL_Space3D.use_local_collections = True
+            AXIAL_Space3D.use_local_camera = True
+            AXIAL_Space3D.camera = AxialCam
+            Override = {
+                "window": MultiView_Window,
+                "screen": MultiView_Screen,
+                "area": AXIAL,
+                "space_data": AXIAL_Space3D,
+                "region": AXIAL_Region,
+            }
+            bpy.ops.view3d.view_camera(Override)
+
+            # CORONAL Cam view toggle :
+            CoronalCam = bpy.data.objects.get(f"{CoronalPlane.name}_CAM")
+            CORONAL_Space3D.use_local_collections = True
+            CORONAL_Space3D.use_local_camera = True
+            CORONAL_Space3D.camera = CoronalCam
+            Override = {
+                "window": MultiView_Window,
+                "screen": MultiView_Screen,
+                "area": CORONAL,
+                "space_data": CORONAL_Space3D,
+                "region": CORONAL_Region,
+            }
+            bpy.ops.view3d.view_camera(Override)
+
+            # AXIAL Cam view toggle :
+            SagitalCam = bpy.data.objects.get(f"{SagitalPlane.name}_CAM")
+            SAGITAL_Space3D.use_local_collections = True
+            SAGITAL_Space3D.use_local_camera = True
+            SAGITAL_Space3D.camera = SagitalCam
+            Override = {
+                "window": MultiView_Window,
+                "screen": MultiView_Screen,
+                "area": SAGITAL,
+                "space_data": SAGITAL_Space3D,
+                "region": SAGITAL_Region,
+            }
+            bpy.ops.view3d.view_camera(Override)
+
+            bpy.ops.object.select_all(Override, action="DESELECT")
+            SLICES_POINTER.select_set(True)
+            bpy.context.view_layer.objects.active = SLICES_POINTER
+
+        return {"FINISHED"}
         
 # ---------------------------------------------------------------------------
 #          Registration
 # ---------------------------------------------------------------------------
 
 classes = [INTACT_OT_AddSlices,
+    INTACT_OT_MultiView,
     CroppingCubeCreation]
 
 

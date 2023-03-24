@@ -278,6 +278,12 @@ def Load_Dicom_funtion(context, q):
             ),
             sitk.sitkUInt8,
         )
+        minmax = sitk.MinimumMaximumImageFilter()
+        minmax.Execute(Image3D_255)
+        Wmax = minmax.GetMaximum()
+        Wmin = minmax.GetMinimum()
+        INTACT_Props.Wmin = Wmin 
+        INTACT_Props.Wmax = Wmax
 
         # Convert Dicom to nrrd file :
         # sitk.WriteImage(Image3D, NrrdHuPath)
@@ -352,13 +358,13 @@ def Load_Dicom_funtion(context, q):
         ShowMessageBox(message=message, icon="COLORSET_03_VEC")
         
         #Remove Blenders default objects. 
-        if bpy.data.objects["Camera"]:
+        if 'Camera' in bpy.data.objects:
            bpy.data.objects.remove(bpy.data.objects["Camera"], do_unlink=True)
-        if bpy.data.objects["Cube"]:
+        if 'Cube' in bpy.data.objects:
            bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)   
-        if bpy.data.objects["Light"]:
+        if 'Light' in bpy.data.objects:
            bpy.data.objects.remove(bpy.data.objects["Light"], do_unlink=True)
-        if bpy.data.collections["Collection"]:
+        if 'Collection' in bpy.data.collections:
            bpy.data.collections.remove(bpy.data.collections["Collection"])
         # Fetch the area
         outliner = next(a for a in bpy.context.screen.areas if a.type == "OUTLINER") 
@@ -418,9 +424,7 @@ def Load_Tiff_function(context, q):
 
         # Start Reading Dicom data :
         ######################################################################################
-        #Series_reader = sitk.ImageSeriesReader()
-        #MaxSerie, MaxCount = GetMaxSerie(UserTiffDir)
-        #DcmSerie = Series_reader.GetGDCMSeriesFileNames(UserTiffDir, MaxSerie)
+
         
         TiffSerie = os.listdir(UserTiffDir)
         MaxCount = len(TiffSerie)
@@ -436,8 +440,6 @@ def Load_Tiff_function(context, q):
         reader.SetImageIO('TIFFImageIO')
         reader.SetFileName(TiffSerie[0])
         reader.LoadPrivateTagsOn()
-        #reader.ReadImageInformation()
-        #TiffSerie = [UserTiffDir + '/' + s for s in TiffSerie]
         TiffSerie = [os.path.join(UserTiffDir,s) for s in TiffSerie]
         
         Image3D = sitk.ReadImage(TiffSerie, imageIO='TIFFImageIO')
@@ -447,8 +449,7 @@ def Load_Tiff_function(context, q):
         Sz = Size = Image3D.GetSize()
 		
         Dims = Dimensions = Image3D.GetDimension()
-        #Origin = Image3D.GetOrigin()
-        #Direction = Image3D.GetDirection()
+
         
         Origin = (-(Sz[0]-1)/2*Sp[0], (Sz[1]-1)/2*Sp[1], (Sz[2]-1)/2*Sp[2])
         
@@ -462,26 +463,26 @@ def Load_Tiff_function(context, q):
         
   
 
-        if not (Wmin == 0.0) :
-            fact = []    
-            fact.append(4000/Wmax)
-            fact.append(abs(2000/Wmin))
-            mult_factor = min(fact)
-            multiply = sitk.MultiplyImageFilter()
-            Image3D = multiply.Execute(Image3D, mult_factor)
-        else: 
-            mult_factor = 4000/Wmax
-            multiply = sitk.MultiplyImageFilter()
-            Image3D = multiply.Execute(Image3D, mult_factor)
+        # if not (Wmin == 0.0) :
+            # fact = []    
+            # fact.append(4000/Wmax)
+            # fact.append(abs(2000/Wmin))
+            # mult_factor = min(fact)
+            # multiply = sitk.MultiplyImageFilter()
+            # Image3D = multiply.Execute(Image3D, mult_factor)
+        # else: 
+            # mult_factor = 4000/Wmax
+            # multiply = sitk.MultiplyImageFilter()
+            # Image3D = multiply.Execute(Image3D, mult_factor)
 
         
-        #Re-evaluate Wmin and Wmax after scaling
-        minmax = sitk.MinimumMaximumImageFilter()
-        minmax.Execute(Image3D)
-        Wmax = minmax.GetMaximum()
-        Wmin = minmax.GetMinimum()
-        INTACT_Props.Wmin = Wmin 
-        INTACT_Props.Wmax = Wmax 
+        # #Re-evaluate Wmin and Wmax after scaling
+        # minmax = sitk.MinimumMaximumImageFilter()
+        # minmax.Execute(Image3D)
+        # Wmax = minmax.GetMaximum()
+        # Wmin = minmax.GetMinimum()
+        # INTACT_Props.Wmin = Wmin 
+        # INTACT_Props.Wmax = Wmax 
    
 
         # calculate Informations :
@@ -526,7 +527,7 @@ def Load_Tiff_function(context, q):
             )
         )
 
-        # Set DcmInfo : #where do these numbers all come from? Wmin, Wmax defined in INTACT_Panel
+       
 
         DcmInfo = {
             "UserProjectDir": RelPath(UserProjectDir),
@@ -548,16 +549,7 @@ def Load_Tiff_function(context, q):
             "VolumeCenter": VCenter,
         }
         print(DcmInfo)
-        tags = {
-            "StudyDate": "0008|0020",
-            "PatientName": "0010|0010",
-            "PatientID": "0010|0020",
-            "BirthDate": "0010|0030",
-            "WinCenter": "0028|1050",
-            "WinWidth": "0028|1051",
-        }
-
-
+        
         ###################################### debug_02 ##################################
         debug_02 = Tcounter()
         message = f"DcmInfo {Preffix} set (Time : {debug_02-debug_01} secondes)"
@@ -595,10 +587,14 @@ def Load_Tiff_function(context, q):
             ),
             sitk.sitkUInt8,
         )
-        
+        minmax = sitk.MinimumMaximumImageFilter()
+        minmax.Execute(Image3D_255)
+        Wmax = minmax.GetMaximum()
+        Wmin = minmax.GetMinimum()
+        INTACT_Props.Wmin = Wmin 
+        INTACT_Props.Wmax = Wmax 
 
-        
-        # Convert Dicom to nrrd file :
+        # Convert to nrrd file :
         sitk.WriteImage(Image3D_255, Nrrd255Path)
 
         ################################## debug_03 ######################################
@@ -618,12 +614,10 @@ def Load_Tiff_function(context, q):
             cv2.imwrite(image_path, img_Slice)
             image = bpy.data.images.load(image_path)
             image.pack()
-            # print(f"{img_Name} was processed...")
 
 
         Array = sitk.GetArrayFromImage(Image3D_255)
         slices = [np.flipud(Array[i, :, :]) for i in range(Array.shape[0])]
-
 
         threads = [
             threading.Thread(
@@ -661,13 +655,13 @@ def Load_Tiff_function(context, q):
         ShowMessageBox(message=message, icon="COLORSET_03_VEC")
         
         #Remove Blenders default objects. 
-        if bpy.data.objects["Camera"]:
+        if 'Camera' in bpy.data.objects:
            bpy.data.objects.remove(bpy.data.objects["Camera"], do_unlink=True)
-        if bpy.data.objects["Cube"]:
+        if 'Cube' in bpy.data.objects:
            bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)   
-        if bpy.data.objects["Light"]:
+        if 'Light' in bpy.data.objects:
            bpy.data.objects.remove(bpy.data.objects["Light"], do_unlink=True)
-        if bpy.data.collections["Collection"]:
+        if 'Collection' in bpy.data.collections:
            bpy.data.collections.remove(bpy.data.collections["Collection"])
         # Fetch the area
         outliner = next(a for a in bpy.context.screen.areas if a.type == "OUTLINER") 
@@ -782,6 +776,14 @@ def Load_3DImage_function(context, q):
         Dims = Dimensions = Image3D.GetDimension()
         Origin = Image3D.GetOrigin()
         Direction = Image3D.GetDirection()
+        
+        #Set Wmin and Wmax
+        minmax = sitk.MinimumMaximumImageFilter()
+        minmax.Execute(Image3D)
+        Wmax = minmax.GetMaximum()
+        Wmin = minmax.GetMinimum()
+        INTACT_Props.Wmin = Wmin 
+        INTACT_Props.Wmax = Wmax 
 
         # calculate Informations :
         D = Direction
@@ -882,16 +884,11 @@ def Load_3DImage_function(context, q):
         Image3D.SetSpacing(Sp)
         Image3D.SetDirection(D)
         Image3D.SetOrigin(O)
+        print(Wmin,Wmax)
         
-        minmax = sitk.MinimumMaximumImageFilter()
-        minmax.Execute(Image3D)
-        Wmax = minmax.GetMaximum()
-        Wmin = minmax.GetMinimum()
-        INTACT_Props.Wmin = Wmin 
-        INTACT_Props.Wmax = Wmax
-
         if INTACT_nrrd:
             Image3D_255 = Image3D
+            print('Not rescaled')
 
         else:
             #######################################################################################
@@ -969,13 +966,13 @@ def Load_3DImage_function(context, q):
         print(f"Data Loaded in {finish-start} second(s)")
         #############################################################################################
         #Remove Blenders default objects. 
-        if bpy.data.objects["Camera"]:
+        if 'Camera' in bpy.data.objects:
            bpy.data.objects.remove(bpy.data.objects["Camera"], do_unlink=True)
-        if bpy.data.objects["Cube"]:
+        if 'Cube' in bpy.data.objects:
            bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)   
-        if bpy.data.objects["Light"]:
+        if 'Light' in bpy.data.objects:
            bpy.data.objects.remove(bpy.data.objects["Light"], do_unlink=True)
-        if bpy.data.collections["Collection"]:
+        if 'Collection' in bpy.data.collections:
            bpy.data.collections.remove(bpy.data.collections["Collection"])
         # Fetch the area
         outliner = next(a for a in bpy.context.screen.areas if a.type == "OUTLINER") 
@@ -1013,7 +1010,7 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
             DcmInfo = Load_Tiff_function(context, self.q)
         if DataType == "DICOM Series":
             DcmInfo = Load_Dicom_funtion(context, self.q)
-        if DataType == "3D Image File":
+        if DataType == "NRRD File":
             DcmInfo = Load_3DImage_function(context, self.q)
 
         UserProjectDir = AbsPath(INTACT_Props.UserProjectDir)
@@ -1031,7 +1028,7 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
 
         GpNode = bpy.data.node_groups.get(GpThreshold)
         Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
-        Low_Treshold.default_value = 600
+        Low_Treshold.default_value = 100
         WminNode = GpNode.nodes["WminNode"].outputs[0]
         WminNode.default_value = Wmin
         WmaxNode = GpNode.nodes["WmaxNode"].outputs[0]
@@ -1083,6 +1080,19 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         
         bpy.data.collections['Surface'].objects.link(obj_object)
         bpy.context.scene.collection.objects.unlink(obj_object)
+        
+        
+        #Remove Blenders default objects. 
+        if 'Camera' in bpy.data.objects:
+           bpy.data.objects.remove(bpy.data.objects["Camera"], do_unlink=True)
+        if 'Cube' in bpy.data.objects:
+           bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)   
+        if 'Light' in bpy.data.objects:
+           bpy.data.objects.remove(bpy.data.objects["Light"], do_unlink=True)
+        if 'Collection' in bpy.data.collections:
+           bpy.data.collections.remove(bpy.data.collections["Collection"])
+        
+        
         # Fetch the area
         outliner = next(a for a in bpy.context.screen.areas if a.type == "OUTLINER") 
         # Fetch the space
@@ -1101,374 +1111,6 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         return {"FINISHED"}
 
 
-class INTACT_OT_AddMarkupPoint(bpy.types.Operator):
-    """ Add Markup point """
-
-    bl_idname = "intact.add_markup_point"
-    bl_label = "ADD MARKUP POINT"
-
-    MarkupName: StringProperty(
-        name="Markup Name",
-        default="Markup 01",
-        description="Markup Name",
-    )
-    MarkupColor: FloatVectorProperty(
-        name="Markup Color",
-        description="Markup Color",
-        default=[1.0, 0.0, 0.0, 1.0],
-        size=4,
-        subtype="COLOR",
-    )
-
-    CollName = "Markup Points"
-
-    def execute(self, context):
-
-        if self.MarkupVoxelMode:
-            Preffix = self.TargetObject.name[:5]
-            CursorToVoxelPoint(Preffix=Preffix, CursorMove=True)
-
-        Co = context.scene.cursor.location
-        P = AddMarkupPoint(
-            name=self.MarkupName, color=self.MarkupColor, loc=Co, CollName=self.CollName
-        )
-
-        return {"FINISHED"}
-
-    def invoke(self, context, event):
-
-        self.INTACT_Props = bpy.context.scene.INTACT_Props
-
-        Active_Obj = bpy.context.view_layer.objects.active
-
-        if not Active_Obj:
-            message = [" Please select Target Object ! "]
-            ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-            return {"CANCELLED"}
-
-        else:
-            if Active_Obj.select_get() == False:
-                message = [" Please select Target Object ! "]
-                ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-                return {"CANCELLED"}
-
-            else:
-                self.TargetObject = Active_Obj
-                self.MarkupVoxelMode = self.TargetObject.name.startswith(
-                    "IT"
-                ) and self.TargetObject.name.endswith("_CTVolume")
-                wm = context.window_manager
-                return wm.invoke_props_dialog(self)
-
-
-
-class INTACT_OT_MultiView(bpy.types.Operator):
-    """ MultiView Toggle """
-
-    bl_idname = "intact.multiview"
-    bl_label = "MULTI-VIEW"
-
-    def execute(self, context):
-
-        INTACT_Props = bpy.context.scene.INTACT_Props
-        Vol = INTACT_Props.CT_Vol
-        AxialPlane = INTACT_Props.Axial_Slice
-        CoronalPlane = INTACT_Props.Coronal_Slice
-        SagitalPlane = INTACT_Props.Sagital_Slice
-
-        if not Vol:
-            message = [" Please input CT Volume first "]
-            ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-            return {"CANCELLED"}
-        elif not AxialPlane or not CoronalPlane or not SagitalPlane:
-            message = [" Please click 'Slice Volume' first "]
-            ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-            return {"CANCELLED"}
-        else:
-            Preffix = INTACT_Props.CT_Vol.name[:5]
-            SLICES_POINTER = bpy.data.objects.get(f"{Preffix}_SLICES_POINTER")
-
-            bpy.context.scene.unit_settings.scale_length = 0.001
-            bpy.context.scene.unit_settings.length_unit = "MILLIMETERS"
-
-            (
-                MultiView_Window,
-                OUTLINER,
-                PROPERTIES,
-                AXIAL,
-                CORONAL,
-                SAGITAL,
-                VIEW_3D,
-            ) = INTACT_MultiView_Toggle(Preffix)
-            MultiView_Screen = MultiView_Window.screen
-            AXIAL_Space3D = [
-                Space for Space in AXIAL.spaces if Space.type == "VIEW_3D"
-            ][0]
-            AXIAL_Region = [
-                reg for reg in AXIAL.regions if reg.type == "WINDOW"
-            ][0]
-
-            CORONAL_Space3D = [
-                Space for Space in CORONAL.spaces if Space.type == "VIEW_3D"
-            ][0]
-            CORONAL_Region = [
-                reg for reg in CORONAL.regions if reg.type == "WINDOW"
-            ][0]
-
-            SAGITAL_Space3D = [
-                Space for Space in SAGITAL.spaces if Space.type == "VIEW_3D"
-            ][0]
-            SAGITAL_Region = [
-                reg for reg in SAGITAL.regions if reg.type == "WINDOW"
-            ][0]
-            # AXIAL Cam view toggle :
-
-            AxialCam = bpy.data.objects.get(f"{AxialPlane.name}_CAM")
-            AXIAL_Space3D.use_local_collections = True
-            AXIAL_Space3D.use_local_camera = True
-            AXIAL_Space3D.camera = AxialCam
-            Override = {
-                "window": MultiView_Window,
-                "screen": MultiView_Screen,
-                "area": AXIAL,
-                "space_data": AXIAL_Space3D,
-                "region": AXIAL_Region,
-            }
-            bpy.ops.view3d.view_camera(Override)
-
-            # CORONAL Cam view toggle :
-            CoronalCam = bpy.data.objects.get(f"{CoronalPlane.name}_CAM")
-            CORONAL_Space3D.use_local_collections = True
-            CORONAL_Space3D.use_local_camera = True
-            CORONAL_Space3D.camera = CoronalCam
-            Override = {
-                "window": MultiView_Window,
-                "screen": MultiView_Screen,
-                "area": CORONAL,
-                "space_data": CORONAL_Space3D,
-                "region": CORONAL_Region,
-            }
-            bpy.ops.view3d.view_camera(Override)
-
-            # AXIAL Cam view toggle :
-            SagitalCam = bpy.data.objects.get(f"{SagitalPlane.name}_CAM")
-            SAGITAL_Space3D.use_local_collections = True
-            SAGITAL_Space3D.use_local_camera = True
-            SAGITAL_Space3D.camera = SagitalCam
-            Override = {
-                "window": MultiView_Window,
-                "screen": MultiView_Screen,
-                "area": SAGITAL,
-                "space_data": SAGITAL_Space3D,
-                "region": SAGITAL_Region,
-            }
-            bpy.ops.view3d.view_camera(Override)
-
-            bpy.ops.object.select_all(Override, action="DESELECT")
-            SLICES_POINTER.select_set(True)
-            bpy.context.view_layer.objects.active = SLICES_POINTER
-
-        return {"FINISHED"}
-
-
-
-class INTACT_OT_AddReferencePlanes(bpy.types.Operator):
-    """ Add Reference Planes"""
-
-    bl_idname = "intact.add_reference_planes"
-    bl_label = "Add REFERENCE PLANES"
-    bl_options = {"REGISTER", "UNDO"}
-
-    def modal(self, context, event):
-
-        if (
-            event.type
-            in [
-                "LEFTMOUSE",
-                "RIGHTMOUSE",
-                "MIDDLEMOUSE",
-                "WHEELUPMOUSE",
-                "WHEELDOWNMOUSE",
-                "N",
-                "NUMPAD_2",
-                "NUMPAD_4",
-                "NUMPAD_6",
-                "NUMPAD_8",
-                "NUMPAD_1",
-                "NUMPAD_3",
-                "NUMPAD_5",
-                "NUMPAD_7",
-                "NUMPAD_9",
-            ]
-            and event.value == "PRESS"
-        ):
-
-            return {"PASS_THROUGH"}
-        #########################################
-        elif event.type == "RET":
-            if event.value == ("PRESS"):
-
-                CurrentPointsNames = [P.name for P in self.CurrentPointsList]
-                P_Names = [P for P in self.PointsNames if not P in CurrentPointsNames]
-                if P_Names:
-                    if self.MarkupVoxelMode:
-                        CursorToVoxelPoint(Preffix=self.Preffix, CursorMove=True)
-
-                    loc = context.scene.cursor.location
-                    P = AddMarkupPoint(P_Names[0], self.Color, loc, self.CollName)
-                    self.CurrentPointsList.append(P)
-
-                if not P_Names:
-
-                    Override, area3D, space3D = CtxOverride(context)
-                    RefPlanes = PointsToFrankfortPlane(
-                        Override,
-                        self.TargetObject,
-                        self.CurrentPointsList,
-                        color=(0.0, 0.0, 0.2, 0.7),
-                        CollName=self.CollName,
-                    )
-                    bpy.ops.object.select_all(action="DESELECT")
-                    for Plane in RefPlanes:
-                        Plane.select_set(True)
-                    CurrentPoints = [
-                        bpy.data.objects.get(PName) for PName in CurrentPointsNames
-                    ]
-                    for P in CurrentPoints:
-                        P.select_set(True)
-                    self.TargetObject.select_set(True)
-                    bpy.context.view_layer.objects.active = self.TargetObject
-                    bpy.ops.object.parent_set(type="OBJECT", keep_transform=True)
-                    bpy.ops.object.select_all(action="DESELECT")
-                    self.DcmInfo[self.Preffix]["Frankfort"] = RefPlanes[0].name
-                    INTACT_Props = bpy.context.scene.INTACT_Props
-                    INTACT_Props.DcmInfo = str(self.DcmInfo)
-                    ##########################################################
-                    space3D.overlay.show_outline_selected = True
-                    space3D.overlay.show_object_origins = True
-                    space3D.overlay.show_annotation = True
-                    space3D.overlay.show_text = True
-                    space3D.overlay.show_extras = True
-                    space3D.overlay.show_floor = True
-                    space3D.overlay.show_axis_x = True
-                    space3D.overlay.show_axis_y = True
-                    # ###########################################################
-                    bpy.ops.wm.tool_set_by_id(Override, name="builtin.select")
-                    bpy.context.scene.tool_settings.use_snap = False
-
-                    bpy.context.scene.cursor.location = (0, 0, 0)
-                    bpy.ops.screen.region_toggle(Override, region_type="UI")
-
-                    return {"FINISHED"}
-
-        #########################################
-
-        elif event.type == ("DEL") and event.value == ("PRESS"):
-            if self.CurrentPointsList:
-                P = self.CurrentPointsList.pop()
-                bpy.data.objects.remove(P)
-
-        elif event.type == ("ESC"):
-            if self.CurrentPointsList:
-                for P in self.CurrentPointsList:
-                    bpy.data.objects.remove(P)
-
-            Override, area3D, space3D = CtxOverride(context)
-            ##########################################################
-            space3D.overlay.show_outline_selected = True
-            space3D.overlay.show_object_origins = True
-            space3D.overlay.show_annotation = True
-            space3D.overlay.show_text = True
-            space3D.overlay.show_extras = True
-            space3D.overlay.show_floor = True
-            space3D.overlay.show_axis_x = True
-            space3D.overlay.show_axis_y = True
-            ###########################################################
-            bpy.ops.wm.tool_set_by_id(Override, name="builtin.select")
-            bpy.context.scene.tool_settings.use_snap = False
-
-            bpy.context.scene.cursor.location = (0, 0, 0)
-            bpy.ops.screen.region_toggle(Override, region_type="UI")
-
-            message = [
-                " The Frankfort Plane Operation was Cancelled!",
-            ]
-
-            ShowMessageBox(message=message, icon="COLORSET_03_VEC")
-
-            return {"CANCELLED"}
-
-        return {"RUNNING_MODAL"}
-
-    def invoke(self, context, event):
-
-        Active_Obj = bpy.context.view_layer.objects.active
-
-        if not Active_Obj:
-            message = [" Please select Target Object ! "]
-            ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-            return {"CANCELLED"}
-        else:
-            ValidTarget = Active_Obj.name.startswith("IT") and Active_Obj.name.endswith(
-                ("_CTVolume", "SEGMENTATION")
-            )
-            if Active_Obj.select_get() == False or not ValidTarget:
-                message = [
-                    " Please select Target Object ! ",
-                    "Target Object should be a CTVolume or a Segmentation",
-                ]
-                ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-                return {"CANCELLED"}
-
-            else:
-                if context.space_data.type == "VIEW_3D":
-
-                    INTACT_Props = bpy.context.scene.INTACT_Props
-
-                    # Prepare scene  :
-                    ##########################################################
-                    bpy.context.space_data.overlay.show_outline_selected = False
-                    bpy.context.space_data.overlay.show_object_origins = False
-                    bpy.context.space_data.overlay.show_annotation = False
-                    bpy.context.space_data.overlay.show_text = True
-                    bpy.context.space_data.overlay.show_extras = False
-                    bpy.context.space_data.overlay.show_floor = False
-                    bpy.context.space_data.overlay.show_axis_x = False
-                    bpy.context.space_data.overlay.show_axis_y = False
-                    bpy.context.scene.tool_settings.use_snap = True
-                    bpy.context.scene.tool_settings.snap_elements = {"FACE"}
-                    bpy.context.scene.tool_settings.transform_pivot_point = (
-                        "INDIVIDUAL_ORIGINS"
-                    )
-                    bpy.ops.wm.tool_set_by_id(name="builtin.cursor")
-
-                    ###########################################################
-                    self.CollName = "REFERENCE PLANES"
-                    self.CurrentPointsList = []
-                    self.PointsNames = ["Na", "R_Or", "L_Or", "R_Po", "L_Po"]
-                    self.Color = [1, 0, 0, 1]  # Red color
-                    self.TargetObject = Active_Obj
-                    self.visibleObjects = bpy.context.visible_objects.copy()
-                    self.MarkupVoxelMode = self.TargetObject.name.endswith("_CTVolume")
-                    self.Preffix = self.TargetObject.name[:5]
-                    DcmInfo = INTACT_Props.DcmInfo
-                    self.DcmInfo = eval(DcmInfo)
-                    Override, area3D, space3D = CtxOverride(context)
-                    bpy.ops.screen.region_toggle(Override, region_type="UI")
-                    bpy.ops.object.select_all(action="DESELECT")
-                    #                bpy.ops.object.select_all(Override, action="DESELECT")
-                    context.window_manager.modal_handler_add(self)
-
-                    return {"RUNNING_MODAL"}
-
-                else:
-                    message = [
-                        "Active space must be a View3d",
-                    ]
-                    ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-
-                    return {"CANCELLED"}
-
 
 #################################################################################################
 # Registration :
@@ -1477,9 +1119,6 @@ class INTACT_OT_AddReferencePlanes(bpy.types.Operator):
 classes = [
     INTACT_OT_Volume_Render,
     INTACT_OT_Surface_Render,
-    INTACT_OT_MultiView,
-    INTACT_OT_AddReferencePlanes,
-    INTACT_OT_AddMarkupPoint,
 ]
 
 

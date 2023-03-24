@@ -542,23 +542,10 @@ def VolumeRender(DcmInfo, GpShader, ShadersBlendFile):
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
 
-        # bpy.ops.object.mode_set(mode="EDIT")
-        # bpy.ops.mesh.select_all(action="SELECT")
-        # # bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value":(0, 0, Offset),"constraint_axis":(False, False, True)})
-        # bpy.ops.mesh.subdivide(number_cuts=9)
-        # bpy.ops.mesh.select_all(action="DESELECT")
-        # bpy.ops.mesh.select_non_manifold()
-        # bpy.ops.mesh.select_all(action='INVERT')
 
-        # bpy.ops.mesh.select_nth(offset=1)
-
-        # bpy.ops.object.mode_set(mode="OBJECT")
-        # for v in obj.data.vertices :
-        #     if v.select :
-        #         v.co[2] = Offset-0.01
 
         ##########################################
-        # Add Material :
+        # Add Material:
         mat = bpy.data.materials.new(f"{Preffix}_Voxelmat_{i}")
         mat.use_nodes = True
         node_tree = mat.node_tree
@@ -623,21 +610,7 @@ def VolumeRender(DcmInfo, GpShader, ShadersBlendFile):
 
     Voxel.matrix_world = TransformMatrix
     Override, area3D, space3D = CtxOverride(bpy.context)
-    # for area in bpy.context.screen.areas:
-    #     if area.type == "VIEW_3D":
-    #         area3D = area
-    #         for space in area3D.spaces:
-    #             if space.type == "VIEW_3D":
-    #                 space3D = space
-    #                 break
-    #         for region in area3D.regions:
-    #             if region.type == "WINDOW":
-    #                 r3D = region
-    #                 break
-    # override = bpy.context.copy()
-    # override["area"] = area3D
-    # override["space_data"] = space3D
-    # override["region"] = r3D
+
     bpy.ops.view3d.view_selected(Override, use_all_regions=False)
 
     for scr in bpy.data.screens:

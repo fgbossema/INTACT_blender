@@ -185,12 +185,12 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                     row.scale_y = 2
                     row.operator("intact.volume_render", icon="IMPORT")
 
-            if INTACT_Props.DataType == "3D Image File":
+            if INTACT_Props.DataType == "NRRD File":
 
                 row = layout.row()
                 split = row.split()
                 col = split.column()
-                col.label(text="3D Image File :")
+                col.label(text="NRRD File:")
                 col = split.column()
                 col.prop(INTACT_Props, "UserImageFile", text="")
 
