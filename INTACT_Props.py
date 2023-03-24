@@ -239,15 +239,15 @@ class INTACT_Props(bpy.types.PropertyGroup):
     )
     #######################
 
-    Wmin: IntProperty()
-    Wmax: IntProperty()
+    Wmin: FloatProperty()
+    Wmax: FloatProperty()
     
     Slice_min: FloatProperty(
         name="Slice min",
         description="Choose a minimum for slice visualisation.",
         default=0, 
         soft_min=0.0,
-        soft_max=255,
+        soft_max=255.0,
         update = SliceIntensityUpdate,
     )
     Slice_max: FloatProperty(
@@ -255,7 +255,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
         description="Choose a minimum for slice visualisation.",
         default=255, 
         soft_min=0.0,
-        soft_max=255,
+        soft_max=255.0,
         update = SliceIntensityUpdate,
     )
     
@@ -328,15 +328,14 @@ class INTACT_Props(bpy.types.PropertyGroup):
     )
 
     
-    Threshold: IntProperty(
+    Threshold: FloatProperty(
         name="Threshold 1",
         description="Threshold 1",
-        default = 100,
-        step=1,
-        min=0,
-        max=255,
-        soft_min=0,
-        soft_max=255,
+        default = 50.0,
+        min=0.0,
+        max=255.0,
+        soft_min=0.0,
+        soft_max=255.0,
         update=TresholdUpdateFunction,
     )
     

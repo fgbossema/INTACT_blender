@@ -220,24 +220,24 @@ def Load_Dicom_funtion(context, q):
             "VolumeCenter": VCenter,
         }
         print(DcmInfo)
-        tags = {
-            "StudyDate": "0008|0020",
-            "PatientName": "0010|0010",
-            "PatientID": "0010|0020",
-            "BirthDate": "0010|0030",
-            "WinCenter": "0028|1050",
-            "WinWidth": "0028|1051",
-        }
-        for k, tag in tags.items():
+        # tags = {
+            # "StudyDate": "0008|0020",
+            # "PatientName": "0010|0010",
+            # "PatientID": "0010|0020",
+            # "BirthDate": "0010|0030",
+            # "WinCenter": "0028|1050",
+            # "WinWidth": "0028|1051",
+        # }
+        # for k, tag in tags.items():
 
-            if tag in reader.GetMetaDataKeys():
-                v = reader.GetMetaData(tag)
+            # if tag in reader.GetMetaDataKeys():
+                # v = reader.GetMetaData(tag)
 
-            else:
-                v = ""
+            # else:
+                # v = ""
 
-            DcmInfo[k] = v
-            Image3D.SetMetaData(tag, v)
+            # DcmInfo[k] = v
+            # Image3D.SetMetaData(tag, v)
 
         ###################################### debug_02 ##################################
         debug_02 = Tcounter()
@@ -316,11 +316,11 @@ def Load_Dicom_funtion(context, q):
             Image3D_255 = ResizeImage(sitkImage=Image3D_255, Ratio=SampleRatio)
             DcmInfo["RenderSz"] = Image3D_255.GetSize()
             DcmInfo["RenderSp"] = Image3D_255.GetSpacing()
+            print(sample_ratio)
 
         Array = sitk.GetArrayFromImage(Image3D_255)
         slices = [np.flipud(Array[i, :, :]) for i in range(Array.shape[0])]
-        # slices = [Image3D_255[:, :, i] for i in range(Image3D_255.GetDepth())]
-
+ 
         threads = [
             threading.Thread(
                 target=Image3DToPNG,
@@ -1028,7 +1028,7 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
 
         GpNode = bpy.data.node_groups.get(GpThreshold)
         Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
-        Low_Treshold.default_value = 100
+        Low_Treshold.default_value = 50
         WminNode = GpNode.nodes["WminNode"].outputs[0]
         WminNode.default_value = Wmin
         WmaxNode = GpNode.nodes["WmaxNode"].outputs[0]
