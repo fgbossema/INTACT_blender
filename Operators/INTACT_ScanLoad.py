@@ -144,7 +144,7 @@ def Load_function(context, image_type, q):
             Sp = Spacing = Image3D.GetSpacing()
         
         if image_type == 'Tiff':
-            TiffSerie = os.listdir(UserTiffDir)
+            TiffSerie = sorted(os.listdir(UserTiffDir))
             MaxCount = len(TiffSerie)
             ##################################### debug_02 ###################################
             debug_01 = Tcounter()
