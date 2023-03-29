@@ -357,12 +357,12 @@ def Load_function(context, image_type, q):
         # Get slices list :
         MaxSp = max(Vector(Sp))
         print(MaxSp)
-        if MaxSp < 0.25:
-            SampleRatio = round(MaxSp / 0.25, 2)
-            Image3D_255 = ResizeImage(sitkImage=Image3D_255, Ratio=SampleRatio)
-            DcmInfo["RenderSz"] = Image3D_255.GetSize()
-            DcmInfo["RenderSp"] = Image3D_255.GetSpacing()
-            print('Reducing number of slices for visualisation by ratio:', sample_ratio)
+        # if MaxSp < 0.25:
+            # SampleRatio = round(MaxSp / 0.25, 2)
+            # Image3D_255 = ResizeImage(sitkImage=Image3D_255, Ratio=SampleRatio)
+            # DcmInfo["RenderSz"] = Image3D_255.GetSize()
+            # DcmInfo["RenderSp"] = Image3D_255.GetSpacing()
+            # print('Reducing number of slices for visualisation by ratio:', SampleRatio)
 
         Array = sitk.GetArrayFromImage(Image3D_255)
         slices = [np.flipud(Array[i, :, :]) for i in range(Array.shape[0])]
