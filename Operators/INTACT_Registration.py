@@ -549,16 +549,19 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
         SmoothIterations = SmthIter = 5
         Thikness = 1
 
-        SegmentTreshold = self.SegmentsDict[Segment]["Treshold"]
+        SegmentThreshold = self.SegmentsDict[Segment]["Threshold"]
         SegmentColor = self.SegmentsDict[Segment]["Color"]
         SegmentStlPath = join(UserProjectDir, f"{Segment}_SEGMENTATION.stl")
 
         # Convert Hu treshold value to 0-255 UINT8 :
-        Treshold255 = HuTo255(Hu=SegmentTreshold, Wmin=DcmInfo["Wmin"], Wmax=DcmInfo["Wmax"])
+        #Treshold255 = HuTo255(Hu=SegmentTreshold, Wmin=DcmInfo["Wmin"], Wmax=DcmInfo["Wmax"])
+        
+        Treshold255 = SegmentThreshold
         if Treshold255 == 0:
             Treshold255 = 1
         elif Treshold255 == 255:
             Treshold255 = 254
+        print(Treshold255)
 
         ############### step 2 : Extracting mesh... #########################
         # print("Extracting mesh...")
@@ -641,7 +644,7 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
 
                 self.Thres1 = INTACT_Props.Thres1Bool
                
-                self.Thres1Tresh = INTACT_Props.Threshold
+                self.Threshold = INTACT_Props.Threshold
                 
                 self.Thres1SegmentColor = INTACT_Props.Thres1SegmentColor
                 
@@ -649,7 +652,7 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
                 self.SegmentsDict = {
                     "Thres1": {
                         "State": self.Thres1,
-                        "Treshold": self.Thres1Tresh,
+                        "Threshold": self.Threshold,
                         "Color": self.Thres1SegmentColor,
                     },
                 }
@@ -681,6 +684,13 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
                         print(f"step 1 : Read DICOM ({self.step1-self.counter_start})")
 
                         Image3D = sitk.ReadImage(self.Nrrd255Path)
+                        minmax = sitk.MinimumMaximumImageFilter()
+                        minmax.Execute(Image3D)
+                        Imax = minmax.GetMaximum()
+                        Imin = minmax.GetMinimum()
+                        print(Imin, Imax)
+
+                        
                         Sp = self.DcmInfo["Spacing"]
                         print('Resolution', Sp)
                         MaxSp = max(Vector(Sp))

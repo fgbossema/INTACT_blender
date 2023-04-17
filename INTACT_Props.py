@@ -45,7 +45,7 @@ def ShaderUpdateFunction(self, context):
 def TresholdUpdateFunction(self, context):
     INTACT_Props = context.scene.INTACT_Props
     GpShader = INTACT_Props.ThresholdGroupNodeName
-    Treshold = INTACT_Props.Threshold
+    Threshold = INTACT_Props.Threshold
     CtVolumeList = [
         obj
         for obj in bpy.context.scene.objects
@@ -54,7 +54,7 @@ def TresholdUpdateFunction(self, context):
     if context.object in CtVolumeList:
         GpNode = bpy.data.node_groups.get(GpShader)
         Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
-        Low_Treshold.default_value = Treshold
+        Low_Treshold.default_value = Threshold
 
 def SliceIntensityUpdate(self, scene):
     INTACT_Utils.SlicesUpdateAll(scene)
