@@ -426,7 +426,7 @@ def Load_Tiff_function(context, q):
         ######################################################################################
 
         
-        TiffSerie = os.listdir(UserTiffDir)
+        TiffSerie = sorted(os.listdir(UserTiffDir))
         MaxCount = len(TiffSerie)
         ##################################### debug_02 ###################################
         debug_01 = Tcounter()
@@ -460,29 +460,7 @@ def Load_Tiff_function(context, q):
         minmax.Execute(Image3D)
         Wmax = minmax.GetMaximum()
         Wmin = minmax.GetMinimum()
-        
-  
 
-        # if not (Wmin == 0.0) :
-            # fact = []    
-            # fact.append(4000/Wmax)
-            # fact.append(abs(2000/Wmin))
-            # mult_factor = min(fact)
-            # multiply = sitk.MultiplyImageFilter()
-            # Image3D = multiply.Execute(Image3D, mult_factor)
-        # else: 
-            # mult_factor = 4000/Wmax
-            # multiply = sitk.MultiplyImageFilter()
-            # Image3D = multiply.Execute(Image3D, mult_factor)
-
-        
-        # #Re-evaluate Wmin and Wmax after scaling
-        # minmax = sitk.MinimumMaximumImageFilter()
-        # minmax.Execute(Image3D)
-        # Wmax = minmax.GetMaximum()
-        # Wmin = minmax.GetMinimum()
-        # INTACT_Props.Wmin = Wmin 
-        # INTACT_Props.Wmax = Wmax 
    
 
         # calculate Informations :
