@@ -28,7 +28,7 @@ class INTACT_PT_MainPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI" 
     bl_category = "INTACT"
-    bl_label = "INTACT"
+    bl_label = "INTACT INFORMATION"
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
@@ -50,7 +50,20 @@ class INTACT_PT_MainPanel(bpy.types.Panel):
         
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text="A plugin designed for visualising CT scans and 3D visualisations of cultural heritage objects.")
+        row.label(text="A plugin designed for visualising CT scans and surface scans of cultural heritage objects.")
+        
+        row = box.row()
+        row.alignment = "LEFT"
+        row.label(text="The plugin is associated with the article by Bossema et. al.: 'Fusing 3D imaging modalities for the internal and external investigation of multi-material museum objects.'")
+      
+        row = box.row()
+        row.alignment = "LEFT"
+        row.label(text="The most current version can be found on Github. We welcome contributions via that channel.")
+        
+        row = box.row()
+        row.alignment = "LEFT"
+        row.label(text="The plugin can be used and adjusted freely, if used for an article or other publication we would appreciate if you would cite above mentioned article and Github repository.'")
+      
         
         row = box.row()
         row.alignment = "LEFT"
@@ -58,19 +71,27 @@ class INTACT_PT_MainPanel(bpy.types.Panel):
         
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text="1. Loading of CT and surface scan data.")
+        row.label(text="1. Loading CT data.")
         
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text="2. CT mesh generation and Registration of two data modalities.")
+        row.label(text="2. Loading surface scan data.")
         
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text="3. Interactive visualisation.")
+        row.label(text="3. CT mesh generation.")
         
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text="4. Images and output.")
+        row.label(text="4. Registration.")
+        
+        row = box.row()
+        row.alignment = "LEFT"
+        row.label(text="5. Interactive visualisation.")
+        
+        row = box.row()
+        row.alignment = "LEFT"
+        row.label(text="6. Images and output.")
 
         row = box.row()
         row.alignment = "LEFT"
@@ -90,11 +111,28 @@ class INTACT_PT_MainPanel(bpy.types.Panel):
         
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text="Niels Klop, whose plugins ICP Registration/Alignment and Distance Map are incorporated in the Registration module.")
+        row.label(text="Niels Klop, whose plugin ICP Registration/Alignment was the base for the Registration module.")
         
         row = box.row()
         row.alignment = "LEFT"
         row.label(text="See: https://3d-operators.com/")
+
+class INTACT_WorkingDIR(bpy.types.Panel):
+
+    """ INTACT Workin dir"""
+
+    bl_idname = "INTACT_PT_workingdir"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI" 
+    bl_category = "INTACT"
+    bl_label = "WORKING DIRECTORY"
+    bl_options = {"DEFAULT_CLOSED"}
+
+    def draw(self, context):
+
+        # Draw Addon UI :
+        layout = self.layout
+        INTACT_Props = context.scene.INTACT_Props
 
         row = layout.row()
         split = row.split()
@@ -103,23 +141,14 @@ class INTACT_PT_MainPanel(bpy.types.Panel):
         col = split.column()
         col.prop(INTACT_Props, "UserProjectDir", text="")
         
-        
-        # row = layout.row()
-        # split = row.split()
-        # col = split.column()
-        # col.label(text="Optional: use a theme with light background.")
-        # col = split.column()
-        # col.operator("intact.template", text="INTACT THEME")
-
-
 class INTACT_PT_ScanPanel(bpy.types.Panel):
-    """ INTACT Scan Panel"""
+    """ INTACT CT load"""
 
     bl_idname = "INTACT_PT_ScanPanel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI" 
     bl_category = "INTACT"
-    bl_label = "CT SCAN LOAD"
+    bl_label = "1. CT SCAN LOAD"
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
@@ -228,13 +257,13 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
 
 
 class INTACT_PT_SurfacePanel(bpy.types.Panel):
-    """ INTACT Scan Panel"""
+    """ INTACT Surface load"""
 
     bl_idname = "INTACT_PT_SurfacePanel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"  
     bl_category = "INTACT"
-    bl_label = "SURFACE SCAN LOAD"
+    bl_label = "2. SURFACE SCAN LOAD"
     bl_options = {"DEFAULT_CLOSED"}
     
     def draw(self, context):
@@ -262,11 +291,9 @@ class INTACT_PT_SurfacePanel(bpy.types.Panel):
            row.scale_y = 2
            row.operator("intact.obj_render", icon="IMPORT")
         
-
-
-class OBJECT_PT_ICP_panel(bpy.types.Panel):
+class INTACT_PT_CTmeshPanel(bpy.types.Panel):
     bl_category = "INTACT"
-    bl_label = "REGISTRATION"
+    bl_label = "3. CT MESH GENERATION"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_context = "objectmode"
@@ -277,24 +304,12 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
         INTACT_Props = context.scene.INTACT_Props
          
         condition_CT = False
-        condition_surface = False
-
 
         for obj in context.scene.objects: 
             if obj.name.endswith("CTVolume"):
                 condition_CT = True
-            if obj.name.startswith("IT_surface"):
-                condition_surface = True
-        if not (condition_CT or condition_surface):
-            row = layout.row()
-            row.label(text="Please load your data first.")
-        elif (condition_surface and not condition_CT):
-            row = layout.row()
-            row.label(text="Please load CT scan.")
-                     
-        
+                
         if condition_CT:
-        
             row = layout.row()
             split = row.split()
             col = split.column()
@@ -334,7 +349,36 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
         elif (condition_CT and not obj.name.endswith("CTVolume")): 
             row = layout.row()
             row.label(text="Please select CT volume for segmentation.")
-            
+
+
+class OBJECT_PT_ICP_panel(bpy.types.Panel):
+    bl_category = "INTACT"
+    bl_label = "4. REGISTRATION"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_context = "objectmode"
+    bl_options = {"DEFAULT_CLOSED"}
+
+    def draw(self, context):
+        layout = self.layout
+        INTACT_Props = context.scene.INTACT_Props
+         
+        condition_CT = False
+        condition_surface = False
+
+
+        for obj in context.scene.objects: 
+            if obj.name.endswith("CTVolume"):
+                condition_CT = True
+            if obj.name.startswith("IT_surface"):
+                condition_surface = True
+        if not (condition_CT or condition_surface):
+            row = layout.row()
+            row.label(text="Please load your data first.")
+        elif (condition_surface and not condition_CT):
+            row = layout.row()
+            row.label(text="Please load CT scan.")
+           
         condition_segment = False
 
         if context.object:
@@ -403,7 +447,7 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
 class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
     """Creates a Panel in the scene context of the properties editor"""
     bl_category = "INTACT"
-    bl_label = "VISUALISATION"
+    bl_label = "5. INTERACTIVE VISUALISATION"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_context = "objectmode"
@@ -498,7 +542,7 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
 class OBJECT_PT_Image_Panel(bpy.types.Panel):
     """Creates a Panel in the scene context of the properties editor"""
     bl_category = "INTACT"
-    bl_label = "IMAGES AND OUTPUT"
+    bl_label = "6. IMAGES AND OUTPUT"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_context = "objectmode"
@@ -569,8 +613,10 @@ class OBJECT_PT_Image_Panel(bpy.types.Panel):
 
 classes = [
     INTACT_PT_MainPanel,
+    INTACT_WorkingDIR,
     INTACT_PT_ScanPanel,
     INTACT_PT_SurfacePanel,
+    INTACT_PT_CTmeshPanel,
     OBJECT_PT_ICP_panel,
     OBJECT_PT_Visualisation_Panel,
     OBJECT_PT_Image_Panel

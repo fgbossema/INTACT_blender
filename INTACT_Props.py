@@ -18,27 +18,29 @@ from bpy.props import (
 def ColorUpdateFunction(self, context):
     INTACT_Props = context.scene.INTACT_Props
     GpShader = INTACT_Props.GroupNodeName
-    CtVolumeList = [
-        obj
-        for obj in bpy.context.scene.objects
-        if obj.name.startswith("IT") and obj.name.endswith("_CTVolume")
-    ]
-    if context.object in CtVolumeList:
-        GpNode = bpy.data.node_groups.get(GpShader)
-        GpNode.nodes["ColorPresetRamp"].color_ramp.elements[1].color = INTACT_Props.CTcolor
+    # CtVolumeList = [
+        # obj
+        # for obj in bpy.context.scene.objects
+        # if obj.name.startswith("IT") and obj.name.endswith("_CTVolume")
+    # ]
+    # if context.object in CtVolumeList:
+    GpNode = bpy.data.node_groups.get(GpShader)
+    GpNode.nodes["ColorPresetRamp"].color_ramp.elements[1].color = INTACT_Props.CTcolor
 
 
 def ShaderUpdateFunction(self, context):
     INTACT_Props = context.scene.INTACT_Props
     GpShader = INTACT_Props.GroupNodeName
-    CtVolumeList = [
-        obj
-        for obj in bpy.context.scene.objects
-        if obj.name.startswith("IT") and obj.name.endswith("_CTVolume")
-    ]
-    if context.object in CtVolumeList:
-        GpNode = bpy.data.node_groups.get(GpShader)
-        GpNode.nodes["ColorPresetRamp"].color_ramp.elements[1].position = INTACT_Props.ColorPos
+    # for obj in bpy.context.scene.objects:
+        # if obj.name.startswith("IT") and obj.name.endswith("_CTVolume"):
+            # INTACT_Props.CT_Vol = obj
+  
+    # ct_vol = INTACT_Props.CT_Vol
+    
+    # ct_vol.select_set(True)
+    GpNode = bpy.data.node_groups.get(GpShader)
+    GpNode.nodes["ColorPresetRamp"].color_ramp.elements[1].position = INTACT_Props.ColorPos
+    # ct_vol.select_set(False)
 
 
 
@@ -46,15 +48,17 @@ def TresholdUpdateFunction(self, context):
     INTACT_Props = context.scene.INTACT_Props
     GpShader = INTACT_Props.ThresholdGroupNodeName
     Threshold = INTACT_Props.Threshold
-    CtVolumeList = [
-        obj
-        for obj in bpy.context.scene.objects
-        if obj.name.startswith("IT") and obj.name.endswith("_CTVolume")
-    ]
-    if context.object in CtVolumeList:
-        GpNode = bpy.data.node_groups.get(GpShader)
-        Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
-        Low_Treshold.default_value = Threshold
+    # for obj in bpy.context.scene.objects:
+        # if obj.name.startswith("IT") and obj.name.endswith("_CTVolume"):
+            # INTACT_Props.CT_Vol = obj
+  
+    # ct_vol = INTACT_Props.CT_Vol
+    
+    # ct_vol.select_set(True)
+    GpNode = bpy.data.node_groups.get(GpShader)
+    Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
+    Low_Treshold.default_value = Threshold
+    # ct_vol.select_set(False)
 
 def SliceIntensityUpdate(self, scene):
     INTACT_Utils.SlicesUpdateAll(scene)

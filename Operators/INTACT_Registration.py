@@ -757,8 +757,15 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
                         )
 
                         print(self.TimingDict)
+                        for obj in bpy.context.scene.objects:
+                            if obj.name.startswith("IT_") and obj.name.endswith("SEGMENTATION"):
+                                INTACT_Props.Seg = obj
 
                         return {"FINISHED"}
+                        
+        
+
+                        
                         
 class INTACT_OT_ResetCtVolumePosition(bpy.types.Operator):
     """ Reset the CtVolume to its original position """
@@ -814,6 +821,8 @@ class INTACT_OT_CTVolumeOrientation(bpy.types.Operator):
                       @ Active_Obj.matrix_world)
                  bpy.ops.view3d.view_center_cursor()
                  return {"FINISHED"}
+                 
+
         
                         
 class globalVars():
