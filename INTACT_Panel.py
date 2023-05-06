@@ -372,12 +372,17 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
                 condition_CT = True
             if obj.name.startswith("IT_surface"):
                 condition_surface = True
+            if obj.name.endswith("SEGMENTATION"): 
+                 condition_seg = True
         if not (condition_CT or condition_surface):
             row = layout.row()
             row.label(text="Please load your data first.")
         elif (condition_surface and not condition_CT):
             row = layout.row()
             row.label(text="Please load CT scan.")
+        elif (condition_CT and not condition_surface):
+            row = layout.row()
+            row.label(text="Please load a surface scan.")
            
         condition_segment = False
 
