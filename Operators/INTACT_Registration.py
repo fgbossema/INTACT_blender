@@ -168,7 +168,12 @@ class OBJECT_OT_initialAlignment_operator(bpy.types.Operator):
         INTACT_Props = context.scene.INTACT_Props     
         ct_seg = INTACT_Props.Seg
         surf_3d = INTACT_Props.Surf_3D
-
+        ct_seg.select_set(True)
+        surf_3d.select_set(True)
+        condition = ct_seg.type == 'MESH' and surf_3d.type == 'MESH'
+        ct_seg.select_set(False)
+        surf_3d.select_set(False)
+        return condition
     
     def execute(self, context):
         INTACT_Props = context.scene.INTACT_Props     
@@ -180,7 +185,8 @@ class OBJECT_OT_initialAlignment_operator(bpy.types.Operator):
         
         #assign moving object
         movingObject = surf_3d
-
+        ct_seg.select_set(True)
+        surf_3d.select_set(True)
         
         #copy T0 transformations
         transformationRoughT0 = copy.deepcopy(movingObject.matrix_world)
@@ -255,6 +261,8 @@ class OBJECT_OT_initialAlignment_operator(bpy.types.Operator):
         
         #compute transformation matrix
         globalVars.transformationRough = transformationRoughT1 @ transformationRoughT0.inverted_safe()
+        ct_seg.select_set(False)
+        surf_3d.select_set(False)
         return {'FINISHED'}
      
 class OBJECT_OT_ICP_operator(bpy.types.Operator):
@@ -270,12 +278,16 @@ class OBJECT_OT_ICP_operator(bpy.types.Operator):
         INTACT_Props = context.scene.INTACT_Props     
         ct_seg = INTACT_Props.Seg
         surf_3d = INTACT_Props.Surf_3D
+        #below doesn't work now? maybe because these are pointers and it only works when the object is active
+        #return ct_seg.type == 'MESH' and surf_3d.type == 'MESH'
 
     
     def execute(self, context):
         INTACT_Props = context.scene.INTACT_Props     
         ct_seg = INTACT_Props.Seg
         surf_3d = INTACT_Props.Surf_3D
+        ct_seg.select_set(True)
+        surf_3d.select_set(True)
        
         #assign fixed object
         fixedObject = ct_seg
@@ -396,6 +408,8 @@ class OBJECT_OT_ICP_operator(bpy.types.Operator):
         
         #compute transformation matrix
         globalVars.transformationFine = transformationFineT1 @ transformationFineT0.inverted_safe()
+        ct_seg.select_set(False)
+        surf_3d.select_set(False)
         return {'FINISHED'}
 
 class OBJECT_OT_ICPexport_operator(bpy.types.Operator):
@@ -745,9 +759,6 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
                         )
 
                         print(self.TimingDict)
-                        for obj in bpy.context.scene.objects:
-                            if obj.name.startswith("IT_") and obj.name.endswith("SEGMENTATION"):
-                                INTACT_Props.Seg = obj
 
                         return {"FINISHED"}
                         
