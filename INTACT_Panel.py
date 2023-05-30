@@ -414,22 +414,10 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
             col.prop(INTACT_Props, "Seg", text="")
         
         
-        #rough alignment panel
-            layout.label(text = "Initial Alignment")
-            layout.label(text = "Either manually move the surface scan for a rough alignment or place landmarks on each object (CT first, press enter to confirm) and align.")
-            layout.prop(context.scene, "allowScaling", text = "Allow Scaling")
-            layout.operator("object.placelandmarks")
-            layout.operator("object.deletelandmarks")
-            Box = layout.box()
-            row = Box.row()
-            row.alignment = "CENTER"
-            row.scale_y = 2
-            row.operator("object.initialalignment")
-              
-            layout.separator()
-        
         #fine alignment panel
             layout.label(text = "ICP Alignment")
+            layout.label(text = "Manually move the surface scan for a rough alignment first.")
+            layout.label(text = "Check the boxes below to allow scaling of the surface scan or to use only selected vertices.")
             layout.prop(context.scene, "allowScaling", text = "Allow Scaling")
             layout.prop(context.scene, "vertexSelect", text = "Use Vertex Selections")
             layout.prop(context.scene, "iterations", text = "Iterations")
@@ -441,12 +429,12 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
             row.scale_y = 2
             row.operator("object.icp")
         
-        #transformations panel
-            layout.separator()
-            layout.label(text = "Transformations export and import")
-            layout.prop(context.scene, "exportTransformation", text = "")
-            layout.operator("object.icpexport")
-            layout.operator("object.icpset")
+        # #transformations panel
+            # layout.separator()
+            # layout.label(text = "Transformations export and import")
+            # layout.prop(context.scene, "exportTransformation", text = "")
+            # layout.operator("object.icpexport")
+            # layout.operator("object.icpset")
 
 
 class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
