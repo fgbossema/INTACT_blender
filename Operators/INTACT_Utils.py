@@ -679,32 +679,9 @@ def SlicesUpdate(scene, slice_index):
 
     if Planes:
         ActiveObject = bpy.context.view_layer.objects.active
-        #ActiveObject = bpy.context.view_layer.objects.name.endswith(slice_name_suffixes[slice_index])
         position_property = position_properties[slice_index]
         rotation_property = rotation_properties[slice_index]
         
-        
-        # # Only update when position or rotation of plane changes (this also allows it to update when not selected)
-        # Condition1 = False
-        # slice_pos = Planes[0].location
-        # slice_rot = Planes[0].rotation_euler
-        #!!
-        # # If position isn't initialised, or has changed, then condition is true and position is updated
-        # if position_property not in INTACT_Props or getattr(INTACT_Props, position_property) != slice_pos:
-            # Condition1 = True
-            # setattr(INTACT_Props, position_property, slice_pos)
-        # # If rotation isn't initialised, or has changed, then condition is true and rotation is updated
-        # elif rotation_property not in INTACT_Props or getattr(INTACT_Props, rotation_property) != slice_rot:
-            # Condition1 = True
-            # setattr(INTACT_Props, rotation_property, slice_rot)
-
-        # Condition2 = ActiveObject in SLICES_POINTER
-
-        # if Condition1:
-            # Preffix = Planes[0].name[2:7]
-
-        # if Condition2:
-            # Preffix = ActiveObject.name[0:5]
         Condition1 = True
         Preffix = Planes[0].name[2:7]
         

@@ -428,13 +428,6 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
             row.alignment = "CENTER"
             row.scale_y = 2
             row.operator("object.icp")
-        
-        # #transformations panel
-            # layout.separator()
-            # layout.label(text = "Transformations export and import")
-            # layout.prop(context.scene, "exportTransformation", text = "")
-            # layout.operator("object.icpexport")
-            # layout.operator("object.icpset")
 
 
 class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):

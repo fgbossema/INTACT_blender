@@ -1,13 +1,3 @@
-#bl_info = {
-   # "name": "Iterative Closest Point (ICP) Registration",
-   # "author": "Niels Klop, adapted by Francien Bossema",
-   # "version": (3, 0),
-   # "blender": (2, 90, 0),
-   # "location": "View3D > Sidebar > INTACT_Registration",
-   # "description": "Performs iterative closest point registration",
-   # "category": "Object",
-#}
-
 import bpy
 import numpy as np
 import math as mt
@@ -76,197 +66,7 @@ def placeSeed(context, event):
     _, seedIndex, _ = tree.find(hitLocation)
     return object, seedIndex
 
-# def drawTextCallback(context, dummy):
-    # #callback function for plotting seed positions
     
-    # for object in bpy.context.visible_objects:
-        # if object.get('landmarkDictionary') is not None:
-            # for landmark, index in object['landmarkDictionary'].items():
-                # vertLoc = object.matrix_world @ object.data.vertices[index].co
-                # vertLocOnScreen = view3d_utils.location_3d_to_region_2d(context.region, context.space_data.region_3d, vertLoc)
-                # blf.position(0, vertLocOnScreen[0] - 2, vertLocOnScreen[1] - 8, 0)
-                # blf.size(0, 20, 72)
-                # blf.color(0, 1, 1, 0, 1)
-                # blf.draw(0, '·' + landmark)
-    # return
-
-
-# class OBJECT_OT_placeLandmarks_operator(bpy.types.Operator):
-    # """Place at least 4 landmarks on two selected objects for initial alignment. Press ENTER/RETURN to confirm"""
-    # bl_idname = "object.placelandmarks"
-    # bl_label = "Place Landmarks"
-    # bl_options = {'REGISTER', 'UNDO'}
-    
-    # @classmethod
-    # def poll(cls, context):
-        # objects = len(bpy.context.selected_objects)
-        # return objects == 1 or objects == 2
-    
-    # def modal(self, context, event):
-        # if event.type in {'MIDDLEMOUSE', 'WHEELUPMOUSE', 'WHEELDOWNMOUSE'}:
-            # return {'PASS_THROUGH'} #allow navigation
-        # elif event.type in {'RET', 'NUMPAD_ENTER'}:
-            # return {'FINISHED'} #confirm
-        # elif event.type == 'LEFTMOUSE' and event.value == 'PRESS':
-            # bpy.types.SpaceView3D.draw_handler_add(drawTextCallback, (bpy.context, None), 'WINDOW', 'POST_PIXEL')
-            
-            # object, seedIndex = placeSeed(context, event)
-            
-            # #if landmark dictionary does not exists, make one
-            # if object is not None:
-                # if object.get('landmarkDictionary') is None:
-                    # object['landmarkDictionary'] = {}
-            
-            # if seedIndex is None:  #no raycast hit
-                # self.report({'ERROR'}, "Cannot place landmark. Select a position on a selected object. Press ENTER/RETURN to confirm.")
-            # else:
-                # if seedIndex not in object['landmarkDictionary'].values():
-                    # landmark = str(len(object['landmarkDictionary']) + 1)
-                    # object['landmarkDictionary'].update({landmark: seedIndex})
-                # else:
-                    # self.report({'ERROR'}, "Cannot place landmark. Another landmark is already on this position.")
-            
-            # #redraw scene
-            # bpy.ops.wm.redraw_timer(type = 'DRAW_WIN_SWAP', iterations = 1)
-            # return {'RUNNING_MODAL'}
-        # return {'RUNNING_MODAL'}
-    
-    # def invoke(self, context, event):
-        # context.window_manager.modal_handler_add(self)
-        # return {'RUNNING_MODAL'}
-
-# class OBJECT_OT_deleteLandmarks_operator(bpy.types.Operator):
-    # """Delete landmarks of selected objects"""
-    # bl_idname = "object.deletelandmarks"
-    # bl_label = "Delete Landmarks"
-    # bl_options = {'REGISTER', 'UNDO'}
-    
-    # @classmethod
-    # def poll(cls, context):
-        # objects = len(bpy.context.selected_objects)
-        # return objects > 0
-            
-    # def execute(self, context):
-        # #delete dictionary
-        # for object in bpy.context.selected_objects:
-            # if object.get('landmarkDictionary') is not None:
-                # del object['landmarkDictionary']
-        
-        # #redraw scene
-        # bpy.ops.wm.redraw_timer(type = 'DRAW_WIN_SWAP', iterations = 1)
-        # return {'FINISHED'}
-   
-        
-# class OBJECT_OT_initialAlignment_operator(bpy.types.Operator):
-    # """Perform initial alignment (first selected object = moving, last selected object = fixed)"""
-    # bl_idname = "object.initialalignment"
-    # bl_label = "Perform Initial Alignment"
-    # bl_options = {'REGISTER', 'UNDO'}
-    
-    # @classmethod
-    # def poll(cls, context):
-        # INTACT_Props = context.scene.INTACT_Props     
-        # ct_seg = INTACT_Props.Seg
-        # surf_3d = INTACT_Props.Surf_3D
-        # ct_seg.select_set(True)
-        # surf_3d.select_set(True)
-        # condition = (ct_seg.type == 'MESH' and surf_3d.type == 'MESH')
-        # ct_seg.select_set(False)
-        # surf_3d.select_set(False)
-        # return condition
-    
-    # def execute(self, context):
-        # INTACT_Props = context.scene.INTACT_Props     
-        # ct_seg = INTACT_Props.Seg
-        # surf_3d = INTACT_Props.Surf_3D
-       
-        # #assign fixed object
-        # fixedObject = ct_seg
-        
-        # #assign moving object
-        # movingObject = surf_3d
-        # ct_seg.select_set(True)
-        # surf_3d.select_set(True)
-        
-        # #copy T0 transformations
-        # transformationRoughT0 = copy.deepcopy(movingObject.matrix_world)
-        
-        # #error messages if no or inequal amount of landmarks is detected
-        # if fixedObject.get('landmarkDictionary') is None or movingObject.get('landmarkDictionary') is None:
-            # self.report({'ERROR'}, "No landmarks detected on one or both objects. Place at least 4 landmarks on both objects.")
-            # return {'FINISHED'}
-        # if len(fixedObject['landmarkDictionary']) is not len(movingObject['landmarkDictionary']):
-            # self.report({'ERROR'}, "Inequal amount of landmarks detected. Place at least 4 landmarks on both objects.")
-            # return {'FINISHED'}
-        
-        # #build landmark matrix
-        # fixedArray = np.array([fixedObject.matrix_world @ fixedObject.data.vertices[index].co for index in fixedObject['landmarkDictionary'].values()])
-        # movingArray = np.array([movingObject.matrix_world @ movingObject.data.vertices[index].co for index in movingObject['landmarkDictionary'].values()])
-        
-        # #calculate centroids
-        # fixedCentroid = np.mean(fixedArray, axis = 0)
-        # movingCentroid = np.mean(movingArray, axis = 0)
-        
-        # #move arrays to origin
-        # fixedOrigin = fixedArray - fixedCentroid
-        # movingOrigin = movingArray - movingCentroid
-        
-        # #calculate sum of squares
-        # fixedSumSquared = np.sum(fixedOrigin ** 2)
-        # movingSumSquared = np.sum(movingOrigin ** 2)
-        
-        # #normalize arrays
-        # fixedNormalized = np.sqrt(fixedSumSquared)
-        # fixedNormOrigin = fixedOrigin / fixedNormalized
-        # movingNormalized = np.sqrt(movingSumSquared)
-        # movingNormOrigin = movingOrigin / movingNormalized
-        
-        # #singular value decomposition
-        # covMatrix = np.matrix.transpose(movingNormOrigin) @ fixedNormOrigin
-        # U, s, Vt = np.linalg.svd(covMatrix)
-        
-        # #scaling
-        # if bpy.context.scene.allowScaling:
-            # scalingFactor = np.sum(s) * fixedNormalized / movingNormalized
-            # scalingMatrix = np.eye(4)
-            # for i in range(3):
-                # scalingMatrix[i,i] *= scalingFactor
-            # normMatrix = np.eye(4)
-            # normMatrix[0:3,3] = -np.matrix.transpose(movingCentroid)
-            # movingObject.matrix_world = mu.Matrix(normMatrix) @ movingObject.matrix_world
-            # movingObject.matrix_world = mu.Matrix(scalingMatrix) @ movingObject.matrix_world
-            # normMatrix[0:3,3] = -normMatrix[0:3,3]
-            # movingObject.matrix_world = mu.Matrix(normMatrix) @ movingObject.matrix_world
-                
-        # #rotation
-        # rotation3x3 = np.matrix.transpose(Vt) @ np.matrix.transpose(U)
-        # rotationMatrix = np.eye(4)
-        # rotationMatrix[0:3,0:3] = rotation3x3
-        # movingObject.matrix_world = mu.Matrix(rotationMatrix) @ movingObject.matrix_world
-        
-        # #translation
-        # translationMatrix = np.eye(4)
-        # translation = movingCentroid - np.dot(fixedCentroid, rotation3x3)
-        # translationMatrix[0:3,3] = np.matrix.transpose(fixedCentroid - rotation3x3 @ movingCentroid)
-        # movingObject.matrix_world = mu.Matrix(translationMatrix) @ movingObject.matrix_world
-        
-        # #redraw scene
-        # bpy.ops.wm.redraw_timer(type = 'DRAW_WIN_SWAP', iterations = 1)
-        
-        # #remove landmark dictionaries
-        # bpy.ops.object.deletelandmarks()
-        
-        # #copy T1 transformations
-        # transformationRoughT1 = copy.deepcopy(movingObject.matrix_world)
-        
-        # #compute transformation matrix
-        # globalVars.transformationRough = transformationRoughT1 @ transformationRoughT0.inverted_safe()
-        # #ct_seg.select_set(False)
-        # #surf_3d.select_set(False)
-        # bpy.ops.object.select_all(action="DESELECT")
-
-        # return {'FINISHED'}
-     
 class OBJECT_OT_ICP_operator(bpy.types.Operator):
     """Start iterative closest point registration (first selected object = moving, last selected object = fixed)"""
     bl_idname = "object.icp"
@@ -416,81 +216,6 @@ class OBJECT_OT_ICP_operator(bpy.types.Operator):
         ct_seg.select_set(False)
         surf_3d.select_set(False)
         return {'FINISHED'}
-
-# class OBJECT_OT_ICPexport_operator(bpy.types.Operator):
-    # """Export transformations to file"""
-    # bl_idname = "object.icpexport"
-    # bl_label = "Export Transformation"
-    # filepath: bpy.props.StringProperty(subtype = "FILE_PATH")
-    
-    # @classmethod
-    # def poll(cls, context):
-        # if bpy.context.scene.exportTransformation == 'combined':
-            # return 'transformationRough' in dir(globalVars) and 'transformationFine' in dir(globalVars)
-        # if bpy.context.scene.exportTransformation == 'roughAlignment':
-            # return 'transformationRough' in dir(globalVars)
-        # if bpy.context.scene.exportTransformation == 'fineAlignment':
-            # return 'transformationFine' in dir(globalVars)
-    
-    # def execute(self, context):
-        # #rough and fine alignment
-        # if bpy.context.scene.exportTransformation == 'combined':
-            # if 'transformationRough' in dir(globalVars) and 'transformationFine' in dir(globalVars):
-                # transformations = globalVars.transformationFine @ globalVars.transformationRough
-            
-        # #only rough alignment
-        # if bpy.context.scene.exportTransformation == 'roughAlignment':
-            # if 'transformationRough' in dir(globalVars):
-                # transformations = globalVars.transformationRough
-        
-        # #only fine alignment
-        # if bpy.context.scene.exportTransformation == 'fineAlignment':
-            # if 'transformationFine' in dir(globalVars):
-                # transformations = globalVars.transformationFine
-        
-        # #write transformations
-        # np.savetxt(self.filepath, np.array(transformations))
-        
-        # #reset filepath
-        # self.filepath = os.path.split(self.filepath)[0] + "\\"
-        # return {'FINISHED'}
-        
-    # def invoke(self, context, event):
-        # #open explorer
-        # context.window_manager.fileselect_add(self)
-        
-        # #set path and file name
-        # defaultFileName = 'transformations.txt'
-        # self.filepath += defaultFileName
-        # return {'RUNNING_MODAL'}
-
-# class OBJECT_OT_ICPset_operator(bpy.types.Operator):
-    # """Set transformation from file"""
-    # bl_idname = "object.icpset"
-    # bl_label = "Set Transformation"
-    # bl_options = {'REGISTER', 'UNDO'}
-    # filepath: bpy.props.StringProperty(subtype = "FILE_PATH")
-    
-    # @classmethod
-    # def poll(cls, context):
-        # return len(context.selected_objects) == 1 and bpy.context.selected_objects[0].type == 'MESH'
-    
-    # def execute(self, context):
-        # #read transformations
-        # transformationMatrix = mu.Matrix(np.loadtxt(self.filepath))
-        
-        # #assign moving object
-        # movingObject = bpy.context.active_object
-        
-        # #set transformations
-        # movingObject.matrix_world = transformationMatrix @ movingObject.matrix_world
-        # return {'FINISHED'}
-    
-    # def invoke(self, context, event):
-        # #open explorer
-        # context.window_manager.fileselect_add(self)
-        # return {'RUNNING_MODAL'}
-
 
 
 ###############################################################################
@@ -839,15 +564,11 @@ class globalVars():
 
 
 classes = (
-    # OBJECT_OT_placeLandmarks_operator,
-    # OBJECT_OT_deleteLandmarks_operator,
-    # OBJECT_OT_initialAlignment_operator,
     OBJECT_OT_ICP_operator,
     INTACT_OT_ResetCtVolumePosition,
     INTACT_OT_MultiTreshSegment,
-    #OBJECT_OT_ICPexport_operator,
     INTACT_OT_CTVolumeOrientation)
-    #OBJECT_OT_ICPset_operator)
+
 
 def register():
     for cls in classes:
@@ -870,14 +591,7 @@ def register():
         default = 0, min = 0, max = 99,
         description = "Downsampling percentage")
         
-    #export transformations panel
-    bpy.types.Scene.exportTransformation = bpy.props.EnumProperty(
-        name = "Export Transformation",
-        items = [("combined", "Combined Transformation", "Export the combined initial and ICP transformation"),
-            ("roughAlignment", "Initial Transformation", "Export only the initial transformation"),
-            ("fineAlignment", "ICP Transformation", "Export only the ICP transformation")])
-
-    
+   
     
 def unregister():
     for cls in classes:
