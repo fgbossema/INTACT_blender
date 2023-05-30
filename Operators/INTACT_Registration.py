@@ -762,6 +762,10 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
                         self.TimingDict["Total Time"] = (
                             self.counter_finish - self.counter_start
                         )
+                        
+                        for obj in bpy.context.scene.objects:
+                            if obj.name.endswith("_SEGMENTATION"):
+                                INTACT_Props.Seg = obj
 
                         print(self.TimingDict)
 

@@ -18,12 +18,6 @@ from bpy.props import (
 def ColorUpdateFunction(self, context):
     INTACT_Props = context.scene.INTACT_Props
     GpShader = INTACT_Props.GroupNodeName
-    # CtVolumeList = [
-        # obj
-        # for obj in bpy.context.scene.objects
-        # if obj.name.startswith("IT") and obj.name.endswith("_CTVolume")
-    # ]
-    # if context.object in CtVolumeList:
     GpNode = bpy.data.node_groups.get(GpShader)
     GpNode.nodes["ColorPresetRamp"].color_ramp.elements[1].color = INTACT_Props.CTcolor
 
@@ -31,11 +25,8 @@ def ColorUpdateFunction(self, context):
 def ShaderUpdateFunction(self, context):
     INTACT_Props = context.scene.INTACT_Props
     GpShader = INTACT_Props.GroupNodeName
-
     GpNode = bpy.data.node_groups.get(GpShader)
     GpNode.nodes["ColorPresetRamp"].color_ramp.elements[1].position = INTACT_Props.ColorPos
-
-
 
 
 def TresholdUpdateFunction(self, context):
