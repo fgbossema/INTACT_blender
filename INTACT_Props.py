@@ -305,7 +305,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
     Threshold: FloatProperty(
         name="Threshold 1",
         description="Threshold 1",
-        default = 50.0,
+        default = 100.0,
         min=0.0,
         max=255.0,
         soft_min=0.0,
