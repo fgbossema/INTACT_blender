@@ -1006,7 +1006,7 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
 
         GpNode = bpy.data.node_groups.get(GpThreshold)
         Low_Treshold = GpNode.nodes["Low_Treshold"].outputs[0]
-        Low_Treshold.default_value = 50
+        Low_Treshold.default_value = 100
         WminNode = GpNode.nodes["WminNode"].outputs[0]
         WminNode.default_value = Wmin
         WmaxNode = GpNode.nodes["WmaxNode"].outputs[0]
