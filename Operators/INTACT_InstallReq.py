@@ -49,8 +49,6 @@ def ReqInternetInstall(path, modules):
 
     call(f'"{PythonPath}" -m ensurepip ', shell=True)
 
-    call(f'"{PythonPath}" -m pip install -U pip==21.0 ', shell=True)
-
     for module in modules:
         command = f' "{PythonPath}" -m pip install {module} --target "{path}" '
         call(command, shell=True)
