@@ -3,7 +3,7 @@ import sys, os, bpy, socket, shutil
 from dataclasses import dataclass
 from importlib import import_module
 from os.path import dirname, join, realpath, abspath, exists
-from subprocess import call
+from subprocess import run, SubprocessError, CalledProcessError, PIPE
 
 
 @dataclass
@@ -52,11 +52,20 @@ def ReqInternetInstall(path, modules):
     else:
         PythonPath = bpy.app.binary_path_python
 
-    call(f'"{PythonPath}" -m ensurepip ', shell=True)
-
-    # for module in modules:
-    command = f' "{PythonPath}" -m pip install {" ".join(modules)} --target "{path}" '
-    call(command, shell=True)
+    # Capture stderr and add to to the exception message in case of an error
+    try:
+        run(f'"{PythonPath}" -m pip install --upgrade pip',
+            shell=True, check=True, stderr=PIPE, text=True)
+        run(f'"{PythonPath}" -m pip install --upgrade pip',
+            shell=True, check=True, stderr=PIPE, text=True)
+        run(f'"{PythonPath}" -m pip install {" ".join(modules)} --target "{path}"',
+            shell=True, check=True, stderr=PIPE, text=True)
+    except CalledProcessError as e:
+        raise RuntimeError(
+            f"Requirements couldn't be installed via Internet.\n"
+            f"Command: {e.cmd}\n"
+            f"Error message: {e.stderr}"
+        ).with_traceback(e.__traceback__) from None
 
 
 #############################################################
