@@ -28,18 +28,6 @@ def isConnected():
 
 
 #############################################################
-def ImportReq(REQ_DICT):
-    Pkgs = []
-    for mod, pkg in REQ_DICT.items():
-        try:
-            import_module(mod)
-        except ImportError:
-            Pkgs.append(pkg)
-
-    return Pkgs
-
-
-#############################################################
 def ReqInternetInstall(path, modules):
     # Download and install requirement if not AddonPacked version:
     if bpy.app.version >= (2, 80, 0):
