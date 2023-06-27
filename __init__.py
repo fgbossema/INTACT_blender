@@ -61,9 +61,9 @@ def ImportReq(REQ_DICT):
 
 ###################################################
 REQ_DICT = {
-    "SimpleITK": "SimpleITK==2.0.2",
-    "vtk": "vtk==9.0.1",
-    "cv2": "opencv-contrib-python==4.4.0.46",
+    "SimpleITK": "SimpleITK",
+    "vtk": "vtk",
+    "cv2": "opencv-contrib-python",
 }
 ADDON_DIR = dirname(abspath(__file__))
 REQ_ZIP_DIR = join(ADDON_DIR, "Resources", "REQ_ZIP_DIR")
