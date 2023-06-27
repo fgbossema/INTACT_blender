@@ -62,7 +62,7 @@ def ImportReq(REQ_DICT):
 ###################################################
 REQ_DICT = {
     "SimpleITK": "SimpleITK",
-    "vtk": "vtk",
+    "vtkmodules.vtkCommonCore": "vtk",
     "cv2": "opencv-contrib-python",
 }
 ADDON_DIR = dirname(abspath(__file__))

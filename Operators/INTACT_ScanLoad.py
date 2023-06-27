@@ -11,10 +11,9 @@ from bpy.props import (
     BoolProperty,
 )
 import SimpleITK as sitk
-import vtk
 import cv2
 
-from vtk import vtkCommand
+from vtkmodules.vtkCommonCore import vtkCommand
 
 # Global Variables :
 

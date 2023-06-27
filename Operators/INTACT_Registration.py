@@ -7,6 +7,8 @@ import os
 import blf
 from bpy_extras import view3d_utils
 
+from vtkmodules.vtkIOGeometry import vtkSTLWriter
+
 from .INTACT_Utils import *
 
 def placeSeed(context, event):
@@ -348,7 +350,7 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
         self.TimingDict["Mesh Orientation"] = self.step5 - self.step4
         print(f"{Segment} Mesh Orientation Finished")
         ############### step 6 : exporting mesh stl... #########################
-        writer = vtk.vtkSTLWriter()
+        writer = vtkSTLWriter()
         writer.SetInputData(TransformedMesh)
         writer.SetFileTypeToBinary()
         writer.SetFileName(SegmentStlPath)
