@@ -152,7 +152,7 @@ def make_directory(Root, DirName):
     if not DirName in os.listdir(Root):
         os.mkdir(DirPath)
     return DirPath
-    
+
 
 ################################
 # Copy DcmSerie To ProjDir function :
@@ -681,10 +681,10 @@ def SlicesUpdate(scene, slice_index):
         ActiveObject = bpy.context.view_layer.objects.active
         position_property = position_properties[slice_index]
         rotation_property = rotation_properties[slice_index]
-        
+
         Condition1 = True
         Preffix = Planes[0].name[2:7]
-        
+
         if Condition1:
 
             Plane = [obj for obj in Planes if Preffix in obj.name][0]
@@ -757,7 +757,7 @@ def SlicesUpdate(scene, slice_index):
                     Out_Direction,
                     0,
                 )
-                
+
                 #Change contrast based on user input#
                 Image2D = sitk.Cast(
                 sitk.IntensityWindowing(
@@ -769,7 +769,7 @@ def SlicesUpdate(scene, slice_index):
                 ),
                 sitk.sitkUInt8,
                 )
-                
+
                 #############################################
                 # Write Image :
                 Array = sitk.GetArrayFromImage(Image2D)
@@ -806,13 +806,13 @@ def CoronalSliceUpdate(scene):
 @persistent
 def SagitalSliceUpdate(scene):
     SlicesUpdate(scene, 2)
-    
+
 def SlicesUpdateAll(scene):
     SlicesUpdate(scene, 0)
     SlicesUpdate(scene, 1)
     SlicesUpdate(scene, 2)
 
-    
+
 
 ####################################################################
 def Add_Cam_To_Plane(Plane, CamDistance, ClipOffset):
@@ -1083,7 +1083,7 @@ def sitkTovtk(sitkImage):
     vtkImage.SetExtent(0, Sz[0] - 1, 0, Sz[1] - 1, 0, Sz[2] - 1)
 
     VtkArray = numpy_support.numpy_to_vtk(
-        sitkArray.ravel(), deep=True, array_type=vtk.VTK_UNSIGNED_INT
+        sitkArray.ravel(), deep=True, array_type=VTK_UNSIGNED_INT
     )
     VtkArray.SetNumberOfComponents(1)
     vtkImage.GetPointData().SetScalars(VtkArray)

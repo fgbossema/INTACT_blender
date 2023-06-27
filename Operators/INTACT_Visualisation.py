@@ -3,7 +3,7 @@ from . import INTACT_Utils
 from bpy.app.handlers import persistent
 
 from .INTACT_Utils import *
-    
+
 # ---------------------------------------------------------------------------
 #          Operators
 # ---------------------------------------------------------------------------
@@ -505,7 +505,7 @@ class INTACT_OT_AddSlices(bpy.types.Operator):
             bpy.context.view_layer.objects.active = SLICES_POINTER
             MoveToCollection(obj=SLICES_POINTER, CollName="SLICES_POINTERS")
 
-            return {"FINISHED"}    
+            return {"FINISHED"}
 
 class INTACT_OT_MultiView(bpy.types.Operator):
     """ MultiView Toggle """
@@ -614,7 +614,7 @@ class INTACT_OT_MultiView(bpy.types.Operator):
             bpy.context.view_layer.objects.active = SLICES_POINTER
 
         return {"FINISHED"}
-        
+
 # ---------------------------------------------------------------------------
 #          Registration
 # ---------------------------------------------------------------------------

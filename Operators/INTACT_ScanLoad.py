@@ -144,17 +144,17 @@ def Load_Dicom_funtion(context, q):
         minmax.Execute(Image3D)
         Wmax = minmax.GetMaximum()
         Wmin = minmax.GetMinimum()
-        INTACT_Props.Wmin = Wmin 
-        INTACT_Props.Wmax = Wmax    
+        INTACT_Props.Wmin = Wmin
+        INTACT_Props.Wmax = Wmax
 
         # Get Dicom Info :
         Sp = Spacing = Image3D.GetSpacing()
         Sz = Size = Image3D.GetSize()
-		
+
         Dims = Dimensions = Image3D.GetDimension()
         Origin = Image3D.GetOrigin()
         Direction = Image3D.GetDirection()
-		
+
 
         # calculate Informations :
         #D = Direction
@@ -260,12 +260,12 @@ def Load_Dicom_funtion(context, q):
         Nrrd255Path = join(UserProjectDir, f"{Preffix}_Image3D255.nrrd")
 
         DcmInfo["Nrrd255Path"] = RelPath(Nrrd255Path)
-         
+
         ###Set info in Image3D metadata:
         Image3D.SetSpacing(Sp)
         Image3D.SetDirection(D)
         Image3D.SetOrigin(O)
-        
+
         #######################################################################################
         # set IntensityWindowing  :
         Image3D_255 = sitk.Cast(
@@ -282,7 +282,7 @@ def Load_Dicom_funtion(context, q):
         minmax.Execute(Image3D_255)
         Wmax = minmax.GetMaximum()
         Wmin = minmax.GetMinimum()
-        INTACT_Props.Wmin = Wmin 
+        INTACT_Props.Wmin = Wmin
         INTACT_Props.Wmax = Wmax
 
         # Convert Dicom to nrrd file :
@@ -320,7 +320,7 @@ def Load_Dicom_funtion(context, q):
 
         Array = sitk.GetArrayFromImage(Image3D_255)
         slices = [np.flipud(Array[i, :, :]) for i in range(Array.shape[0])]
- 
+
         threads = [
             threading.Thread(
                 target=Image3DToPNG,
@@ -345,7 +345,7 @@ def Load_Dicom_funtion(context, q):
         DcmInfoDict[Preffix] = DcmInfo
         INTACT_Props.DcmInfo = str(DcmInfoDict)
         INTACT_Props.UserProjectDir = RelPath(INTACT_Props.UserProjectDir)
-        bpy.ops.wm.save_mainfile() 
+        bpy.ops.wm.save_mainfile()
 
 
         #############################################################################################
@@ -356,18 +356,18 @@ def Load_Dicom_funtion(context, q):
         #############################################################################################
         message = ["DICOM loaded successfully. "]
         ShowMessageBox(message=message, icon="COLORSET_03_VEC")
-        
-        #Remove Blenders default objects. 
+
+        #Remove Blenders default objects.
         if 'Camera' in bpy.data.objects:
            bpy.data.objects.remove(bpy.data.objects["Camera"], do_unlink=True)
         if 'Cube' in bpy.data.objects:
-           bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)   
+           bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)
         if 'Light' in bpy.data.objects:
            bpy.data.objects.remove(bpy.data.objects["Light"], do_unlink=True)
         if 'Collection' in bpy.data.collections:
            bpy.data.collections.remove(bpy.data.collections["Collection"])
         # Fetch the area
-        outliner = next(a for a in bpy.context.screen.areas if a.type == "OUTLINER") 
+        outliner = next(a for a in bpy.context.screen.areas if a.type == "OUTLINER")
         # Fetch the space
         outliner.spaces[0].show_restrict_column_render = True
 
@@ -425,14 +425,14 @@ def Load_Tiff_function(context, q):
         # Start Reading Dicom data :
         ######################################################################################
 
-        
+
         TiffSerie = sorted(os.listdir(UserTiffDir))
         MaxCount = len(TiffSerie)
         ##################################### debug_02 ###################################
         debug_01 = Tcounter()
         message = f"MaxSerie Count : {MaxCount} (Time : {round(debug_01-start,2)} secondes)"
         print(message)
-  
+
         ####################################################################################
         print(UserTiffDir)
         # Get StudyInfo :
@@ -441,33 +441,33 @@ def Load_Tiff_function(context, q):
         reader.SetFileName(TiffSerie[0])
         reader.LoadPrivateTagsOn()
         TiffSerie = [os.path.join(UserTiffDir,s) for s in TiffSerie]
-        
+
         Image3D = sitk.ReadImage(TiffSerie, imageIO='TIFFImageIO')
 
-        # Get Info : 
+        # Get Info :
         Sp = Spacing = (INTACT_Props.Resolution, INTACT_Props.Resolution, INTACT_Props.Resolution)
         Sz = Size = Image3D.GetSize()
-		
+
         Dims = Dimensions = Image3D.GetDimension()
 
-        
+
         Origin = (-(Sz[0]-1)/2*Sp[0], (Sz[1]-1)/2*Sp[1], (Sz[2]-1)/2*Sp[2])
-        
-        
-      
+
+
+
         Image3D = sitk.Cast(Image3D, sitk.sitkFloat32)
         minmax = sitk.MinimumMaximumImageFilter()
         minmax.Execute(Image3D)
         Wmax = minmax.GetMaximum()
         Wmin = minmax.GetMinimum()
 
-   
+
 
         # calculate Informations :
         D = (1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0)
         O = Origin
         Direction = D
-        
+
         DirectionMatrix_4x4 = Matrix(
             (
                 (D[0], D[1], D[2], 0.0),
@@ -505,7 +505,7 @@ def Load_Tiff_function(context, q):
             )
         )
 
-       
+
 
         DcmInfo = {
             "UserProjectDir": RelPath(UserProjectDir),
@@ -527,7 +527,7 @@ def Load_Tiff_function(context, q):
             "VolumeCenter": VCenter,
         }
         print(DcmInfo)
-        
+
         ###################################### debug_02 ##################################
         debug_02 = Tcounter()
         message = f"DcmInfo {Preffix} set (Time : {debug_02-debug_01} secondes)"
@@ -547,7 +547,7 @@ def Load_Tiff_function(context, q):
         Nrrd255Path = join(UserProjectDir, f"{Preffix}_Image3D255.nrrd")
 
         DcmInfo["Nrrd255Path"] = RelPath(Nrrd255Path)
-        
+
         ###Set info in Image3D metadata:
         Image3D.SetSpacing(Sp)
         Image3D.SetDirection(D)
@@ -569,8 +569,8 @@ def Load_Tiff_function(context, q):
         minmax.Execute(Image3D_255)
         Wmax = minmax.GetMaximum()
         Wmin = minmax.GetMinimum()
-        INTACT_Props.Wmin = Wmin 
-        INTACT_Props.Wmax = Wmax 
+        INTACT_Props.Wmin = Wmin
+        INTACT_Props.Wmax = Wmax
 
         # Convert to nrrd file :
         sitk.WriteImage(Image3D_255, Nrrd255Path)
@@ -620,7 +620,7 @@ def Load_Tiff_function(context, q):
         DcmInfoDict[Preffix] = DcmInfo
         INTACT_Props.DcmInfo = str(DcmInfoDict)
         INTACT_Props.UserProjectDir = RelPath(INTACT_Props.UserProjectDir)
-        bpy.ops.wm.save_mainfile() 
+        bpy.ops.wm.save_mainfile()
 
 
         #############################################################################################
@@ -631,25 +631,25 @@ def Load_Tiff_function(context, q):
         #############################################################################################
         message = ["DICOM loaded successfully. "]
         ShowMessageBox(message=message, icon="COLORSET_03_VEC")
-        
-        #Remove Blenders default objects. 
+
+        #Remove Blenders default objects.
         if 'Camera' in bpy.data.objects:
            bpy.data.objects.remove(bpy.data.objects["Camera"], do_unlink=True)
         if 'Cube' in bpy.data.objects:
-           bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)   
+           bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)
         if 'Light' in bpy.data.objects:
            bpy.data.objects.remove(bpy.data.objects["Light"], do_unlink=True)
         if 'Collection' in bpy.data.collections:
            bpy.data.collections.remove(bpy.data.collections["Collection"])
         # Fetch the area
-        outliner = next(a for a in bpy.context.screen.areas if a.type == "OUTLINER") 
+        outliner = next(a for a in bpy.context.screen.areas if a.type == "OUTLINER")
         # Fetch the space
         outliner.spaces[0].show_restrict_column_render = True
 
         return DcmInfo
     ####### End Load_Tiff_function ##############
-    
-    
+
+
 #######################################################################################
 # INTACT CT Scan 3DImage File Load :
 
@@ -754,14 +754,14 @@ def Load_3DImage_function(context, q):
         Dims = Dimensions = Image3D.GetDimension()
         Origin = Image3D.GetOrigin()
         Direction = Image3D.GetDirection()
-        
+
         #Set Wmin and Wmax
         minmax = sitk.MinimumMaximumImageFilter()
         minmax.Execute(Image3D)
         Wmax = minmax.GetMaximum()
         Wmin = minmax.GetMinimum()
-        INTACT_Props.Wmin = Wmin 
-        INTACT_Props.Wmax = Wmax 
+        INTACT_Props.Wmin = Wmin
+        INTACT_Props.Wmax = Wmax
 
         # calculate Informations :
         D = Direction
@@ -863,7 +863,7 @@ def Load_3DImage_function(context, q):
         Image3D.SetDirection(D)
         Image3D.SetOrigin(O)
         print(Wmin,Wmax)
-        
+
         if INTACT_nrrd:
             Image3D_255 = Image3D
             print('Not rescaled')
@@ -885,8 +885,8 @@ def Load_3DImage_function(context, q):
         # Convert Dicom to nrrd file :
         # sitk.WriteImage(Image3D, NrrdHuPath)
         sitk.WriteImage(Image3D_255, Nrrd255Path)
-        
- 
+
+
 
         #############################################################################################
         # MultiThreading PNG Writer:
@@ -943,20 +943,20 @@ def Load_3DImage_function(context, q):
         finish = Tcounter()
         print(f"Data Loaded in {finish-start} second(s)")
         #############################################################################################
-        #Remove Blenders default objects. 
+        #Remove Blenders default objects.
         if 'Camera' in bpy.data.objects:
            bpy.data.objects.remove(bpy.data.objects["Camera"], do_unlink=True)
         if 'Cube' in bpy.data.objects:
-           bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)   
+           bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)
         if 'Light' in bpy.data.objects:
            bpy.data.objects.remove(bpy.data.objects["Light"], do_unlink=True)
         if 'Collection' in bpy.data.collections:
            bpy.data.collections.remove(bpy.data.collections["Collection"])
         # Fetch the area
-        outliner = next(a for a in bpy.context.screen.areas if a.type == "OUTLINER") 
+        outliner = next(a for a in bpy.context.screen.areas if a.type == "OUTLINER")
         # Fetch the space
         outliner.spaces[0].show_restrict_column_render = True
-           
+
         return DcmInfo
 
 
@@ -1017,7 +1017,7 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
         bpy.context.scene.unit_settings.length_unit = "MILLIMETERS"
         bpy.ops.view3d.view_selected(use_all_regions=False)
         bpy.ops.wm.save_mainfile()
-        
+
         for obj in bpy.context.scene.objects:
             if obj.name.startswith("IT") and obj.name.endswith("_CTVolume"):
                 INTACT_Props.CT_Vol = obj
@@ -1048,35 +1048,35 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         UserOBjDir = AbsPath(INTACT_Props.UserObjDir)
         print("\n##########################\n")
         print("Loading Surface scan...")
-        
-        if 'Surface' not in bpy.data.collections: 
+
+        if 'Surface' not in bpy.data.collections:
             print('Make surface collection')
             bpy.data.collections.new('Surface')
             coll = bpy.data.collections.get('Surface')
             context.collection.children.link(coll)
-            
-            
+
+
         imported_object = bpy.ops.import_scene.obj(filepath=UserOBjDir, filter_glob="*.obj;*.mtl")
-        obj_object = bpy.context.selected_objects[0] 
+        obj_object = bpy.context.selected_objects[0]
         obj_object.name = "IT_surface_" + obj_object.name
-        
+
         bpy.data.collections['Surface'].objects.link(obj_object)
         bpy.context.scene.collection.objects.unlink(obj_object)
-        
-        
-        #Remove Blenders default objects. 
+
+
+        #Remove Blenders default objects.
         if 'Camera' in bpy.data.objects:
            bpy.data.objects.remove(bpy.data.objects["Camera"], do_unlink=True)
         if 'Cube' in bpy.data.objects:
-           bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)   
+           bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)
         if 'Light' in bpy.data.objects:
            bpy.data.objects.remove(bpy.data.objects["Light"], do_unlink=True)
         if 'Collection' in bpy.data.collections:
            bpy.data.collections.remove(bpy.data.collections["Collection"])
-        
-        
+
+
         # Fetch the area
-        outliner = next(a for a in bpy.context.screen.areas if a.type == "OUTLINER") 
+        outliner = next(a for a in bpy.context.screen.areas if a.type == "OUTLINER")
         # Fetch the space
         outliner.spaces[0].show_restrict_column_render = True
 
