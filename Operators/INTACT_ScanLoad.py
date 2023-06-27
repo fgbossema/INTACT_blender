@@ -126,7 +126,7 @@ def Load_Dicom_funtion(context, q):
 
         ##################################### debug_02 ###################################
         debug_01 = Tcounter()
-        message = f"MaxSerie ID : {MaxSerie}, MaxSerie Count : {MaxCount} (Time : {round(debug_01-start,2)} secondes)"
+        message = f"MaxSerie ID : {MaxSerie}, MaxSerie Count : {MaxCount} (Time : {round(debug_01-start,2)} seconds)"
         print(message)
         # q.put("Max DcmSerie extracted...")
         ####################################################################################
@@ -240,7 +240,7 @@ def Load_Dicom_funtion(context, q):
 
         ###################################### debug_02 ##################################
         debug_02 = Tcounter()
-        message = f"DcmInfo {Preffix} set (Time : {debug_02-debug_01} secondes)"
+        message = f"DcmInfo {Preffix} set (Time : {debug_02-debug_01} seconds)"
         print(Origin, Direction)
         # q.put("Dicom Info extracted...")
         ##################################################################################
@@ -290,7 +290,7 @@ def Load_Dicom_funtion(context, q):
 
         ################################## debug_03 ######################################
         debug_03 = Tcounter()
-        message = f"Nrrd255 Export done!  (Time : {debug_03-debug_02} secondes)"
+        message = f"Nrrd255 Export done!  (Time : {debug_03-debug_02} seconds)"
         print(message)
         # q.put("nrrd 3D image file saved...")
         ##################################################################################
@@ -349,7 +349,7 @@ def Load_Dicom_funtion(context, q):
 
         #############################################################################################
         finish = Tcounter()
-        message = f"Data Loaded in {finish-start} secondes"
+        message = f"Data Loaded in {finish-start} seconds"
         print(message)
         # q.put(message)
         #############################################################################################
@@ -429,7 +429,7 @@ def Load_Tiff_function(context, q):
         MaxCount = len(TiffSerie)
         ##################################### debug_02 ###################################
         debug_01 = Tcounter()
-        message = f"MaxSerie Count : {MaxCount} (Time : {round(debug_01-start,2)} secondes)"
+        message = f"MaxSerie Count : {MaxCount} (Time : {round(debug_01-start,2)} seconds)"
         print(message)
 
         ####################################################################################
@@ -529,7 +529,7 @@ def Load_Tiff_function(context, q):
 
         ###################################### debug_02 ##################################
         debug_02 = Tcounter()
-        message = f"DcmInfo {Preffix} set (Time : {debug_02-debug_01} secondes)"
+        message = f"DcmInfo {Preffix} set (Time : {debug_02-debug_01} seconds)"
 
 
         #######################################################################################
@@ -576,7 +576,7 @@ def Load_Tiff_function(context, q):
 
         ################################## debug_03 ######################################
         debug_03 = Tcounter()
-        message = f"Nrrd255 Export done!  (Time : {debug_03-debug_02} secondes)"
+        message = f"Nrrd255 Export done!  (Time : {debug_03-debug_02} seconds)"
         print(message)
         # q.put("nrrd 3D image file saved...")
         ##################################################################################
@@ -624,7 +624,7 @@ def Load_Tiff_function(context, q):
 
         #############################################################################################
         finish = Tcounter()
-        message = f"Data Loaded in {finish-start} secondes"
+        message = f"Data Loaded in {finish-start} seconds"
         print(message)
         # q.put(message)
         #############################################################################################

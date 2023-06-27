@@ -629,7 +629,7 @@ def VolumeRender(DcmInfo, GpShader, ShadersBlendFile):
         Voxel.lock_scale[i] = True
 
     Finish = Tcounter()
-    print(f"CT-Scan loaded in {Finish-Start} secondes")
+    print(f"CT-Scan loaded in {Finish-Start} seconds")
 
 
 def Scene_Settings():

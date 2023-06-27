@@ -85,7 +85,7 @@ def ReqInstall(req_list, req_zip_dir, req_installation_dir):
             ReqInternetInstall(path=req_installation_dir, modules=Pkgs)
 
             ##########################
-            print("requirements Internet installation completed.")
+            print("Requirements installation completed via Internet.")
             print("Please Restart Blender")
             message = [
                 "Required Modules installation completed! ",
@@ -94,7 +94,7 @@ def ReqInstall(req_list, req_zip_dir, req_installation_dir):
             ShowMessageBox(message=message, icon="COLORSET_03_VEC")
 
         else:
-            message = ["Please Check Internet Connexion and retry! "]
+            message = ["Please check Internet connection and retry!"]
             ShowMessageBox(message=message, icon="COLORSET_02_VEC")
             print(message)
 
