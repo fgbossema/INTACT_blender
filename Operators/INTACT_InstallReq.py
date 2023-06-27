@@ -19,7 +19,7 @@ REQ_LIST = [
 ]
 ADDON_DIR = dirname(dirname(abspath(__file__)))
 REQ_ZIP_DIR = join(ADDON_DIR, "Resources", "REQ_ZIP_DIR")
-REQ_INSTALLATION_DIR = join(os.path.expanduser("~/INTACT_Modules"))
+REQ_INSTALLATION_DIR = join(ADDON_DIR, 'dependencies')
 
 
 #############################################################
