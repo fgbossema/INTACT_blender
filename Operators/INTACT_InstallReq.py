@@ -1,8 +1,25 @@
 # Python imports :
 import sys, os, bpy, socket, shutil
+from dataclasses import dataclass
 from importlib import import_module
 from os.path import dirname, join, realpath, abspath, exists
 from subprocess import call
+
+
+@dataclass
+class Requirement:
+    package_name: str
+    test_string: str
+
+
+REQ_LIST = [
+    Requirement(package_name='SimpleITK', test_string='SimpleITK'),
+    Requirement(package_name='vtk', test_string='vtkmodules.vtkCommonCore'),
+    Requirement(package_name='opencv-contrib-python', test_string='cv2')
+]
+ADDON_DIR = dirname(dirname(abspath(__file__)))
+REQ_ZIP_DIR = join(ADDON_DIR, "Resources", "REQ_ZIP_DIR")
+REQ_INSTALLATION_DIR = join(os.path.expanduser("~/INTACT_Modules"))
 
 
 #############################################################
@@ -43,17 +60,16 @@ def ReqInternetInstall(path, modules):
 
 
 #############################################################
-def ReqInstall(REQ_DICT, REQ_ZIP_DIR, INTACT_Modules_DIR):
-
-    Pkgs = list(REQ_DICT.values())
+def ReqInstall(req_list, req_zip_dir, req_installation_dir):
+    Pkgs = [x.package_name for x in req_list]
     Preffix = sys.platform
     ZippedModuleFiles = [f"{Preffix}_{Pkg}.zip" for Pkg in Pkgs]
-    condition = all([(mod in os.listdir(REQ_ZIP_DIR)) for mod in ZippedModuleFiles])
+    condition = all([(mod in os.listdir(req_zip_dir)) for mod in ZippedModuleFiles])
 
     if condition:
-        os.chdir(REQ_ZIP_DIR)
+        os.chdir(req_zip_dir)
         for Pkg in ZippedModuleFiles:
-            shutil.unpack_archive(Pkg, INTACT_Modules_DIR)
+            shutil.unpack_archive(Pkg, req_installation_dir)
 
         print("Requirements installed from ARCHIVE!")
         print("Please Restart Blender")
@@ -66,7 +82,7 @@ def ReqInstall(REQ_DICT, REQ_ZIP_DIR, INTACT_Modules_DIR):
     else:
         if isConnected():
 
-            ReqInternetInstall(path=INTACT_Modules_DIR, modules=Pkgs)
+            ReqInternetInstall(path=req_installation_dir, modules=Pkgs)
 
             ##########################
             print("requirements Internet installation completed.")
@@ -95,19 +111,7 @@ class INTACT_OT_InstallRequirements(bpy.types.Operator):
     bl_label = "INSTALL INTACT MODULES"
 
     def execute(self, context):
-
-        REQ_DICT = {
-            "SimpleITK": "SimpleITK",
-            "vtk": "vtk",
-            "cv2": "opencv-contrib-python",
-        }
-        ADDON_DIR = dirname(dirname(abspath(__file__)))
-        REQ_ZIP_DIR = join(ADDON_DIR, "Resources", "REQ_ZIP_DIR")
-        INTACT_Modules_DIR = join(os.path.expanduser("~/INTACT_Modules"))
-        INTACT_Theme = join(ADDON_DIR, "Resources", "INTACT.xml")
-
-        ReqInstall(REQ_DICT, REQ_ZIP_DIR, INTACT_Modules_DIR)
-
+        ReqInstall(REQ_LIST, REQ_ZIP_DIR, REQ_INSTALLATION_DIR)
         return {"FINISHED"}
 
 
