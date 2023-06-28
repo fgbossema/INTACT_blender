@@ -26,7 +26,7 @@ class INTACT_PT_MainPanel(bpy.types.Panel):
 
     bl_idname = "INTACT_PT_MainPanel"
     bl_space_type = "VIEW_3D"
-    bl_region_type = "UI" 
+    bl_region_type = "UI"
     bl_category = "INTACT"
     bl_label = "INTACT INFORMATION"
     bl_options = {"DEFAULT_CLOSED"}
@@ -43,52 +43,52 @@ class INTACT_PT_MainPanel(bpy.types.Panel):
         row.alert = True
         row.alignment = "CENTER"
         row.label(text=f"WINDOWS VERSION : {Addon_Version_Date}")
-        
+
         row = box.row()
         row.alignment = "LEFT"
         row.label(text="Description of plugin:")
-        
+
         row = box.row()
         row.alignment = "LEFT"
         row.label(text="A plugin designed for visualising CT scans and surface scans of cultural heritage objects.")
-        
+
         row = box.row()
         row.alignment = "LEFT"
         row.label(text="The plugin is associated with the article by Bossema et. al.: 'Fusing 3D imaging modalities for the internal and external investigation of multi-material museum objects.'")
-      
+
         row = box.row()
         row.alignment = "LEFT"
         row.label(text="The most current version can be found on Github. We welcome contributions via that channel.")
-        
+
         row = box.row()
         row.alignment = "LEFT"
         row.label(text="The plugin can be used and adjusted freely, if used for an article or other publication we would appreciate if you would cite above mentioned article and Github repository.'")
-      
-        
+
+
         row = box.row()
         row.alignment = "LEFT"
-        row.label(text="The plugin has the following submodules") 
-        
+        row.label(text="The plugin has the following submodules")
+
         row = box.row()
         row.alignment = "LEFT"
         row.label(text="1. Loading CT data.")
-        
+
         row = box.row()
         row.alignment = "LEFT"
         row.label(text="2. Loading surface scan data.")
-        
+
         row = box.row()
         row.alignment = "LEFT"
         row.label(text="3. CT mesh generation.")
-        
+
         row = box.row()
         row.alignment = "LEFT"
         row.label(text="4. Registration.")
-        
+
         row = box.row()
         row.alignment = "LEFT"
         row.label(text="5. Interactive visualisation.")
-        
+
         row = box.row()
         row.alignment = "LEFT"
         row.label(text="6. Images and output.")
@@ -96,11 +96,11 @@ class INTACT_PT_MainPanel(bpy.types.Panel):
         row = box.row()
         row.alignment = "LEFT"
         row.label(text="Designed and developed by Paul van Laar, Francien Bossema & Kimberly Meechan.")
-        
+
         row = box.row()
         row.alignment = "LEFT"
         row.label(text="ACKNOWLEDGEMENTS")
-        
+
         row = box.row()
         row.alignment = "LEFT"
         row.label(text="Issam Dakir, whose plugin BDENTAL served as the base for this plugin.")
@@ -108,11 +108,11 @@ class INTACT_PT_MainPanel(bpy.types.Panel):
         row = box.row()
         row.alignment = "LEFT"
         row.label(text="See: https://github.com/issamdakir/BDENTAL ")
-        
+
         row = box.row()
         row.alignment = "LEFT"
         row.label(text="Niels Klop, whose plugin ICP Registration/Alignment was the base for the Registration module.")
-        
+
         row = box.row()
         row.alignment = "LEFT"
         row.label(text="See: https://3d-operators.com/")
@@ -123,7 +123,7 @@ class INTACT_WorkingDIR(bpy.types.Panel):
 
     bl_idname = "INTACT_PT_workingdir"
     bl_space_type = "VIEW_3D"
-    bl_region_type = "UI" 
+    bl_region_type = "UI"
     bl_category = "INTACT"
     bl_label = "WORKING DIRECTORY"
     bl_options = {"DEFAULT_CLOSED"}
@@ -140,13 +140,13 @@ class INTACT_WorkingDIR(bpy.types.Panel):
         col.label(text="Project Directory :")
         col = split.column()
         col.prop(INTACT_Props, "UserProjectDir", text="")
-        
+
 class INTACT_PT_ScanPanel(bpy.types.Panel):
     """ INTACT CT load"""
 
     bl_idname = "INTACT_PT_ScanPanel"
     bl_space_type = "VIEW_3D"
-    bl_region_type = "UI" 
+    bl_region_type = "UI"
     bl_category = "INTACT"
     bl_label = "1. CT SCAN LOAD"
     bl_options = {"DEFAULT_CLOSED"}
@@ -158,12 +158,12 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
         # Draw Addon UI :
         layout = self.layout
 
-          
+
         if not INTACT_Props.UserProjectDir:
             row = layout.row()
             row.alignment = "LEFT"
             row.label(text = "Please select working directory in INTACT panel.")
-            
+
         if INTACT_Props.UserProjectDir:
 
             row = layout.row()
@@ -172,7 +172,7 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
             col.label(text="Scan Data Type :")
             col = split.column()
             col.prop(INTACT_Props, "DataType", text="")
-            
+
             if INTACT_Props.DataType == "TIFF Stack":
 
                 row = layout.row()
@@ -181,13 +181,13 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                 col.label(text="TIFF Directory :")
                 col = split.column()
                 col.prop(INTACT_Props, "UserTiffDir", text="")
-                
+
                 #input for resolution
                 row = layout.row()
                 split = row.split()
                 col = split.column()
                 col.label(text="Resolution (voxel size in mm) :")
-                col = split.column()                
+                col = split.column()
                 col.prop(INTACT_Props, "Resolution", text = "")
 
                 if INTACT_Props.UserTiffDir:
@@ -196,7 +196,7 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                     row.alignment = "CENTER"
                     row.scale_y = 2
                     row.operator("intact.volume_render", icon="IMPORT")
-                    
+
             if INTACT_Props.DataType == "DICOM Series":
 
                 row = layout.row()
@@ -241,19 +241,19 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                 col.label(text = "Color of volume render:")
                 col = split.column()
                 col.prop(INTACT_Props, "CTcolor", text="")
-                
+
                 row = layout.row()
                 split = row.split()
                 col = split.column()
                 col.label(text = "Shading of volume render:")
                 col = split.column()
                 col.prop(INTACT_Props, "ColorPos", text="", slider=True)
-                
+
                 row = layout.row()
                 row.label(text=f"Threshold:")
                 row = layout.row()
                 row.prop(INTACT_Props, "Threshold", text="THRESHOLD", slider=True)
-                   
+
 
 
 class INTACT_PT_SurfacePanel(bpy.types.Panel):
@@ -261,36 +261,36 @@ class INTACT_PT_SurfacePanel(bpy.types.Panel):
 
     bl_idname = "INTACT_PT_SurfacePanel"
     bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"  
+    bl_region_type = "UI"
     bl_category = "INTACT"
     bl_label = "2. SURFACE SCAN LOAD"
     bl_options = {"DEFAULT_CLOSED"}
-    
+
     def draw(self, context):
 
        INTACT_Props = context.scene.INTACT_Props
         # Draw Addon UI :
        layout = self.layout
-       
+
        if not INTACT_Props.UserProjectDir:
            row = layout.row()
            row.alignment = "LEFT"
            row.label(text = "Please select working directory in INTACT panel.")
-       else: 
+       else:
            row = layout.row()
            split = row.split()
            col = split.column()
            col.label(text="Surface scan directory (.obj file) :")
            col = split.column()
            col.prop(INTACT_Props, "UserObjDir", text="")
-        
+
        if INTACT_Props.UserObjDir:
            Box = layout.box()
            row = Box.row()
            row.alignment = "CENTER"
            row.scale_y = 2
            row.operator("intact.obj_render", icon="IMPORT")
-        
+
 class INTACT_PT_CTmeshPanel(bpy.types.Panel):
     bl_category = "INTACT"
     bl_label = "3. CT MESH GENERATION"
@@ -302,13 +302,13 @@ class INTACT_PT_CTmeshPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         INTACT_Props = context.scene.INTACT_Props
-         
+
         condition_CT = False
 
-        for obj in context.scene.objects: 
+        for obj in context.scene.objects:
             if obj.name.endswith("CTVolume"):
                 condition_CT = True
-                
+
         if condition_CT:
             row = layout.row()
             split = row.split()
@@ -316,18 +316,18 @@ class INTACT_PT_CTmeshPanel(bpy.types.Panel):
             col.label(text="CT Volume:")
             col = split.column()
             col.prop(INTACT_Props, "CT_Vol", text="")
-            
+
             row = layout.row()
             row.label(text="If the CT volume has moved, reset it's position.")
-                
+
             row = layout.row()
             row.operator("intact.reset_ctvolume_position")
-                
+
             row = layout.row()
             row.label(text="Determine the threshold to separate air and object.")
             row = layout.row()
             row.prop(INTACT_Props, "Threshold", text="THRESHOLD", slider=True)
-                   
+
             layout.separator()
 
             row = layout.row()
@@ -346,7 +346,7 @@ class INTACT_PT_CTmeshPanel(bpy.types.Panel):
             row.alignment = "CENTER"
             row.scale_y = 2
             row.operator("intact.multitresh_segment")
-        elif (condition_CT and not obj.name.endswith("CTVolume")): 
+        elif (condition_CT and not obj.name.endswith("CTVolume")):
             row = layout.row()
             row.label(text="Please select CT volume for segmentation.")
 
@@ -362,17 +362,17 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         INTACT_Props = context.scene.INTACT_Props
-         
+
         condition_CT = False
         condition_surface = False
 
 
-        for obj in context.scene.objects: 
+        for obj in context.scene.objects:
             if obj.name.endswith("CTVolume"):
                 condition_CT = True
             if obj.name.startswith("IT_surface"):
                 condition_surface = True
-            if obj.name.endswith("SEGMENTATION"): 
+            if obj.name.endswith("SEGMENTATION"):
                  condition_seg = True
         if not (condition_CT or condition_surface):
             row = layout.row()
@@ -383,11 +383,11 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
         elif (condition_CT and not condition_surface):
             row = layout.row()
             row.label(text="Please load a surface scan.")
-           
+
         condition_segment = False
 
         if context.object:
-            for obj in context.scene.objects: 
+            for obj in context.scene.objects:
                 if obj.name.endswith("SEGMENTATION"):
                     condition_segment = True
             if (condition_CT and condition_surface and not condition_segment):
@@ -396,9 +396,9 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
             if (condition_CT and condition_segment and not condition_surface):
                 row = layout.row()
                 row.label(text="Please load a surface scan.")
-            
+
         if (condition_surface and condition_segment):
-            
+
             row = layout.row()
             split = row.split()
             col = split.column()
@@ -412,8 +412,8 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
             col.label(text="CT Segmentation:")
             col = split.column()
             col.prop(INTACT_Props, "Seg", text="")
-        
-        
+
+
         #fine alignment panel
             layout.label(text = "ICP Alignment")
             layout.label(text = "Manually move the surface scan for a rough alignment first.")
@@ -438,19 +438,19 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
     bl_region_type = "UI"
     bl_context = "objectmode"
     bl_options = {"DEFAULT_CLOSED"}
-    
+
     def draw(self, context):
         layout = self.layout
         row = layout.row()
         scene = context.scene
 
         INTACT_Props = context.scene.INTACT_Props
-        
+
         condition_CT = False
         condition_surface = False
 
 
-        for obj in context.scene.objects: 
+        for obj in context.scene.objects:
             if obj.name.endswith("CTVolume"):
                 condition_CT = True
             if obj.name.startswith("IT_surface"):
@@ -458,7 +458,7 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
         if not (condition_CT or condition_surface):
             row = layout.row()
             row.label(text="Please load your data first.")
-            
+
         if (condition_CT or condition_surface):
             row = layout.row()
             split = row.split()
@@ -480,13 +480,13 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
             col.label(text="CT Segmentation:")
             col = split.column()
             col.prop(INTACT_Props, "Seg", text="")
-            
+
             Box = layout.box()
             row = Box.row()
             row.alignment = "CENTER"
             row.scale_y = 2
             row.operator("intact.addslices", icon="EMPTY_AXIS")
-            
+
             row = layout.row()
             row.label(text="Slices contrast adjustment")
             row = layout.row()
@@ -497,9 +497,9 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
             row.label(text="Slice max value:")
             row = layout.row()
             row.prop(INTACT_Props, "Slice_max", text="Maximum value", slider=True)
-                
 
-        
+
+
         if (condition_CT or condition_surface):
             layout.label(text="Make cropping cube:")
             layout.operator("intact.cropping_cube_creation", text="Create Cropping Cube")
@@ -513,7 +513,7 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
             row.prop(INTACT_Props, "Remove_slice_outside_object", text="Crop slices outside object")
             # disable checkbox while there are no slices + no cropping cube
             row.enabled = INTACT_Props.Axial_Slice is not None and INTACT_Props.Cropping_Cube is not None
-        
+
             row = layout.row()
             row.label(text="Open viewing in multiple directions.")
             row = layout.row()
@@ -524,7 +524,7 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
             layout.prop(INTACT_Props, "Surface_scan_roughness", text="Surface scan roughness")
             layout.prop(INTACT_Props, "Slice_thickness", text="Slice thickness")
 
-        
+
 class OBJECT_PT_Image_Panel(bpy.types.Panel):
     """Creates a Panel in the scene context of the properties editor"""
     bl_category = "INTACT"
@@ -533,18 +533,18 @@ class OBJECT_PT_Image_Panel(bpy.types.Panel):
     bl_region_type = "UI"
     bl_context = "objectmode"
     bl_options = {"DEFAULT_CLOSED"}
-    
+
     def draw(self, context):
         layout = self.layout
         row = layout.row()
         scene = context.scene
         INTACT_Props = context.scene.INTACT_Props
-        
+
         condition_CT = False
         condition_surface = False
 
 
-        for obj in context.scene.objects: 
+        for obj in context.scene.objects:
             if obj.name.endswith("CTVolume"):
                 condition_CT = True
             if obj.name.startswith("IT_surface"):
@@ -552,26 +552,26 @@ class OBJECT_PT_Image_Panel(bpy.types.Panel):
         if not (condition_CT and condition_surface):
             row = layout.row()
             row.label(text="Please load your data first.")
-            
+
         if (condition_CT or condition_surface):
             row = layout.row()
             row.label(text="Quick screenshot:")
             layout.operator("intact.take_screenshot", text="Take Screenshot")
-            
+
             row = layout.row()
             row.label(text="Camera setup:")
             layout.prop(INTACT_Props, "Resolution_x", text="Resolution x (pixels)")
             layout.prop(INTACT_Props, "Resolution_y", text="Resolution y (pixels)")
-           
+
             if not INTACT_Props.Set_camera_enabled:
                 icon = "PLAY"
                 txt = 'Set Camera Position'
             else:
                 icon = "PAUSE"
                 txt = 'Confirm Camera Position'
-            
+
             layout.prop(INTACT_Props, 'Set_camera_enabled', text=txt, icon=icon, toggle=True)
-            
+
             row = layout.row()
             row.label(text="Render options:")
             layout.prop(INTACT_Props, 'Lighting_strength', text="Lighting strength")
@@ -591,8 +591,8 @@ class OBJECT_PT_Image_Panel(bpy.types.Panel):
             row.prop_enum(INTACT_Props, "Movie_rotation_axis", "Y")
             row.prop_enum(INTACT_Props, "Movie_rotation_axis", "Z")
             layout.operator("intact.render_turntable", text="Render turntable movie")
-        
-        
+
+
 #################################################################################################
 # Registration :
 #################################################################################################
@@ -613,7 +613,7 @@ def register():
 
     for cls in classes:
         bpy.utils.register_class(cls)
-        
+
     #icp panel
     bpy.types.Scene.allowScaling = bpy.props.BoolProperty(
         default = False,
@@ -630,7 +630,7 @@ def register():
     bpy.types.Scene.downsamplingPerc = bpy.props.IntProperty(
         default = 0, min = 0, max = 99,
         description = "Downsampling percentage")
-        
+
     #export transformations panel
     bpy.types.Scene.exportTransformation = bpy.props.EnumProperty(
         name = "Export Transformation",
@@ -643,4 +643,3 @@ def unregister():
 
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
-    

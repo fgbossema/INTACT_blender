@@ -106,7 +106,7 @@ def make_path_absolute(key):
     props = bpy.context.scene.INTACT_Props
     sane_path = lambda p: os.path.abspath(bpy.path.abspath(p))
     if key in props and props[key].startswith('//'):
-        props[key] = sane_path(props[key]) 
+        props[key] = sane_path(props[key])
 
 
 class INTACT_Props(bpy.types.PropertyGroup):
@@ -133,7 +133,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
         description="DICOM Directory Path",
         subtype="DIR_PATH",
     )
-    
+
     UserTiffDir: StringProperty(
         name="TIFF Path",
         default="",
@@ -149,7 +149,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
         description="User Image File Path",
         subtype="FILE_PATH",
     )
-    
+
     UserObjDir: StringProperty(
         name="OBJ Path",
         update = lambda s,c: make_path_absolute('UserObjDir'),
@@ -157,7 +157,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
         description="OBJ Directory Path",
         subtype="FILE_PATH",
     )
-    
+
     #####################
 
     Data_Types = ["TIFF Stack", "DICOM Series", "NRRD File", ""]
@@ -175,7 +175,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
         default="{'Deffault': None}",
         description="Dicom series files list",
     )
-    
+
     TiffInfo: StringProperty(
         name="(str) TiffInfo",
         default="{'Deffault': None}",
@@ -215,11 +215,11 @@ class INTACT_Props(bpy.types.PropertyGroup):
 
     Wmin: FloatProperty()
     Wmax: FloatProperty()
-    
+
     Slice_min: FloatProperty(
         name="Slice min",
         description="Choose a minimum for slice visualisation.",
-        default=0, 
+        default=0,
         soft_min=0.0,
         soft_max=255.0,
         update = SliceIntensityUpdate,
@@ -227,12 +227,12 @@ class INTACT_Props(bpy.types.PropertyGroup):
     Slice_max: FloatProperty(
         name="Slice min",
         description="Choose a minimum for slice visualisation.",
-        default=255, 
+        default=255,
         soft_min=0.0,
         soft_max=255.0,
         update = SliceIntensityUpdate,
     )
-    
+
     Resolution: FloatProperty(
         name="Resolution",
         default=1.0,
@@ -286,8 +286,8 @@ class INTACT_Props(bpy.types.PropertyGroup):
         )
 
     #######################
-    
-    
+
+
     Progress_Bar: FloatProperty(
         name="Progress_Bar",
         description="Progress_Bar",
@@ -301,7 +301,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
         precision=1,
     )
 
-    
+
     Threshold: FloatProperty(
         name="Threshold 1",
         description="Threshold 1",
@@ -312,31 +312,31 @@ class INTACT_Props(bpy.types.PropertyGroup):
         soft_max=255.0,
         update=TresholdUpdateFunction,
     )
-    
+
 
     Thres1Bool: BoolProperty(description="", default=True)
 
     Thres1SegmentColor: FloatVectorProperty(
         name="Segmentation Color 1",
         description="Color 1",
-        default=[0.07, 0.75, 0.8, 1.0], 
+        default=[0.07, 0.75, 0.8, 1.0],
         soft_min=0.0,
         soft_max=1.0,
         size=4,
         subtype="COLOR",
     )
-     
+
     CTcolor: FloatVectorProperty(
         name="CT volume render color",
         description="Choose a color for the volume render.",
-        default=[0.799, 0.448, 0.058, 1.000000], 
+        default=[0.799, 0.448, 0.058, 1.000000],
         soft_min=0.0,
         soft_max=1.0,
         size=4,
         subtype="COLOR",
         update = ColorUpdateFunction,
     )
-    
+
     ColorPos: FloatProperty(
         default=0.25,
         min=0.0,

@@ -41,42 +41,33 @@ import sys, os, bpy
 from importlib import import_module
 from os.path import dirname, join, realpath, abspath, exists
 
+from .Operators.INTACT_InstallReq import REQ_LIST, REQ_INSTALLATION_DIR
+
 
 if sys.platform == "win32":
     sys.stdout.reconfigure(
         encoding="cp65001"
     )  # activate unicode characters in windows CLI
 
+###################################################
+if not exists(REQ_INSTALLATION_DIR):
+    os.mkdir(REQ_INSTALLATION_DIR)
+
+if not sys.path[0] == REQ_INSTALLATION_DIR:
+    sys.path.insert(0, REQ_INSTALLATION_DIR)
+
 #############################################################
-def ImportReq(REQ_DICT):
+def ImportReq(requirements_list):
     Pkgs = []
-    for mod, pkg in REQ_DICT.items():
+    for requirement in requirements_list:
         try:
-            import_module(mod)
+            import_module(requirement.test_string)
         except ImportError:
-            Pkgs.append(pkg)
+            Pkgs.append(requirement.package_name)
 
     return Pkgs
 
-
-###################################################
-REQ_DICT = {
-    "SimpleITK": "SimpleITK==2.0.2",
-    "vtk": "vtk==9.0.1",
-    "cv2": "opencv-contrib-python==4.4.0.46",
-}
-ADDON_DIR = dirname(abspath(__file__))
-REQ_ZIP_DIR = join(ADDON_DIR, "Resources", "REQ_ZIP_DIR")
-INTACT_Modules_DIR = join(os.path.expanduser("~/INTACT_Modules"))
-if not exists(INTACT_Modules_DIR):
-    os.mkdir(INTACT_Modules_DIR)
-
-
-if not sys.path[0] == INTACT_Modules_DIR:
-    sys.path.insert(0, INTACT_Modules_DIR)
-
-NotFoundPkgs = ImportReq(REQ_DICT)
-
+NotFoundPkgs = ImportReq(REQ_LIST)
 if NotFoundPkgs:
     ############################
     # Install Req Registration :

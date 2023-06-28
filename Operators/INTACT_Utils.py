@@ -16,15 +16,19 @@ import mathutils
 from mathutils import Matrix, Vector, Euler, kdtree, geometry as Geo
 
 import SimpleITK as sitk
-import vtk
 import cv2
-
 try:
     cv2 = reload(cv2)
 except ImportError:
     pass
-from vtk.util import numpy_support
-from vtk import vtkCommand
+from vtkmodules.vtkCommonDataModel import vtkImageData, vtkPolyData
+from vtkmodules.vtkCommonCore import VTK_UNSIGNED_INT, vtkCommand
+from vtkmodules.vtkCommonTransforms import vtkTransform
+from vtkmodules.vtkFiltersCore import vtkMarchingCubes, vtkQuadricDecimation, vtkSmoothPolyDataFilter, vtkPolyDataConnectivityFilter, vtkCleanPolyData, vtkContourFilter
+from vtkmodules.vtkFiltersGeneral import vtkTransformPolyDataFilter
+from vtkmodules.vtkFiltersModeling import vtkFillHolesFilter
+from vtkmodules.util import numpy_support
+
 
 # Global Variables :
 
@@ -152,7 +156,7 @@ def make_directory(Root, DirName):
     if not DirName in os.listdir(Root):
         os.mkdir(DirPath)
     return DirPath
-    
+
 
 ################################
 # Copy DcmSerie To ProjDir function :
@@ -625,7 +629,7 @@ def VolumeRender(DcmInfo, GpShader, ShadersBlendFile):
         Voxel.lock_scale[i] = True
 
     Finish = Tcounter()
-    print(f"CT-Scan loaded in {Finish-Start} secondes")
+    print(f"CT-Scan loaded in {Finish-Start} seconds")
 
 
 def Scene_Settings():
@@ -681,10 +685,10 @@ def SlicesUpdate(scene, slice_index):
         ActiveObject = bpy.context.view_layer.objects.active
         position_property = position_properties[slice_index]
         rotation_property = rotation_properties[slice_index]
-        
+
         Condition1 = True
         Preffix = Planes[0].name[2:7]
-        
+
         if Condition1:
 
             Plane = [obj for obj in Planes if Preffix in obj.name][0]
@@ -757,7 +761,7 @@ def SlicesUpdate(scene, slice_index):
                     Out_Direction,
                     0,
                 )
-                
+
                 #Change contrast based on user input#
                 Image2D = sitk.Cast(
                 sitk.IntensityWindowing(
@@ -769,7 +773,7 @@ def SlicesUpdate(scene, slice_index):
                 ),
                 sitk.sitkUInt8,
                 )
-                
+
                 #############################################
                 # Write Image :
                 Array = sitk.GetArrayFromImage(Image2D)
@@ -806,13 +810,13 @@ def CoronalSliceUpdate(scene):
 @persistent
 def SagitalSliceUpdate(scene):
     SlicesUpdate(scene, 2)
-    
+
 def SlicesUpdateAll(scene):
     SlicesUpdate(scene, 0)
     SlicesUpdate(scene, 1)
     SlicesUpdate(scene, 2)
 
-    
+
 
 ####################################################################
 def Add_Cam_To_Plane(Plane, CamDistance, ClipOffset):
@@ -1071,7 +1075,7 @@ def TerminalProgressBar(
 def sitkTovtk(sitkImage):
     """Convert sitk image to a VTK image"""
     sitkArray = sitk.GetArrayFromImage(sitkImage)  # .astype(np.uint8)
-    vtkImage = vtk.vtkImageData()
+    vtkImage = vtkImageData()
 
     Sp = Spacing = sitkImage.GetSpacing()
     Sz = Size = sitkImage.GetSize()
@@ -1083,7 +1087,7 @@ def sitkTovtk(sitkImage):
     vtkImage.SetExtent(0, Sz[0] - 1, 0, Sz[1] - 1, 0, Sz[2] - 1)
 
     VtkArray = numpy_support.numpy_to_vtk(
-        sitkArray.ravel(), deep=True, array_type=vtk.VTK_UNSIGNED_INT
+        sitkArray.ravel(), deep=True, array_type=VTK_UNSIGNED_INT
     )
     VtkArray.SetNumberOfComponents(1)
     vtkImage.GetPointData().SetScalars(VtkArray)
@@ -1093,12 +1097,12 @@ def sitkTovtk(sitkImage):
 
 
 def vtk_MC_Func(vtkImage, Treshold):
-    MCFilter = vtk.vtkMarchingCubes()
+    MCFilter = vtkMarchingCubes()
     MCFilter.ComputeNormalsOn()
     MCFilter.SetValue(0, Treshold)
     MCFilter.SetInputData(vtkImage)
     MCFilter.Update()
-    mesh = vtk.vtkPolyData()
+    mesh = vtkPolyData()
     mesh.DeepCopy(MCFilter.GetOutput())
     return mesh
 
@@ -1119,7 +1123,7 @@ def vtkMeshReduction(q, mesh, reduction, step, start, finish):
             ]
         )
 
-    decimatFilter = vtk.vtkQuadricDecimation()
+    decimatFilter = vtkQuadricDecimation()
     decimatFilter.SetInputData(mesh)
     decimatFilter.SetTargetReduction(reduction)
 
@@ -1146,7 +1150,7 @@ def vtkSmoothMesh(q, mesh, Iterations, step, start, finish):
             ]
         )
 
-    SmoothFilter = vtk.vtkSmoothPolyDataFilter()
+    SmoothFilter = vtkSmoothPolyDataFilter()
     SmoothFilter.SetInputData(mesh)
     SmoothFilter.SetNumberOfIterations(int(Iterations))
     SmoothFilter.SetFeatureAngle(45)
@@ -1160,10 +1164,10 @@ def vtkSmoothMesh(q, mesh, Iterations, step, start, finish):
 def vtkTransformMesh(mesh, Matrix):
     """Transform a mesh using VTK's vtkTransformPolyData filter."""
 
-    Transform = vtk.vtkTransform()
+    Transform = vtkTransform()
     Transform.SetMatrix(Matrix)
 
-    transformFilter = vtk.vtkTransformPolyDataFilter()
+    transformFilter = vtkTransformPolyDataFilter()
     transformFilter.SetInputData(mesh)
     transformFilter.SetTransform(Transform)
     transformFilter.Update()
@@ -1172,7 +1176,7 @@ def vtkTransformMesh(mesh, Matrix):
 
 
 def vtkfillholes(mesh, size):
-    FillHolesFilter = vtk.vtkFillHolesFilter()
+    FillHolesFilter = vtkFillHolesFilter()
     FillHolesFilter.SetInputData(mesh)
     FillHolesFilter.SetHoleSize(size)
     FillHolesFilter.Update()
@@ -1183,8 +1187,8 @@ def vtkfillholes(mesh, size):
 def vtkCleanMesh(mesh, connectivityFilter=False):
     """Clean a mesh using VTK's CleanPolyData filter."""
 
-    ConnectFilter = vtk.vtkPolyDataConnectivityFilter()
-    CleanFilter = vtk.vtkCleanPolyData()
+    ConnectFilter = vtkPolyDataConnectivityFilter()
+    CleanFilter = vtkCleanPolyData()
 
     if connectivityFilter:
 
@@ -1242,11 +1246,11 @@ def sitkToContourArray(sitkImage, HuMin, HuMax, Wmin, Wmax, Thikness):
 def vtkContourFilter(vtkImage, isovalue=0.0):
     """Extract an isosurface from a volume."""
 
-    ContourFilter = vtk.vtkContourFilter()
+    ContourFilter = vtkContourFilter()
     ContourFilter.SetInputData(vtkImage)
     ContourFilter.SetValue(0, isovalue)
     ContourFilter.Update()
-    mesh = vtk.vtkPolyData()
+    mesh = vtkPolyData()
     mesh.DeepCopy(ContourFilter.GetOutput())
     return mesh
 
