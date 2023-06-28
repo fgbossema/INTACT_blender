@@ -308,6 +308,10 @@ class INTACT_PT_CTmeshPanel(bpy.types.Panel):
         for obj in context.scene.objects:
             if obj.name.endswith("CTVolume"):
                 condition_CT = True
+                
+        if not condition_CT:
+            row = layout.row()
+            row.label(text="Please load your CT data first.")
 
         if condition_CT:
             row = layout.row()
