@@ -47,7 +47,7 @@ def isConnected():
 #############################################################
 def ReqInternetInstall(path, modules):
     # Download and install requirement if not AddonPacked version:
-    if bpy.app.version >= (2, 80, 0):
+    if bpy.app.version >= (2, 91, 0):
         PythonPath = sys.executable
     else:
         PythonPath = bpy.app.binary_path_python
