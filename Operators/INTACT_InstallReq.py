@@ -47,14 +47,14 @@ def isConnected():
 #############################################################
 def ReqInternetInstall(path, modules):
     # Download and install requirement if not AddonPacked version:
-    if bpy.app.version >= (2, 80, 0):
+    if bpy.app.version >= (2, 91, 0):
         PythonPath = sys.executable
     else:
         PythonPath = bpy.app.binary_path_python
 
     # Capture stderr and add to to the exception message in case of an error
     try:
-        run(f'"{PythonPath}" -m pip install --upgrade pip',
+        run(f'"{PythonPath}" -m ensurepip',
             shell=True, check=True, stderr=PIPE, text=True)
         run(f'"{PythonPath}" -m pip install --upgrade pip',
             shell=True, check=True, stderr=PIPE, text=True)
