@@ -1047,22 +1047,8 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         UserOBjDir = AbsPath(INTACT_Props.UserObjDir)
         print("\n##########################\n")
         print("Loading Surface scan...")
-
-        if 'Surface' not in bpy.data.collections:
-            print('Make surface collection')
-            bpy.data.collections.new('Surface')
-            coll = bpy.data.collections.get('Surface')
-            context.collection.children.link(coll)
-
-
-        imported_object = bpy.ops.import_scene.obj(filepath=UserOBjDir, filter_glob="*.obj;*.mtl")
-        obj_object = bpy.context.selected_objects[0]
-        obj_object.name = "IT_surface_" + obj_object.name
-
-        bpy.data.collections['Surface'].objects.link(obj_object)
-        bpy.context.scene.collection.objects.unlink(obj_object)
-
-
+        
+        
         #Remove Blenders default objects.
         if 'Camera' in bpy.data.objects:
            bpy.data.objects.remove(bpy.data.objects["Camera"], do_unlink=True)
@@ -1072,6 +1058,23 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
            bpy.data.objects.remove(bpy.data.objects["Light"], do_unlink=True)
         if 'Collection' in bpy.data.collections:
            bpy.data.collections.remove(bpy.data.collections["Collection"])
+           
+        if 'Surface' not in bpy.data.collections:
+            print('Make surface collection')
+            bpy.data.collections.new('Surface')
+            coll = bpy.data.collections.get('Surface')
+            context.collection.children.link(coll)
+        
+
+        imported_object = bpy.ops.import_scene.obj(filepath=UserOBjDir, filter_glob="*.obj;*.mtl")
+        obj_object = bpy.context.selected_objects[0]
+        obj_object.name = "IT_surface_" + obj_object.name
+
+        bpy.data.collections['Surface'].objects.link(obj_object)
+        #bpy.context.scene.collection.objects.unlink(obj_object)
+
+
+
 
 
         # Fetch the area
