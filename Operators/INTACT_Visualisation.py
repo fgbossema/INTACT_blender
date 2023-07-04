@@ -44,7 +44,7 @@ class CroppingCubeCreation(bpy.types.Operator):
         cube_collection_name = "Cropping Cubes"
 
         if not ct_vol:
-            message = [" Please input CT Volume first "]
+            message = [" Please define your CT Volume first at the top of this fold-out tab."]
             INTACT_Utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
             return {"CANCELLED"}
 
@@ -54,13 +54,14 @@ class CroppingCubeCreation(bpy.types.Operator):
             # Make cropping cube slightly larger than the CT volume to avoid glitchy artefacts caused by the cube
             # faces exactly matching the CT volume edges.
             croppingcubedim = ct_vol.dimensions*1.001
+
             croppingcube_x = croppingcubedim[0]
 
             croppingcubeloc = ct_vol.location
             loc_x = croppingcubeloc[0]
             loc_y = croppingcubeloc[1]
             loc_z = croppingcubeloc[2]
-            print("\nDimensions of CT voxel representation extracted.")
+            print("\nDimensions of CT voxel representation extracted.", ct_vol.dimensions)
 
             # Create one cropping cube, to use for all axes
             bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD',
@@ -612,6 +613,7 @@ class INTACT_OT_MultiView(bpy.types.Operator):
             bpy.ops.object.select_all(Override, action="DESELECT")
             SLICES_POINTER.select_set(True)
             bpy.context.view_layer.objects.active = SLICES_POINTER
+            
 
         return {"FINISHED"}
 
