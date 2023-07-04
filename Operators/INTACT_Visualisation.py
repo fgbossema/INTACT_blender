@@ -64,9 +64,10 @@ class CroppingCubeCreation(bpy.types.Operator):
             print("\nDimensions of CT voxel representation extracted.", ct_vol.dimensions)
 
             # Create one cropping cube, to use for all axes
-            bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD',
-                                            location=(loc_x + croppingcube_x, loc_y, loc_z), scale=croppingcubedim)
+            bpy.ops.mesh.primitive_cube_add(size=1, enter_editmode=False, align='WORLD')
             cropct = bpy.context.active_object
+            cropct.scale = croppingcubedim
+            cropct.location = loc_x + croppingcube_x, loc_y, loc_z
             INTACT_Props.Cropping_Cube = cropct
             cropct.name = cropping_cube_name
             # Display as bounds, so can see through the cube to the object inside
