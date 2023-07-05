@@ -1071,7 +1071,7 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         obj_object.name = "IT_surface_" + obj_object.name
 
         bpy.data.collections['Surface'].objects.link(obj_object)
-        #bpy.context.scene.collection.objects.unlink(obj_object)
+        bpy.context.scene.collection.objects.unlink(obj_object)
 
 
 
