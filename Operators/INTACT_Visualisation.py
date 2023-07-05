@@ -53,7 +53,7 @@ class CroppingCubeCreation(bpy.types.Operator):
         if not cube_exists:
             # Make cropping cube slightly larger than the CT volume to avoid glitchy artefacts caused by the cube
             # faces exactly matching the CT volume edges.
-            croppingcubedim = ct_vol.dimensions*1.001
+            croppingcubedim = ct_vol.dimensions*1.005
 
             croppingcube_x = croppingcubedim[0]
 
