@@ -158,6 +158,13 @@ class INTACT_Props(bpy.types.PropertyGroup):
         subtype="FILE_PATH",
     )
 
+    CT_ID: IntProperty(
+        name="CT ID",
+        description="ID of this CT stack - used in the filename prefix",
+        default=0,
+        min=0
+    )
+
     #####################
 
     Data_Types = ["TIFF Stack", "DICOM Series", "NRRD File", ""]
@@ -170,16 +177,10 @@ class INTACT_Props(bpy.types.PropertyGroup):
 
     #######################
 
-    DcmInfo: StringProperty(
+    ImageInfo: StringProperty(
         name="(str) DicomInfo",
         default="{'Deffault': None}",
         description="Dicom series files list",
-    )
-
-    TiffInfo: StringProperty(
-        name="(str) TiffInfo",
-        default="{'Deffault': None}",
-        description="Tiff stack files list",
     )
     #######################
 

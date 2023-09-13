@@ -422,19 +422,19 @@ class INTACT_OT_AddSlices(bpy.types.Operator):
             return {"CANCELLED"}
         else:
             Vol = INTACT_Props.CT_Vol
-            Preffix = Vol.name[:5]
-            DcmInfoDict = eval(INTACT_Props.DcmInfo)
-            DcmInfo = DcmInfoDict[Preffix]
+            Prefix = Vol.name[:5]
+            ImageInfoDict = eval(INTACT_Props.ImageInfo)
+            ImageInfo = ImageInfoDict[Prefix]
 
-            AxialPlane = AddSlice(0, Preffix, DcmInfo)
+            AxialPlane = AddSlice(0, Prefix, ImageInfo)
             MoveToCollection(obj=AxialPlane, CollName="SLICES")
             INTACT_Props.Axial_Slice = AxialPlane
 
-            CoronalPlane = AddSlice(1, Preffix, DcmInfo)
+            CoronalPlane = AddSlice(1, Prefix, ImageInfo)
             MoveToCollection(obj=CoronalPlane, CollName="SLICES")
             INTACT_Props.Coronal_Slice = CoronalPlane
 
-            SagitalPlane = AddSlice(2, Preffix, DcmInfo)
+            SagitalPlane = AddSlice(2, Prefix, ImageInfo)
             MoveToCollection(obj=SagitalPlane, CollName="SLICES")
             INTACT_Props.Sagital_Slice = SagitalPlane
 
@@ -472,7 +472,7 @@ class INTACT_OT_AddSlices(bpy.types.Operator):
             MoveToCollection(obj=SagitalCam, CollName="SLICES-CAMERAS")
 
             for obj in bpy.data.objects:
-                if obj.name == f"{Preffix}_SLICES_POINTER":
+                if obj.name == f"{Prefix}_SLICES_POINTER":
                     bpy.data.objects.remove(obj)
 
             bpy.ops.object.empty_add(
@@ -485,7 +485,7 @@ class INTACT_OT_AddSlices(bpy.types.Operator):
             SLICES_POINTER.empty_display_size = 20
             SLICES_POINTER.show_name = True
             SLICES_POINTER.show_in_front = True
-            SLICES_POINTER.name = f"{Preffix}_SLICES_POINTER"
+            SLICES_POINTER.name = f"{Prefix}_SLICES_POINTER"
 
             Override, _, _ = CtxOverride(bpy.context)
 
@@ -532,8 +532,8 @@ class INTACT_OT_MultiView(bpy.types.Operator):
             ShowMessageBox(message=message, icon="COLORSET_02_VEC")
             return {"CANCELLED"}
         else:
-            Preffix = INTACT_Props.CT_Vol.name[:5]
-            SLICES_POINTER = bpy.data.objects.get(f"{Preffix}_SLICES_POINTER")
+            Prefix = INTACT_Props.CT_Vol.name[:5]
+            SLICES_POINTER = bpy.data.objects.get(f"{Prefix}_SLICES_POINTER")
 
             bpy.context.scene.unit_settings.scale_length = 0.001
             bpy.context.scene.unit_settings.length_unit = "MILLIMETERS"
@@ -546,7 +546,7 @@ class INTACT_OT_MultiView(bpy.types.Operator):
                 CORONAL,
                 SAGITAL,
                 VIEW_3D,
-            ) = INTACT_MultiView_Toggle(Preffix)
+            ) = INTACT_MultiView_Toggle(Prefix)
             MultiView_Screen = MultiView_Window.screen
             AXIAL_Space3D = [
                 Space for Space in AXIAL.spaces if Space.type == "VIEW_3D"

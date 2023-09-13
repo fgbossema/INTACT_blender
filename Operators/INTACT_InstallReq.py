@@ -71,8 +71,8 @@ def ReqInternetInstall(path, modules):
 #############################################################
 def ReqInstall(req_list, req_zip_dir, req_installation_dir):
     Pkgs = [x.package_name for x in req_list]
-    Preffix = sys.platform
-    ZippedModuleFiles = [f"{Preffix}_{Pkg}.zip" for Pkg in Pkgs]
+    Prefix = sys.platform
+    ZippedModuleFiles = [f"{Prefix}_{Pkg}.zip" for Pkg in Pkgs]
     condition = all([(mod in os.listdir(req_zip_dir)) for mod in ZippedModuleFiles])
 
     if condition:

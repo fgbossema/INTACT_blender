@@ -236,8 +236,8 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
         # import stl to blender scene :
         bpy.ops.import_mesh.stl(filepath=SegmentStlPath)
         obj = bpy.context.object
-        obj.name = f"{self.Preffix}_{Segment}_SEGMENTATION"
-        obj.data.name = f"{self.Preffix}_{Segment}_mesh"
+        obj.name = f"{self.Prefix}_{Segment}_SEGMENTATION"
+        obj.data.name = f"{self.Prefix}_{Segment}_mesh"
 
         bpy.ops.object.origin_set(type="ORIGIN_GEOMETRY", center="MEDIAN")
 
@@ -270,16 +270,16 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
         #########################################################################
         INTACT_Props = bpy.context.scene.INTACT_Props
         UserProjectDir = AbsPath(INTACT_Props.UserProjectDir)
-        DcmInfo = self.DcmInfo
-        Origin = DcmInfo["Origin"]
-        VtkTransform_4x4 = DcmInfo["VtkTransform_4x4"]
-        TransformMatrix = DcmInfo["TransformMatrix"]
+        ImageInfo = self.ImageInfo
+        Origin = ImageInfo["Origin"]
+        VtkTransform_4x4 = ImageInfo["VtkTransform_4x4"]
+        TransformMatrix = ImageInfo["TransformMatrix"]
         VtkMatrix_4x4 = (
             self.Vol.matrix_world @ TransformMatrix.inverted() @ VtkTransform_4x4
         )
 
         VtkMatrix = list(np.array(VtkMatrix_4x4).ravel())
-        print(self.DcmInfo)
+        print(self.ImageInfo)
         SmoothIterations = SmthIter = 5
         Thikness = 1
 
@@ -288,7 +288,7 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
         SegmentStlPath = join(UserProjectDir, f"{Segment}_SEGMENTATION.stl")
 
         # Convert Hu treshold value to 0-255 UINT8 :
-        #Treshold255 = HuTo255(Hu=SegmentTreshold, Wmin=DcmInfo["Wmin"], Wmax=DcmInfo["Wmax"])
+        #Treshold255 = HuTo255(Hu=SegmentTreshold, Wmin=ImageInfo["Wmin"], Wmax=ImageInfo["Wmax"])
 
         Treshold255 = SegmentThreshold
         if Treshold255 == 0:
@@ -397,10 +397,10 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
                 if Active_Obj:
 
                     self.Vol = Active_Obj
-                    self.Preffix = self.Vol.name[:5]
-                    DcmInfoDict = eval(INTACT_Props.DcmInfo)
-                    self.DcmInfo = DcmInfoDict[self.Preffix]
-                    self.Nrrd255Path = AbsPath(self.DcmInfo["Nrrd255Path"])
+                    self.Prefix = self.Vol.name[:5]
+                    ImageInfoDict = eval(INTACT_Props.ImageInfo)
+                    self.ImageInfo = ImageInfoDict[self.Prefix]
+                    self.Nrrd255Path = AbsPath(self.ImageInfo["Nrrd255Path"])
                     self.q = Queue()
                     self.Exported = Queue()
 
@@ -425,7 +425,7 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
                         print(Imin, Imax)
 
 
-                        Sp = self.DcmInfo["Spacing"]
+                        Sp = self.ImageInfo["Spacing"]
                         print('Resolution', Sp)
                         MaxSp = max(Vector(Sp))
                         if MaxSp < 0.3:
@@ -511,10 +511,10 @@ class INTACT_OT_ResetCtVolumePosition(bpy.types.Operator):
     def execute(self, context):
         INTACT_Props = bpy.context.scene.INTACT_Props
         ct_vol = INTACT_Props.CT_Vol
-        Preffix = ct_vol.name[:5]
-        DcmInfoDict = eval(INTACT_Props.DcmInfo)
-        DcmInfo = DcmInfoDict[Preffix]
-        TransformMatrix = DcmInfo["TransformMatrix"]
+        Prefix = ct_vol.name[:5]
+        ImageInfoDict = eval(INTACT_Props.ImageInfo)
+        ImageInfo = ImageInfoDict[Prefix]
+        TransformMatrix = ImageInfo["TransformMatrix"]
         ct_vol.matrix_world = TransformMatrix
 
         return {"FINISHED"}
@@ -531,16 +531,16 @@ class INTACT_OT_CTVolumeOrientation(bpy.types.Operator):
         INTACT_Props = bpy.context.scene.INTACT_Props
         ct_vol = INTACT_Props.CT_Vol
         Active_Obj = ct_vol
-        Preffix = Active_Obj.name[:5]
-        DcmInfo = eval(INTACT_Props.DcmInfo)
-        if not "Frankfort" in DcmInfo[Preffix].keys():
+        Prefix = Active_Obj.name[:5]
+        ImageInfo = eval(INTACT_Props.ImageInfo)
+        if not "Frankfort" in ImageInfo[Prefix].keys():
             message = ["CTVOLUME Orientation : ",
                         "Please Add Reference Planes before CTVOLUME Orientation ! ",]
             ShowMessageBox(message=message, icon="COLORSET_02_VEC")
             return {"CANCELLED"}
         else:
             Frankfort_Plane = bpy.data.objects.get(
-                  DcmInfo[Preffix]["Frankfort"])
+                  ImageInfo[Prefix]["Frankfort"])
 
             if not Frankfort_Plane:
                  message = [

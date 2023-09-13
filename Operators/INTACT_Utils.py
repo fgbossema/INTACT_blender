@@ -85,7 +85,7 @@ def Addon_Enable(AddonName, Enable=True):
     is_enabled, is_loaded = AU.check(AddonName)
 
 
-def CleanScanData(Preffix):
+def CleanScanData(Prefix):
     D = bpy.data
     Objects = D.objects
     Meshes = D.meshes
@@ -94,8 +94,8 @@ def CleanScanData(Preffix):
     NodeGroups = D.node_groups
 
     # Remove Voxel data :
-    [Meshes.remove(m) for m in Meshes if f"{Preffix}_PLANE_" in m.name]
-    [Images.remove(img) for img in Images if f"{Preffix}_img" in img.name]
+    [Meshes.remove(m) for m in Meshes if f"{Prefix}_PLANE_" in m.name]
+    [Images.remove(img) for img in Images if f"{Prefix}_img" in img.name]
     [Materials.remove(mat) for mat in Materials if "IT001_Voxelmat_" in mat.name]
     [NodeGroups.remove(NG) for NG in NodeGroups if "IT001_VGS_" in NG.name]
 
@@ -103,20 +103,20 @@ def CleanScanData(Preffix):
     SlicePlanes = [
         Objects.remove(obj)
         for obj in Objects
-        if Preffix in obj.name and "SLICE" in obj.name
+        if Prefix in obj.name and "SLICE" in obj.name
     ]
     SliceMeshes = [
-        Meshes.remove(m) for m in Meshes if Preffix in m.name and "SLICE" in m.name
+        Meshes.remove(m) for m in Meshes if Prefix in m.name and "SLICE" in m.name
     ]
     SliceMats = [
         Materials.remove(mat)
         for mat in Materials
-        if Preffix in mat.name and "SLICE" in mat.name
+        if Prefix in mat.name and "SLICE" in mat.name
     ]
     SliceImages = [
         Images.remove(img)
         for img in Images
-        if Preffix in img.name and "SLICE" in img.name
+        if Prefix in img.name and "SLICE" in img.name
     ]
 
 
@@ -462,25 +462,25 @@ def MoveToCollection(obj, CollName):
                 Coll.objects.unlink(obj)
 
 
-def VolumeRender(DcmInfo, GpShader, ShadersBlendFile):
+def VolumeRender(ImageInfo, GpShader, ShadersBlendFile):
 
     INTACT_Props = bpy.context.scene.INTACT_Props
 
     CtVolumeList = [
         obj for obj in bpy.context.scene.objects if "INTACT_CTVolume_" in obj.name
     ]
-    Preffix = DcmInfo["Preffix"]
+    Prefix = ImageInfo["Prefix"]
 
-    Sp = Spacing = DcmInfo["RenderSp"]
-    Sz = Size = DcmInfo["RenderSz"]
-    Origin = DcmInfo["Origin"]
-    Direction = DcmInfo["Direction"]
-    TransformMatrix = DcmInfo["TransformMatrix"]
+    Sp = Spacing = ImageInfo["RenderSp"]
+    Sz = Size = ImageInfo["RenderSz"]
+    Origin = ImageInfo["Origin"]
+    Direction = ImageInfo["Direction"]
+    TransformMatrix = ImageInfo["TransformMatrix"]
     DimX, DimY, DimZ = (Sz[0] * Sp[0], Sz[1] * Sp[1], Sz[2] * Sp[2])
     Offset = Sp[2]
     # ImagesList = sorted(os.listdir(PngDir))
     ImagesNamesList = sorted(
-        [img.name for img in bpy.data.images if img.name.startswith(Preffix)]
+        [img.name for img in bpy.data.images if img.name.startswith(Prefix)]
     )
     ImagesList = [bpy.data.images[Name] for Name in ImagesNamesList]
     #################################################################################
@@ -532,7 +532,7 @@ def VolumeRender(DcmInfo, GpShader, ShadersBlendFile):
     for i, ImageData in enumerate(ImagesList):
         # # Add Plane :
         # ##########################################
-        Name = f"{Preffix}_PLANE_{i}"
+        Name = f"{Prefix}_PLANE_{i}"
         mesh = AddPlaneMesh(DimX, DimY, Name)
         CollName = "CT_Voxel"
 
@@ -548,7 +548,7 @@ def VolumeRender(DcmInfo, GpShader, ShadersBlendFile):
 
         ##########################################
         # Add Material:
-        mat = bpy.data.materials.new(f"{Preffix}_Voxelmat_{i}")
+        mat = bpy.data.materials.new(f"{Prefix}_Voxelmat_{i}")
         mat.use_nodes = True
         node_tree = mat.node_tree
         nodes = node_tree.nodes
@@ -606,7 +606,7 @@ def VolumeRender(DcmInfo, GpShader, ShadersBlendFile):
 
     Voxel = bpy.context.object
 
-    Voxel.name = f"{Preffix}_CTVolume"
+    Voxel.name = f"{Prefix}_CTVolume"
     bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
     bpy.ops.object.origin_set(type="ORIGIN_GEOMETRY", center="MEDIAN")
 
@@ -685,24 +685,24 @@ def SlicesUpdate(scene, slice_index):
         rotation_property = rotation_properties[slice_index]
 
         Condition1 = True
-        Preffix = Planes[0].name[2:7]
+        Prefix = Planes[0].name[2:7]
 
         if Condition1:
 
-            Plane = [obj for obj in Planes if Preffix in obj.name][0]
-            DcmInfoDict = eval(INTACT_Props.DcmInfo)
-            DcmInfo = DcmInfoDict[Preffix]
-            ImageData = AbsPath(DcmInfo["Nrrd255Path"])
+            Plane = [obj for obj in Planes if Prefix in obj.name][0]
+            ImageInfoDict = eval(INTACT_Props.ImageInfo)
+            ImageInfo = ImageInfoDict[Prefix]
+            ImageData = AbsPath(ImageInfo["Nrrd255Path"])
 
             Condition = exists(ImageData)
 
             if Condition:
 
-                CTVolume = bpy.data.objects.get(f"{Preffix}_CTVolume")
+                CTVolume = bpy.data.objects.get(f"{Prefix}_CTVolume")
                 TransformMatrix = CTVolume.matrix_world
 
-                SlicesDir = AbsPath(DcmInfo["SlicesDir"])
-                # TransformMatrix = DcmInfo["TransformMatrix"]
+                SlicesDir = AbsPath(ImageInfo["SlicesDir"])
+                # TransformMatrix = ImageInfo["TransformMatrix"]
                 ImageName = f"{Plane.name}.png"
                 ImagePath = join(SlicesDir, ImageName)
 
@@ -864,30 +864,30 @@ def set_slice_orientation(ct_volume, slice, slice_index):
         slice.matrix_world = ct_volume.matrix_world @ RotMtx
 
 
-def AddSlice(slice_index, Preffix, DcmInfo):
+def AddSlice(slice_index, Prefix, ImageInfo):
     """ Add slices to the UI. Slice index determines which slice to add 0 = axial, 1 = Coronal,
         2 = Sagital
     """
-    CTVolume = bpy.data.objects.get(f"{Preffix}_CTVolume")
+    CTVolume = bpy.data.objects.get(f"{Prefix}_CTVolume")
 
     Sp, Sz, Origin, Direction, VC = (
-        DcmInfo["Spacing"],
-        DcmInfo["Size"],
-        DcmInfo["Origin"],
-        DcmInfo["Direction"],
-        DcmInfo["VolumeCenter"],
+        ImageInfo["Spacing"],
+        ImageInfo["Size"],
+        ImageInfo["Origin"],
+        ImageInfo["Direction"],
+        ImageInfo["VolumeCenter"],
     )
 
     DimX, DimY, DimZ = (Sz[0] * Sp[0], Sz[1] * Sp[1], Sz[2] * Sp[2])
 
     if slice_index == 0:
-        name = f"1_{Preffix}_AXIAL_SLICE"
+        name = f"1_{Prefix}_AXIAL_SLICE"
         PlaneDims = Vector((DimX, DimY, 0.0))
     elif slice_index == 1:
-        name = f"2_{Preffix}_CORONAL_SLICE"
+        name = f"2_{Prefix}_CORONAL_SLICE"
         PlaneDims = Vector((DimX, DimZ, 0.0))
     elif slice_index == 2:
-        name = f"3_{Preffix}_SAGITAL_SLICE"
+        name = f"3_{Prefix}_SAGITAL_SLICE"
         PlaneDims = Vector((DimY, DimZ, 0.0))
 
     # Remove old Slices and their data meshs :
@@ -927,7 +927,7 @@ def AddSlice(slice_index, Preffix, DcmInfo):
     for node in nodes:
         if node.type != "OUTPUT_MATERIAL":
             nodes.remove(node)
-    SlicesDir = AbsPath(DcmInfo["SlicesDir"])
+    SlicesDir = AbsPath(ImageInfo["SlicesDir"])
     ImageName = f"{name}.png"
     ImagePath = join(SlicesDir, ImageName)
 
@@ -1417,7 +1417,7 @@ def progress_bar(pourcentage, Uptxt, Lowtxt="", Title="INTACT", Delay=1):
 
 ###########################################################################
 # Add INTACT MultiView :
-def INTACT_MultiView_Toggle(Preffix):
+def INTACT_MultiView_Toggle(Prefix):
 
     WM = bpy.context.window_manager
 

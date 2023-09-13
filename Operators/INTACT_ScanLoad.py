@@ -5,22 +5,16 @@ from time import perf_counter as Tcounter
 from os.path import split, join, exists, abspath, dirname
 from queue import Queue
 from mathutils import Matrix, Vector
-
-# Blender Imports :
 import SimpleITK as sitk
 import cv2
 
 from vtkmodules.vtkCommonCore import vtkCommand
-
-# Global Variables :
-
 from . import INTACT_Utils as utils
 
+# Global Variables :
 ProgEvent = vtkCommand.ProgressEvent
 
-#######################################################################################
-########################### CT Scan Load : Operators ##############################
-#######################################################################################
+
 def rmtree(top):
     for root, dirs, files in os.walk(top, topdown=False):
         for name in files:
@@ -30,6 +24,7 @@ def rmtree(top):
         for name in dirs:
             os.rmdir(join(root, name))
     os.rmdir(top)
+
 
 def GetMaxSerie(UserDcmDir):
 
@@ -67,609 +62,39 @@ def GetMaxSerie(UserDcmDir):
     return MaxSerie, MaxCount
 
 
-def Load_Dicom_funtion(context, q):
+def all_files_exist(user_project_dir, user_image_path, image_type):
 
-    ################################################################################################
-    start = Tcounter()
-    ################################################################################################
-    INTACT_Props = context.scene.INTACT_Props
-    UserProjectDir = utils.AbsPath(INTACT_Props.UserProjectDir)
-    UserDcmDir = utils.AbsPath(INTACT_Props.UserDcmDir)
+    image_path_is_dir = os.path.isdir(user_image_path)
 
-    ################################################################################################
-
-    if not exists(UserProjectDir):
+    if not exists(user_project_dir):
 
         message = ["The Selected Project Directory Path is not valid ! "]
         utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-        return {"CANCELLED"}
+        return False
 
-    elif not exists(UserDcmDir):
+    elif not exists(user_image_path):
 
-        message = [" The Selected Dicom Directory Path is not valid ! "]
+        message = [f" The Selected {image_type} Path is not valid ! "]
         utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-        return {"CANCELLED"}
+        return False
 
-    elif not os.listdir(UserDcmDir):
-        message = ["No valid DICOM Serie found in DICOM Folder ! "]
+    elif image_path_is_dir and not os.listdir(user_image_path):
+        message = [f"No valid {image_type} stack found in folder ! "]
         utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-        return {"CANCELLED"}
+        return False
+    
+    return True
 
+
+def is_intact_nrrd(UserImageFile):
+    image_filename = os.path.split(UserImageFile)[1]
+    if image_filename.startswith("IT") and image_filename.endswith("_Image3D255.nrrd"):
+        return True
     else:
-        # Get Preffix and save file :
-        DcmInfoDict = eval(INTACT_Props.DcmInfo)
-        Preffixs = list(DcmInfoDict.keys())
+        return False
 
-        for i in range(1, 100):
-            Preffix = f"IT{i:03}"
-            if not Preffix in Preffixs:
-                break
 
-        Split = split(UserProjectDir)
-        ProjectName = Split[-1] or Split[-2]
-        BlendFile = f"{ProjectName}_INTACT.blend"
-        Blendpath = join(UserProjectDir, BlendFile)
-
-        if not exists(Blendpath) or bpy.context.blend_data.filepath == Blendpath:
-            bpy.ops.wm.save_as_mainfile(filepath=Blendpath)
-        else:
-            bpy.ops.wm.save_mainfile()
-
-        # Start Reading Dicom data :
-        ######################################################################################
-        Series_reader = sitk.ImageSeriesReader()
-        MaxSerie, MaxCount = GetMaxSerie(UserDcmDir)
-        DcmSerie = Series_reader.GetGDCMSeriesFileNames(UserDcmDir, MaxSerie)
-
-        ##################################### debug_02 ###################################
-        debug_01 = Tcounter()
-        message = f"MaxSerie ID : {MaxSerie}, MaxSerie Count : {MaxCount} (Time : {round(debug_01-start,2)} seconds)"
-        print(message)
-        # q.put("Max DcmSerie extracted...")
-        ####################################################################################
-
-        # Get StudyInfo :
-        reader = sitk.ImageFileReader()
-        reader.SetImageIO('GDCMImageIO')
-        reader.SetFileName(DcmSerie[0])
-        reader.LoadPrivateTagsOn()
-        reader.ReadImageInformation()
-
-        Image3D = sitk.ReadImage(DcmSerie, imageIO='GDCMImageIO')
-        minmax = sitk.MinimumMaximumImageFilter()
-        minmax.Execute(Image3D)
-        Wmax = minmax.GetMaximum()
-        Wmin = minmax.GetMinimum()
-        INTACT_Props.Wmin = Wmin
-        INTACT_Props.Wmax = Wmax
-
-        # Get Dicom Info :
-        Sp = Spacing = Image3D.GetSpacing()
-        Sz = Size = Image3D.GetSize()
-
-        Dims = Dimensions = Image3D.GetDimension()
-        Origin = Image3D.GetOrigin()
-        Direction = Image3D.GetDirection()
-
-
-        # calculate Informations :
-        #D = Direction
-        D = (1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0)
-        O = Origin
-        Direction = D
-
-        DirectionMatrix_4x4 = Matrix(
-            (
-                (D[0], D[1], D[2], 0.0),
-                (D[3], D[4], D[5], 0.0),
-                (D[6], D[7], D[8], 0.0),
-                (0.0, 0.0, 0.0, 1.0),
-            )
-        )
-
-        TransMatrix_4x4 = Matrix(
-            (
-                (1.0, 0.0, 0.0, O[0]),
-                (0.0, 1.0, 0.0, O[1]),
-                (0.0, 0.0, 1.0, O[2]),
-                (0.0, 0.0, 0.0, 1.0),
-            )
-        )
-
-        VtkTransform_4x4 = TransMatrix_4x4 @ DirectionMatrix_4x4
-        P0 = Image3D.TransformContinuousIndexToPhysicalPoint((0, 0, 0))
-        P_diagonal = Image3D.TransformContinuousIndexToPhysicalPoint(
-            (Sz[0] - 1, Sz[1] - 1, Sz[2] - 1)
-        )
-        VCenter = (Vector(P0) + Vector(P_diagonal)) * 0.5
-
-        #C = (0.0,0.0,0.0)
-        #VCenter = C
-        C = VCenter
-
-        TransformMatrix = Matrix(
-            (
-                (D[0], D[1], D[2], C[0]),
-                (D[3], D[4], D[5], C[1]),
-                (D[6], D[7], D[8], C[2]),
-                (0.0, 0.0, 0.0, 1.0),
-            ))
-        # Set DcmInfo :
-
-        DcmInfo = {
-            "UserProjectDir": utils.RelPath(UserProjectDir),
-            "Preffix": Preffix,
-            "RenderSz": Sz,
-            "RenderSp": Sp,
-            "PixelType": Image3D.GetPixelIDTypeAsString(),
-            "Wmin": Wmin,
-            "Wmax": Wmax,
-            "Size": Sz,
-            "Dims": Dims,
-            "Spacing": Sp,
-            "Origin": Origin,
-            "Direction": Direction,
-            "TransformMatrix": TransformMatrix,
-            "DirectionMatrix_4x4": DirectionMatrix_4x4,
-            "TransMatrix_4x4": TransMatrix_4x4,
-            "VtkTransform_4x4": VtkTransform_4x4,
-            "VolumeCenter": VCenter,
-        }
-        print(DcmInfo)
-        # tags = {
-            # "StudyDate": "0008|0020",
-            # "PatientName": "0010|0010",
-            # "PatientID": "0010|0020",
-            # "BirthDate": "0010|0030",
-            # "WinCenter": "0028|1050",
-            # "WinWidth": "0028|1051",
-        # }
-        # for k, tag in tags.items():
-
-            # if tag in reader.GetMetaDataKeys():
-                # v = reader.GetMetaData(tag)
-
-            # else:
-                # v = ""
-
-            # DcmInfo[k] = v
-            # Image3D.SetMetaData(tag, v)
-
-        ###################################### debug_02 ##################################
-        debug_02 = Tcounter()
-        message = f"DcmInfo {Preffix} set (Time : {debug_02-debug_01} seconds)"
-        print(Origin, Direction)
-        # q.put("Dicom Info extracted...")
-        ##################################################################################
-
-        #######################################################################################
-        # Add directories :
-        SlicesDir = join(UserProjectDir, "Slices")
-        if not exists(SlicesDir):
-            os.makedirs(SlicesDir)
-        DcmInfo["SlicesDir"] = utils.RelPath(SlicesDir)
-
-        PngDir = join(UserProjectDir, "PNG")
-        if not exists(PngDir):
-            os.makedirs(PngDir)
-
-        Nrrd255Path = join(UserProjectDir, f"{Preffix}_Image3D255.nrrd")
-
-        DcmInfo["Nrrd255Path"] = utils.RelPath(Nrrd255Path)
-
-        ###Set info in Image3D metadata:
-        Image3D.SetSpacing(Sp)
-        Image3D.SetDirection(D)
-        Image3D.SetOrigin(O)
-
-        #######################################################################################
-        # set IntensityWindowing  :
-        Image3D_255 = sitk.Cast(
-            sitk.IntensityWindowing(
-                Image3D,
-                windowMinimum=Wmin,
-                windowMaximum=Wmax,
-                outputMinimum=0.0,
-                outputMaximum=255.0,
-            ),
-            sitk.sitkUInt8,
-        )
-        minmax = sitk.MinimumMaximumImageFilter()
-        minmax.Execute(Image3D_255)
-        Wmax = minmax.GetMaximum()
-        Wmin = minmax.GetMinimum()
-        INTACT_Props.Wmin = Wmin
-        INTACT_Props.Wmax = Wmax
-
-        # Convert Dicom to nrrd file :
-        # sitk.WriteImage(Image3D, NrrdHuPath)
-        sitk.WriteImage(Image3D_255, Nrrd255Path)
-
-        ################################## debug_03 ######################################
-        debug_03 = Tcounter()
-        message = f"Nrrd255 Export done!  (Time : {debug_03-debug_02} seconds)"
-        print(message)
-        # q.put("nrrd 3D image file saved...")
-        ##################################################################################
-
-        #############################################################################################
-        # MultiThreading PNG Writer:
-        #########################################################################################
-        def Image3DToPNG(i, slices, PngDir, Preffix):
-            img_Slice = slices[i]
-            img_Name = f"{Preffix}_img{i:04}.png"
-            image_path = join(PngDir, img_Name)
-            cv2.imwrite(image_path, img_Slice)
-            image = bpy.data.images.load(image_path)
-            image.pack()
-            # print(f"{img_Name} was processed...")
-
-        #########################################################################################
-        # Get slices list :
-        MaxSp = max(Vector(Sp))
-        if MaxSp < 0.25:
-            SampleRatio = round(MaxSp / 0.25, 2)
-            Image3D_255 = utils.ResizeImage(sitkImage=Image3D_255, Ratio=SampleRatio)
-            DcmInfo["RenderSz"] = Image3D_255.GetSize()
-            DcmInfo["RenderSp"] = Image3D_255.GetSpacing()
-            print(SampleRatio)
-
-        Array = sitk.GetArrayFromImage(Image3D_255)
-        slices = [np.flipud(Array[i, :, :]) for i in range(Array.shape[0])]
-
-        threads = [
-            threading.Thread(
-                target=Image3DToPNG,
-                args=[i, slices, PngDir, Preffix],
-                daemon=True,
-            )
-            for i in range(len(slices))
-        ]
-
-        for t in threads:
-            t.start()
-
-        for t in threads:
-            t.join()
-
-        # os.removedirs(PngDir)
-        shutil.rmtree(PngDir)
-        DcmInfo["CT_Loaded"] = True
-        # Set DcmInfo property :
-        DcmInfoDict = eval(INTACT_Props.DcmInfo)
-        print(INTACT_Props.DcmInfo)
-        DcmInfoDict[Preffix] = DcmInfo
-        INTACT_Props.DcmInfo = str(DcmInfoDict)
-        INTACT_Props.UserProjectDir = utils.RelPath(INTACT_Props.UserProjectDir)
-        bpy.ops.wm.save_mainfile()
-
-
-        #############################################################################################
-        finish = Tcounter()
-        message = f"Data Loaded in {finish-start} seconds"
-        print(message)
-        # q.put(message)
-        #############################################################################################
-        message = ["DICOM loaded successfully. "]
-        utils.ShowMessageBox(message=message, icon="COLORSET_03_VEC")
-
-        #Remove Blenders default objects.
-        if 'Camera' in bpy.data.objects:
-           bpy.data.objects.remove(bpy.data.objects["Camera"], do_unlink=True)
-        if 'Cube' in bpy.data.objects:
-           bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)
-        if 'Light' in bpy.data.objects:
-           bpy.data.objects.remove(bpy.data.objects["Light"], do_unlink=True)
-        if 'Collection' in bpy.data.collections:
-           bpy.data.collections.remove(bpy.data.collections["Collection"])
-        # Fetch the area
-        outliner = next(a for a in bpy.context.screen.areas if a.type == "OUTLINER")
-        # Fetch the space
-        outliner.spaces[0].show_restrict_column_render = True
-
-        return DcmInfo
-    ####### End Load_Dicom_fuction ##############
-
-def Load_Tiff_function(context, q):
-
-    ################################################################################################
-    start = Tcounter()
-    ################################################################################################
-    INTACT_Props = context.scene.INTACT_Props
-    UserProjectDir = utils.AbsPath(INTACT_Props.UserProjectDir)
-    UserTiffDir = utils.AbsPath(INTACT_Props.UserTiffDir)
-
-    ################################################################################################
-
-    if not exists(UserProjectDir):
-
-        message = ["The Selected Project Directory Path is not valid ! "]
-        utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-        return {"CANCELLED"}
-
-    elif not exists(UserTiffDir):
-
-        message = [" The Selected Tiff Directory Path is not valid ! "]
-        utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-        return {"CANCELLED"}
-
-    elif not os.listdir(UserTiffDir):
-        message = ["No valid TIFF Stack found in DICOM Folder ! "]
-        utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-        return {"CANCELLED"}
-
-    else:
-        # Get Preffix and save file :
-        DcmInfoDict = eval(INTACT_Props.DcmInfo)
-        Preffixs = list(DcmInfoDict.keys())
-
-        for i in range(1, 100):
-            Preffix = f"IT{i:03}"
-            if not Preffix in Preffixs:
-                break
-
-        Split = split(UserProjectDir)
-        ProjectName = Split[-1] or Split[-2]
-        BlendFile = f"{ProjectName}_CT-SCAN.blend"
-        Blendpath = join(UserProjectDir, BlendFile)
-
-        if not exists(Blendpath) or bpy.context.blend_data.filepath == Blendpath:
-            bpy.ops.wm.save_as_mainfile(filepath=Blendpath)
-        else:
-            bpy.ops.wm.save_mainfile()
-
-        # Start Reading Dicom data :
-        ######################################################################################
-
-
-        TiffSerie = sorted(os.listdir(UserTiffDir))
-        MaxCount = len(TiffSerie)
-        ##################################### debug_02 ###################################
-        debug_01 = Tcounter()
-        message = f"MaxSerie Count : {MaxCount} (Time : {round(debug_01-start,2)} seconds)"
-        print(message)
-
-        ####################################################################################
-        print(UserTiffDir)
-        # Get StudyInfo :
-        reader = sitk.ImageFileReader()
-        reader.SetImageIO('TIFFImageIO')
-        reader.SetFileName(TiffSerie[0])
-        reader.LoadPrivateTagsOn()
-        TiffSerie = [join(UserTiffDir,s) for s in TiffSerie]
-
-        Image3D = sitk.ReadImage(TiffSerie, imageIO='TIFFImageIO')
-
-        # Get Info :
-        Sp = Spacing = (INTACT_Props.Resolution, INTACT_Props.Resolution, INTACT_Props.Resolution)
-        Sz = Size = Image3D.GetSize()
-
-        Dims = Dimensions = Image3D.GetDimension()
-
-
-        Origin = (-(Sz[0]-1)/2*Sp[0], (Sz[1]-1)/2*Sp[1], (Sz[2]-1)/2*Sp[2])
-
-
-
-        Image3D = sitk.Cast(Image3D, sitk.sitkFloat32)
-        minmax = sitk.MinimumMaximumImageFilter()
-        minmax.Execute(Image3D)
-        Wmax = minmax.GetMaximum()
-        Wmin = minmax.GetMinimum()
-
-
-
-        # calculate Informations :
-        D = (1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0)
-        O = Origin
-        Direction = D
-
-        DirectionMatrix_4x4 = Matrix(
-            (
-                (D[0], D[1], D[2], 0.0),
-                (D[3], D[4], D[5], 0.0),
-                (D[6], D[7], D[8], 0.0),
-                (0.0, 0.0, 0.0, 1.0),
-            )
-        )
-
-        TransMatrix_4x4 = Matrix(
-            (
-                (1.0, 0.0, 0.0, O[0]),
-                (0.0, 1.0, 0.0, O[1]),
-                (0.0, 0.0, 1.0, O[2]),
-                (0.0, 0.0, 0.0, 1.0),
-            )
-        )
-
-        VtkTransform_4x4 = TransMatrix_4x4 @ DirectionMatrix_4x4
-        P0 = Image3D.TransformContinuousIndexToPhysicalPoint((0, 0, 0))
-        P_diagonal = Image3D.TransformContinuousIndexToPhysicalPoint(
-            (Sz[0] - 1, Sz[1] - 1, Sz[2] - 1)
-        )
-        VCenter = (Vector(P0) + Vector(P_diagonal)) * 0.5
-
-        C = (0.0,0.0,0.0)
-        VCenter = C
-
-        TransformMatrix = Matrix(
-            (
-                (D[0], D[1], D[2], C[0]),
-                (D[3], D[4], D[5], C[1]),
-                (D[6], D[7], D[8], C[2]),
-                (0.0, 0.0, 0.0, 1.0),
-            )
-        )
-
-
-
-        DcmInfo = {
-            "UserProjectDir": utils.RelPath(UserProjectDir),
-            "Preffix": Preffix,
-            "RenderSz": Sz,
-            "RenderSp": Sp,
-            "PixelType": Image3D.GetPixelIDTypeAsString(),
-            "Wmin": Wmin,
-            "Wmax": Wmax,
-            "Size": Sz,
-            "Dims": Dims,
-            "Spacing": Sp,
-            "Origin": Origin,
-            "Direction": Direction,
-            "TransformMatrix": TransformMatrix,
-            "DirectionMatrix_4x4": DirectionMatrix_4x4,
-            "TransMatrix_4x4": TransMatrix_4x4,
-            "VtkTransform_4x4": VtkTransform_4x4,
-            "VolumeCenter": VCenter,
-        }
-        print(DcmInfo)
-
-        ###################################### debug_02 ##################################
-        debug_02 = Tcounter()
-        message = f"DcmInfo {Preffix} set (Time : {debug_02-debug_01} seconds)"
-
-
-        #######################################################################################
-        # Add directories :
-        SlicesDir = join(UserProjectDir, "Slices")
-        if not exists(SlicesDir):
-            os.makedirs(SlicesDir)
-        DcmInfo["SlicesDir"] = utils.RelPath(SlicesDir)
-
-        PngDir = join(UserProjectDir, "PNG")
-        if not exists(PngDir):
-            os.makedirs(PngDir)
-
-        Nrrd255Path = join(UserProjectDir, f"{Preffix}_Image3D255.nrrd")
-
-        DcmInfo["Nrrd255Path"] = utils.RelPath(Nrrd255Path)
-
-        ###Set info in Image3D metadata:
-        Image3D.SetSpacing(Sp)
-        Image3D.SetDirection(D)
-        Image3D.SetOrigin(O)
-
-        #######################################################################################
-        # set IntensityWindowing  :
-        Image3D_255 = sitk.Cast(
-            sitk.IntensityWindowing(
-                Image3D,
-                windowMinimum=Wmin,
-                windowMaximum=Wmax,
-                outputMinimum=0.0,
-                outputMaximum=255.0,
-            ),
-            sitk.sitkUInt8,
-        )
-        minmax = sitk.MinimumMaximumImageFilter()
-        minmax.Execute(Image3D_255)
-        Wmax = minmax.GetMaximum()
-        Wmin = minmax.GetMinimum()
-        INTACT_Props.Wmin = Wmin
-        INTACT_Props.Wmax = Wmax
-
-        # Convert to nrrd file :
-        sitk.WriteImage(Image3D_255, Nrrd255Path)
-
-        ################################## debug_03 ######################################
-        debug_03 = Tcounter()
-        message = f"Nrrd255 Export done!  (Time : {debug_03-debug_02} seconds)"
-        print(message)
-        # q.put("nrrd 3D image file saved...")
-        ##################################################################################
-
-        #############################################################################################
-        # MultiThreading PNG Writer:
-        #########################################################################################
-        def Image3DToPNG(i, slices, PngDir, Preffix):
-            img_Slice = slices[i]
-            img_Name = f"{Preffix}_img{i:04}.png"
-            image_path = join(PngDir, img_Name)
-            cv2.imwrite(image_path, img_Slice)
-            image = bpy.data.images.load(image_path)
-            image.pack()
-
-
-        Array = sitk.GetArrayFromImage(Image3D_255)
-        slices = [np.flipud(Array[i, :, :]) for i in range(Array.shape[0])]
-
-        threads = [
-            threading.Thread(
-                target=Image3DToPNG,
-                args=[i, slices, PngDir, Preffix],
-                daemon=True,
-            )
-            for i in range(len(slices))
-        ]
-
-        for t in threads:
-            t.start()
-
-        for t in threads:
-            t.join()
-
-        # os.removedirs(PngDir)
-        shutil.rmtree(PngDir)
-        DcmInfo["CT_Loaded"] = True
-        # Set DcmInfo property :
-        DcmInfoDict = eval(INTACT_Props.DcmInfo)
-        DcmInfoDict[Preffix] = DcmInfo
-        INTACT_Props.DcmInfo = str(DcmInfoDict)
-        INTACT_Props.UserProjectDir = utils.RelPath(INTACT_Props.UserProjectDir)
-        bpy.ops.wm.save_mainfile()
-
-
-        #############################################################################################
-        finish = Tcounter()
-        message = f"Data Loaded in {finish-start} seconds"
-        print(message)
-        # q.put(message)
-        #############################################################################################
-        message = ["DICOM loaded successfully. "]
-        utils.ShowMessageBox(message=message, icon="COLORSET_03_VEC")
-
-        #Remove Blenders default objects.
-        if 'Camera' in bpy.data.objects:
-           bpy.data.objects.remove(bpy.data.objects["Camera"], do_unlink=True)
-        if 'Cube' in bpy.data.objects:
-           bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)
-        if 'Light' in bpy.data.objects:
-           bpy.data.objects.remove(bpy.data.objects["Light"], do_unlink=True)
-        if 'Collection' in bpy.data.collections:
-           bpy.data.collections.remove(bpy.data.collections["Collection"])
-        # Fetch the area
-        outliner = next(a for a in bpy.context.screen.areas if a.type == "OUTLINER")
-        # Fetch the space
-        outliner.spaces[0].show_restrict_column_render = True
-
-        return DcmInfo
-    ####### End Load_Tiff_function ##############
-
-
-#######################################################################################
-# INTACT CT Scan 3DImage File Load :
-
-
-def Load_3DImage_function(context, q):
-
-    INTACT_Props = context.scene.INTACT_Props
-    UserProjectDir = utils.AbsPath(INTACT_Props.UserProjectDir)
-    UserImageFile = utils.AbsPath(INTACT_Props.UserImageFile)
-
-    #######################################################################################
-
-    if not exists(UserProjectDir):
-
-        message = ["The Selected Project Directory Path is not valid ! "]
-        utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-        return {"CANCELLED"}
-
-    if not exists(UserImageFile):
-        message = [" The Selected Image File Path is not valid ! "]
-
-        utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-        return {"CANCELLED"}
-
+def is_image_supported(UserImageFile):
     reader = sitk.ImageFileReader()
     IO = reader.GetImageIOFromFileName(UserImageFile)
     FileExt = os.path.splitext(UserImageFile)[1]
@@ -679,7 +104,7 @@ def Load_3DImage_function(context, q):
             f"{FileExt} files are not Supported! for more info about supported files please refer to Addon wiki "
         ]
         utils.ShowMessageBox(message=message, icon="COLORSET_01_VEC")
-        return {"CANCELLED"}
+        return False
 
     Image3D = sitk.ReadImage(UserImageFile)
     Depth = Image3D.GetDepth()
@@ -691,12 +116,11 @@ def Load_3DImage_function(context, q):
             "please refer to Addon wiki",
         ]
         utils.ShowMessageBox(message=message, icon="COLORSET_01_VEC")
-        return {"CANCELLED"}
+        return False
 
-    ImgFileName = os.path.split(UserImageFile)[1]
-    INTACT_nrrd = HU_Image = False
-    if ImgFileName.startswith("IT") and ImgFileName.endswith("_Image3D255.nrrd"):
-        INTACT_nrrd = True
+    INTACT_nrrd = is_intact_nrrd(UserImageFile)
+    
+    HU_Image = False
     if Image3D.GetPixelIDTypeAsString() in [
         "32-bit signed integer",
         "16-bit signed integer",
@@ -708,257 +132,351 @@ def Load_3DImage_function(context, q):
             "Only Images with Hunsfield data or INTACT nrrd images are supported !"
         ]
         utils.ShowMessageBox(message=message, icon="COLORSET_01_VEC")
-        return {"CANCELLED"}
-    ###########################################################################################################
+        return False
+    
+    return True
 
+
+def save_blend_file(user_project_dir):
+
+    Split = split(user_project_dir)
+    ProjectName = Split[-1] or Split[-2]
+    BlendFile = f"{ProjectName}_CT-SCAN.blend"
+    Blendpath = join(user_project_dir, BlendFile)
+
+    if not exists(Blendpath) or bpy.context.blend_data.filepath == Blendpath:
+        bpy.ops.wm.save_as_mainfile(filepath=Blendpath)
     else:
-
-        start = Tcounter()
-        ####################################
-        # Get Preffix and save file :
-        DcmInfoDict = eval(INTACT_Props.DcmInfo)
-        Preffixs = list(DcmInfoDict.keys())
-
-        for i in range(1, 100):
-            Preffix = f"IT{i:03}"
-            if not Preffix in Preffixs:
-                break
-        ########################################################
-        Split = split(UserProjectDir)
-        ProjectName = Split[-1] or Split[-2]
-        BlendFile = f"{ProjectName}_CT-SCAN.blend"
-        Blendpath = join(UserProjectDir, BlendFile)
-
-        if not exists(Blendpath) or bpy.context.blend_data.filepath == Blendpath:
-            bpy.ops.wm.save_as_mainfile(filepath=Blendpath)
-        else:
-            bpy.ops.wm.save_mainfile()
-        Image3D = sitk.ReadImage(UserImageFile)
-
-        # Start Reading Dicom data :
-        ######################################################################################
-        # Get Dicom Info :
-        reader = sitk.ImageFileReader()
-        reader.SetFileName(UserImageFile)
-        reader.LoadPrivateTagsOn()
-        reader.ReadImageInformation()
-
-        Image3D = reader.Execute()
-
-        Sp = Spacing = Image3D.GetSpacing()
-        Sz = Size = Image3D.GetSize()
-        Dims = Dimensions = Image3D.GetDimension()
-        Origin = Image3D.GetOrigin()
-        Direction = Image3D.GetDirection()
-
-        #Set Wmin and Wmax
-        minmax = sitk.MinimumMaximumImageFilter()
-        minmax.Execute(Image3D)
-        Wmax = minmax.GetMaximum()
-        Wmin = minmax.GetMinimum()
-        INTACT_Props.Wmin = Wmin
-        INTACT_Props.Wmax = Wmax
-
-        # calculate Informations :
-        D = Direction
-        O = Origin
-        DirectionMatrix_4x4 = Matrix(
-            (
-                (D[0], D[1], D[2], 0.0),
-                (D[3], D[4], D[5], 0.0),
-                (D[6], D[7], D[8], 0.0),
-                (0.0, 0.0, 0.0, 1.0),
-            )
-        )
-
-        TransMatrix_4x4 = Matrix(
-            (
-                (1.0, 0.0, 0.0, O[0]),
-                (0.0, 1.0, 0.0, O[1]),
-                (0.0, 0.0, 1.0, O[2]),
-                (0.0, 0.0, 0.0, 1.0),
-            )
-        )
-
-        VtkTransform_4x4 = TransMatrix_4x4 @ DirectionMatrix_4x4
-        P0 = Image3D.TransformContinuousIndexToPhysicalPoint((0, 0, 0))
-        P_diagonal = Image3D.TransformContinuousIndexToPhysicalPoint(
-            (Sz[0] - 1, Sz[1] - 1, Sz[2] - 1)
-        )
-        VCenter = (Vector(P0) + Vector(P_diagonal)) * 0.5
-
-        C = VCenter
-
-        TransformMatrix = Matrix(
-            (
-                (D[0], D[1], D[2], C[0]),
-                (D[3], D[4], D[5], C[1]),
-                (D[6], D[7], D[8], C[2]),
-                (0.0, 0.0, 0.0, 1.0),
-            )
-        )
-
-        # Set DcmInfo :
-
-        DcmInfo = {
-            "UserProjectDir": utils.RelPath(UserProjectDir),
-            "Preffix": Preffix,
-            "RenderSz": Sz,
-            "RenderSp": Sp,
-            "PixelType": Image3D.GetPixelIDTypeAsString(),
-            "Wmin": Wmin,
-            "Wmax": Wmax,
-            "Size": Sz,
-            "Dims": Dims,
-            "Spacing": Sp,
-            "Origin": Origin,
-            "Direction": Direction,
-            "TransformMatrix": TransformMatrix,
-            "DirectionMatrix_4x4": DirectionMatrix_4x4,
-            "TransMatrix_4x4": TransMatrix_4x4,
-            "VtkTransform_4x4": VtkTransform_4x4,
-            "VolumeCenter": VCenter,
-        }
-        print(DcmInfo)
-        tags = {
-            "StudyDate": "0008|0020",
-            "PatientName": "0010|0010",
-            "PatientID": "0010|0020",
-            "BirthDate": "0010|0030",
-            "WinCenter": "0028|1050",
-            "WinWidth": "0028|1051",
-        }
-
-        for k, tag in tags.items():
-
-            if tag in reader.GetMetaDataKeys():
-                v = reader.GetMetaData(tag)
-
-            else:
-                v = ""
-
-            DcmInfo[k] = v
-            Image3D.SetMetaData(tag, v)
-
-        #######################################################################################
-        # Add directories :
-        SlicesDir = join(UserProjectDir, "Slices")
-        if not exists(SlicesDir):
-            os.makedirs(SlicesDir)
-        DcmInfo["SlicesDir"] = utils.RelPath(SlicesDir)
-
-        PngDir = join(UserProjectDir, "PNG")
-        if not exists(PngDir):
-            os.makedirs(PngDir)
-
-        Nrrd255Path = join(UserProjectDir, f"{Preffix}_Image3D255.nrrd")
-
-        DcmInfo["Nrrd255Path"] = utils.RelPath(Nrrd255Path)
-        ###Set info in Image3D metadata:
-        Image3D.SetSpacing(Sp)
-        Image3D.SetDirection(D)
-        Image3D.SetOrigin(O)
-        print(Wmin,Wmax)
-
-        if INTACT_nrrd:
-            Image3D_255 = Image3D
-            print('Not rescaled')
-
-        else:
-            #######################################################################################
-            # set IntensityWindowing  :
-            Image3D_255 = sitk.Cast(
-                sitk.IntensityWindowing(
-                    Image3D,
-                    windowMinimum=Wmin,
-                    windowMaximum=Wmax,
-                    outputMinimum=0.0,
-                    outputMaximum=255.0,
-                ),
-                sitk.sitkUInt8,
-            )
-
-        # Convert Dicom to nrrd file :
-        # sitk.WriteImage(Image3D, NrrdHuPath)
-        sitk.WriteImage(Image3D_255, Nrrd255Path)
-
-
-
-        #############################################################################################
-        # MultiThreading PNG Writer:
-        #########################################################################################
-        def Image3DToPNG(i, slices, PngDir, Preffix):
-            img_Slice = slices[i]
-            img_Name = f"{Preffix}_img{i:04}.png"
-            image_path = join(PngDir, img_Name)
-            cv2.imwrite(image_path, img_Slice)
-            image = bpy.data.images.load(image_path)
-            image.pack()
-            # print(f"{img_Name} was processed...")
-
-        #########################################################################################
-        # Get slices list :
-        MaxSp = max(Vector(Sp))
-        if MaxSp < 0.25:
-            SampleRatio = round(MaxSp / 0.25, 2)
-            Image3D_255 = utils.ResizeImage(sitkImage=Image3D_255, Ratio=SampleRatio)
-            DcmInfo["RenderSz"] = Image3D_255.GetSize()
-            DcmInfo["RenderSp"] = Image3D_255.GetSpacing()
-
-        Array = sitk.GetArrayFromImage(Image3D_255)
-        slices = [np.flipud(Array[i, :, :]) for i in range(Array.shape[0])]
-        # slices = [Image3D_255[:, :, i] for i in range(Image3D_255.GetDepth())]
-
-        threads = [
-            threading.Thread(
-                target=Image3DToPNG,
-                args=[i, slices, PngDir, Preffix],
-                daemon=True,
-            )
-            for i in range(len(slices))
-        ]
-
-        for t in threads:
-            t.start()
-
-        for t in threads:
-            t.join()
-
-        # os.removedirs(PngDir)
-        shutil.rmtree(PngDir)
-        DcmInfo["CT_Loaded"] = True
-
-        # Set DcmInfo property :
-        DcmInfoDict = eval(INTACT_Props.DcmInfo)
-        DcmInfoDict[Preffix] = DcmInfo
-        INTACT_Props.DcmInfo = str(DcmInfoDict)
-        INTACT_Props.UserProjectDir = utils.RelPath(INTACT_Props.UserProjectDir)
         bpy.ops.wm.save_mainfile()
 
-        #############################################################################################
-        finish = Tcounter()
-        print(f"Data Loaded in {finish-start} second(s)")
-        #############################################################################################
-        #Remove Blenders default objects.
-        if 'Camera' in bpy.data.objects:
-           bpy.data.objects.remove(bpy.data.objects["Camera"], do_unlink=True)
-        if 'Cube' in bpy.data.objects:
-           bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)
-        if 'Light' in bpy.data.objects:
-           bpy.data.objects.remove(bpy.data.objects["Light"], do_unlink=True)
-        if 'Collection' in bpy.data.collections:
-           bpy.data.collections.remove(bpy.data.collections["Collection"])
-        # Fetch the area
-        outliner = next(a for a in bpy.context.screen.areas if a.type == "OUTLINER")
-        # Fetch the space
-        outliner.spaces[0].show_restrict_column_render = True
 
-        return DcmInfo
+def read_dicom_image(user_dcm_dir):
+    # Start Reading Dicom data :
+    Series_reader = sitk.ImageSeriesReader()
+    MaxSerie, MaxCount = GetMaxSerie(user_dcm_dir)
+    DcmSerie = Series_reader.GetGDCMSeriesFileNames(user_dcm_dir, MaxSerie)
+
+    # Get StudyInfo :
+    reader = sitk.ImageFileReader()
+    reader.SetImageIO('GDCMImageIO')
+    reader.SetFileName(DcmSerie[0])
+    reader.LoadPrivateTagsOn()
+    reader.ReadImageInformation()
+
+    Image3D = sitk.ReadImage(DcmSerie, imageIO='GDCMImageIO')
+
+    # Get Dicom Info :
+    Spacing = Image3D.GetSpacing()
+    Size = Image3D.GetSize()
+    Origin = Image3D.GetOrigin()
+
+    return Image3D, Spacing, Size, Origin
 
 
-##########################################################################################
-######################### INTACT Volume Render : ########################################
-##########################################################################################
+def read_tiff_image(user_tiff_dir, resolution):
+    TiffSerie = sorted(os.listdir(user_tiff_dir))
+
+    # Get StudyInfo :
+    reader = sitk.ImageFileReader()
+    reader.SetImageIO('TIFFImageIO')
+    reader.SetFileName(TiffSerie[0])
+    reader.LoadPrivateTagsOn()
+    TiffSerie = [join(user_tiff_dir,s) for s in TiffSerie]
+
+    Image3D = sitk.ReadImage(TiffSerie, imageIO='TIFFImageIO')
+
+    # Get Info :
+    Spacing = (resolution, resolution, resolution)
+    Size = Image3D.GetSize()
+
+    Origin = (
+        -(Size[0]-1)/2*Spacing[0], 
+        (Size[1]-1)/2*Spacing[1], 
+        (Size[2]-1)/2*Spacing[2]
+        )
+    
+    Image3D = sitk.Cast(Image3D, sitk.sitkFloat32)
+    
+    return Image3D, Spacing, Size, Origin
+
+
+def read_nrrd_image(user_nrrd_path):
+    reader = sitk.ImageFileReader()
+    reader.SetFileName(user_nrrd_path)
+    reader.LoadPrivateTagsOn()
+    reader.ReadImageInformation()
+
+    Image3D = reader.Execute()
+
+    Spacing = Image3D.GetSpacing()
+    Size = Image3D.GetSize()
+    Origin = Image3D.GetOrigin()
+
+    return Image3D, Spacing, Size, Origin
+
+
+def get_min_max(Image3D):
+    minmax = sitk.MinimumMaximumImageFilter()
+    minmax.Execute(Image3D)
+    Wmax = minmax.GetMaximum()
+    Wmin = minmax.GetMinimum()
+
+    return Wmin, Wmax
+
+
+def get_matrices(Origin, Direction, VCenter):
+
+    DirectionMatrix_4x4 = Matrix(
+        (
+            (Direction[0], Direction[1], Direction[2], 0.0),
+            (Direction[3], Direction[4], Direction[5], 0.0),
+            (Direction[6], Direction[7], Direction[8], 0.0),
+            (0.0, 0.0, 0.0, 1.0),
+        )
+    )
+
+    TransMatrix_4x4 = Matrix(
+        (
+            (1.0, 0.0, 0.0, Origin[0]),
+            (0.0, 1.0, 0.0, Origin[1]),
+            (0.0, 0.0, 1.0, Origin[2]),
+            (0.0, 0.0, 0.0, 1.0),
+        )
+    )
+
+    VtkTransform_4x4 = TransMatrix_4x4 @ DirectionMatrix_4x4
+
+    TransformMatrix = Matrix(
+        (
+            (Direction[0], Direction[1], Direction[2], VCenter[0]),
+            (Direction[3], Direction[4], Direction[5], VCenter[1]),
+            (Direction[6], Direction[7], Direction[8], VCenter[2]),
+            (0.0, 0.0, 0.0, 1.0),
+        ))
+    
+    return TransformMatrix, DirectionMatrix_4x4, TransMatrix_4x4, VtkTransform_4x4
+
+
+def create_image_info(UserProjectDir, Image3D, Spacing, Size, 
+                    Origin, Direction, VCenter, INTACT_Props):
+
+    INTACT_Props.CT_ID = INTACT_Props.CT_ID + 1
+    Prefix = f"IT{INTACT_Props.CT_ID:03}"
+    
+    Wmin, Wmax = get_min_max(Image3D)
+
+    Direction = (1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0)
+    (TransformMatrix, 
+     DirectionMatrix_4x4, 
+     TransMatrix_4x4, 
+     VtkTransform_4x4) = get_matrices(Origin, Direction, VCenter)
+    
+    # Add directories :
+    SlicesDir = join(UserProjectDir, "Slices")
+    if not exists(SlicesDir):
+        os.makedirs(SlicesDir)
+
+    Nrrd255Path = join(UserProjectDir, f"{Prefix}_Image3D255.nrrd")
+
+    # Set ImageInfo :
+    ImageInfo = {
+        "UserProjectDir": utils.RelPath(UserProjectDir),
+        "Prefix": Prefix,
+        "RenderSz": Size,
+        "RenderSp": Spacing,
+        "PixelType": Image3D.GetPixelIDTypeAsString(),
+        "Wmin": Wmin,
+        "Wmax": Wmax,
+        "Size": Size,
+        "Dims": Image3D.GetDimension(),
+        "Spacing": Spacing,
+        "Origin": Origin,
+        "Direction": Direction,
+        "TransformMatrix": TransformMatrix,
+        "DirectionMatrix_4x4": DirectionMatrix_4x4,
+        "TransMatrix_4x4": TransMatrix_4x4,
+        "VtkTransform_4x4": VtkTransform_4x4,
+        "VolumeCenter": VCenter,
+        "SlicesDir": utils.RelPath(SlicesDir),
+        "Nrrd255Path": utils.RelPath(Nrrd255Path)
+    }
+
+    return ImageInfo
+
+def write_image(UserProjectDir, Image3D, ImageInfo, INTACT_Props, rescale=True):
+    # Set info in Image3D metadata:
+    Image3D.SetSpacing(ImageInfo.Spacing)
+    Image3D.SetDirection(ImageInfo.Direction)
+    Image3D.SetOrigin(ImageInfo.Origin)
+
+    if rescale:
+        # set IntensityWindowing  :
+        Image3D_255 = sitk.Cast(
+            sitk.IntensityWindowing(
+                Image3D,
+                windowMinimum=Wmin,
+                windowMaximum=Wmax,
+                outputMinimum=0.0,
+                outputMaximum=255.0,
+            ),
+            sitk.sitkUInt8,
+        )
+    else:
+        Image3D_255 = Image3D
+
+    Wmin, Wmax = get_min_max(Image3D_255)
+    INTACT_Props.Wmin = Wmin
+    INTACT_Props.Wmax = Wmax
+
+    # Convert Dicom to nrrd file :
+    sitk.WriteImage(Image3D_255, ImageInfo.Nrrd255Path)
+
+    MaxSp = max(Vector(ImageInfo.Spacing))
+    if MaxSp < 0.25:
+        SampleRatio = round(MaxSp / 0.25, 2)
+        Image3D_255 = utils.ResizeImage(sitkImage=Image3D_255, Ratio=SampleRatio)
+        ImageInfo["RenderSz"] = Image3D_255.GetSize()
+        ImageInfo["RenderSp"] = Image3D_255.GetSpacing()
+
+    PngDir = join(UserProjectDir, "PNG")
+    if not exists(PngDir):
+        os.makedirs(PngDir)
+
+    Array = sitk.GetArrayFromImage(Image3D_255)
+    slices = [np.flipud(Array[i, :, :]) for i in range(Array.shape[0])]
+
+    threads = [
+        threading.Thread(
+            target=Image3DToPNG,
+            args=[i, slices, PngDir, ImageInfo.Prefix],
+            daemon=True,
+        )
+        for i in range(len(slices))
+    ]
+
+    for t in threads:
+        t.start()
+
+    for t in threads:
+        t.join()
+
+    shutil.rmtree(PngDir)
+
+
+def Image3DToPNG(i, slices, PngDir, Prefix):
+    """MultiThreading PNG Writer"""
+    img_Slice = slices[i]
+    img_Name = f"{Prefix}_img{i:04}.png"
+    image_path = join(PngDir, img_Name)
+    cv2.imwrite(image_path, img_Slice)
+    image = bpy.data.images.load(image_path)
+    image.pack()
+    # print(f"{img_Name} was processed...")
+
+
+def set_image_info(ImageInfo, INTACT_Props):
+    # Set ImageInfo property :
+    ImageInfoDict = eval(INTACT_Props.ImageInfo)
+    ImageInfoDict[ImageInfo.Prefix] = ImageInfo
+    INTACT_Props.ImageInfo = str(ImageInfoDict)
+    INTACT_Props.UserProjectDir = utils.RelPath(INTACT_Props.UserProjectDir)
+    bpy.ops.wm.save_mainfile()
+
+
+def set_blender_properties():
+    """Remove blender's default objects and ensure render column is visible in
+    outliner"""
+
+    # Remove Blenders default objects.
+    if 'Camera' in bpy.data.objects:
+        bpy.data.objects.remove(bpy.data.objects["Camera"], do_unlink=True)
+    if 'Cube' in bpy.data.objects:
+        bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)
+    if 'Light' in bpy.data.objects:
+        bpy.data.objects.remove(bpy.data.objects["Light"], do_unlink=True)
+    if 'Collection' in bpy.data.collections:
+        bpy.data.collections.remove(bpy.data.collections["Collection"])
+    # Fetch the area
+    outliner = next(a for a in bpy.context.screen.areas if a.type == "OUTLINER")
+    # Fetch the space
+    outliner.spaces[0].show_restrict_column_render = True
+
+
+def calculate_vcenter(Image3D, Size):
+    P0 = Image3D.TransformContinuousIndexToPhysicalPoint((0, 0, 0))
+    P_diagonal = Image3D.TransformContinuousIndexToPhysicalPoint(
+        (Size[0] - 1, Size[1] - 1, Size[2] - 1)
+    )
+    VCenter = (Vector(P0) + Vector(P_diagonal)) * 0.5
+
+    return VCenter
+
+
+def load_image_function(context, q, imageType, imagePath):
+    startTime = Tcounter()
+
+    INTACT_Props = context.scene.INTACT_Props
+    UserProjectDir = utils.AbsPath(INTACT_Props.UserProjectDir)
+    UserImagePath = utils.AbsPath(imagePath)
+
+    if not all_files_exist(UserProjectDir, UserImagePath, imageType):
+        return {"CANCELLED"}
+    else:
+        save_blend_file()
+        rescale = True
+
+        if imageType == "DICOM":
+            (Image3D, 
+            Spacing, 
+            Size,
+            Origin) = read_dicom_image(UserImagePath, INTACT_Props)
+            
+            VCenter = calculate_vcenter(Image3D, Size)
+            Direction = (1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0)
+
+        elif imageType == "TIFF":
+            (Image3D, 
+            Spacing, 
+            Size,
+            Origin) = read_tiff_image(UserImagePath, INTACT_Props)
+            VCenter = (0.0,0.0,0.0)
+            Direction = (1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0)
+        
+        elif imageType == "NRRD" and is_image_supported(UserImagePath):
+            (Image3D, 
+            Spacing, 
+            Size,
+            Origin) = read_nrrd_image(UserImagePath, INTACT_Props)
+
+            VCenter = calculate_vcenter(Image3D, Size)
+            Direction = Image3D.GetDirection()
+            if is_intact_nrrd(UserImagePath):
+                rescale = False
+            
+        else:
+            return {"CANCELLED"}
+        
+        ImageInfo = create_image_info(UserProjectDir, Image3D, Spacing, Size, 
+                                  Origin, Direction, VCenter, INTACT_Props)
+        write_image(UserProjectDir, Image3D, ImageInfo, INTACT_Props, rescale)
+        ImageInfo["CT_Loaded"] = True
+
+        set_image_info(ImageInfo, INTACT_Props)
+
+        finishTime = Tcounter()
+        message = f"Data Loaded in {finishTime-startTime} seconds"
+        print(message)
+        # q.put(message)
+
+        if (imageType != "NRRD"):
+            message = [f"{imageType} loaded successfully. "]
+            utils.ShowMessageBox(message=message, icon="COLORSET_03_VEC")
+
+        set_blender_properties()
+
+        return ImageInfo
+
+
 class INTACT_OT_Volume_Render(bpy.types.Operator):
     """ Volume Render """
 
@@ -981,20 +499,21 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
 
         DataType = INTACT_Props.DataType
         if DataType == "TIFF Stack":
-            DcmInfo = Load_Tiff_function(context, self.q)
+            ImageInfo = load_image_function(context, self.q, "TIFF", 
+                                            INTACT_Props.UserDcmDir)
         if DataType == "DICOM Series":
-            DcmInfo = Load_Dicom_funtion(context, self.q)
+            ImageInfo = load_image_function(context, self.q, "DICOM", 
+                                            INTACT_Props.UserDcmDir)
         if DataType == "NRRD File":
-            DcmInfo = Load_3DImage_function(context, self.q)
+            ImageInfo = load_image_function(context, self.q, "NRRD", 
+                                            INTACT_Props.UserImageFile)
 
-        UserProjectDir = utils.AbsPath(INTACT_Props.UserProjectDir)
-        Preffix = DcmInfo["Preffix"]
         Wmin = INTACT_Props.Wmin
         Wmax = INTACT_Props.Wmax
         # PngDir = AbsPath(INTACT_Props.PngDir)
         print("\n##########################\n")
         print("Voxel Rendering START...")
-        utils.VolumeRender(DcmInfo, GpShader, ShadersBlendFile)
+        utils.VolumeRender(ImageInfo, GpShader, ShadersBlendFile)
         scn = bpy.context.scene
         scn.render.engine = "BLENDER_EEVEE"
         INTACT_Props.GroupNodeName = GpShader
@@ -1044,17 +563,8 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         UserOBjDir = utils.AbsPath(INTACT_Props.UserObjDir)
         print("\n##########################\n")
         print("Loading Surface scan...")
-        
-        
-        #Remove Blenders default objects.
-        if 'Camera' in bpy.data.objects:
-           bpy.data.objects.remove(bpy.data.objects["Camera"], do_unlink=True)
-        if 'Cube' in bpy.data.objects:
-           bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)
-        if 'Light' in bpy.data.objects:
-           bpy.data.objects.remove(bpy.data.objects["Light"], do_unlink=True)
-        if 'Collection' in bpy.data.collections:
-           bpy.data.collections.remove(bpy.data.collections["Collection"])
+
+        set_blender_properties()
            
         if 'Surface' not in bpy.data.collections:
             print('Make surface collection')
@@ -1069,15 +579,6 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
 
         bpy.data.collections['Surface'].objects.link(obj_object)
         bpy.context.scene.collection.objects.unlink(obj_object)
-
-
-
-
-
-        # Fetch the area
-        outliner = next(a for a in bpy.context.screen.areas if a.type == "OUTLINER")
-        # Fetch the space
-        outliner.spaces[0].show_restrict_column_render = True
 
         #INTACT_Props.Surface_Rendered = True
         bpy.context.scene.unit_settings.scale_length = 0.001
