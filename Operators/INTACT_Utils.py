@@ -1,19 +1,17 @@
 # Python imports :
-import os, sys, shutil, threading
-from os.path import join, dirname, exists, abspath
+import os, sys, shutil
+from os.path import join, exists, abspath
 
-from math import degrees, radians, pi
+from math import pi
 import numpy as np
 from time import sleep, perf_counter as Tcounter
-from queue import Queue
 from importlib import reload
 from bpy.app.handlers import persistent
 
 # Blender Imports :
 import bpy
 import bmesh
-import mathutils
-from mathutils import Matrix, Vector, Euler, kdtree, geometry as Geo
+from mathutils import Matrix, Vector, Euler, geometry as Geo
 
 import SimpleITK as sitk
 import cv2

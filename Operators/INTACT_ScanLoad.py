@@ -1,15 +1,12 @@
-import stat
-from os.path import split
+import bpy
+import stat, os, threading, shutil
+import numpy as np
+from time import perf_counter as Tcounter
+from os.path import split, join, exists, abspath, dirname
+from queue import Queue
+from mathutils import Matrix, Vector
 
 # Blender Imports :
-from bpy.props import (
-    StringProperty,
-    IntProperty,
-    FloatProperty,
-    EnumProperty,
-    FloatVectorProperty,
-    BoolProperty,
-)
 import SimpleITK as sitk
 import cv2
 
@@ -17,7 +14,7 @@ from vtkmodules.vtkCommonCore import vtkCommand
 
 # Global Variables :
 
-from .INTACT_Utils import *
+from . import INTACT_Utils as utils
 
 ProgEvent = vtkCommand.ProgressEvent
 
@@ -27,11 +24,11 @@ ProgEvent = vtkCommand.ProgressEvent
 def rmtree(top):
     for root, dirs, files in os.walk(top, topdown=False):
         for name in files:
-            filename = os.path.join(root, name)
+            filename = join(root, name)
             os.chmod(filename, stat.S_IWUSR)
             os.remove(filename)
         for name in dirs:
-            os.rmdir(os.path.join(root, name))
+            os.rmdir(join(root, name))
     os.rmdir(top)
 
 def GetMaxSerie(UserDcmDir):
@@ -44,7 +41,7 @@ def GetMaxSerie(UserDcmDir):
 
         message = ["No valid DICOM Serie found in DICOM Folder ! "]
         print(message)
-        ShowMessageBox(message=message, icon="COLORSET_01_VEC")
+        utils.ShowMessageBox(message=message, icon="COLORSET_01_VEC")
         return {"CANCELLED"}
 
     def GetSerieCount(sID):
@@ -76,26 +73,26 @@ def Load_Dicom_funtion(context, q):
     start = Tcounter()
     ################################################################################################
     INTACT_Props = context.scene.INTACT_Props
-    UserProjectDir = AbsPath(INTACT_Props.UserProjectDir)
-    UserDcmDir = AbsPath(INTACT_Props.UserDcmDir)
+    UserProjectDir = utils.AbsPath(INTACT_Props.UserProjectDir)
+    UserDcmDir = utils.AbsPath(INTACT_Props.UserDcmDir)
 
     ################################################################################################
 
     if not exists(UserProjectDir):
 
         message = ["The Selected Project Directory Path is not valid ! "]
-        ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+        utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
         return {"CANCELLED"}
 
     elif not exists(UserDcmDir):
 
         message = [" The Selected Dicom Directory Path is not valid ! "]
-        ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+        utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
         return {"CANCELLED"}
 
     elif not os.listdir(UserDcmDir):
         message = ["No valid DICOM Serie found in DICOM Folder ! "]
-        ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+        utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
         return {"CANCELLED"}
 
     else:
@@ -200,7 +197,7 @@ def Load_Dicom_funtion(context, q):
         # Set DcmInfo :
 
         DcmInfo = {
-            "UserProjectDir": RelPath(UserProjectDir),
+            "UserProjectDir": utils.RelPath(UserProjectDir),
             "Preffix": Preffix,
             "RenderSz": Sz,
             "RenderSp": Sp,
@@ -250,7 +247,7 @@ def Load_Dicom_funtion(context, q):
         SlicesDir = join(UserProjectDir, "Slices")
         if not exists(SlicesDir):
             os.makedirs(SlicesDir)
-        DcmInfo["SlicesDir"] = RelPath(SlicesDir)
+        DcmInfo["SlicesDir"] = utils.RelPath(SlicesDir)
 
         PngDir = join(UserProjectDir, "PNG")
         if not exists(PngDir):
@@ -258,7 +255,7 @@ def Load_Dicom_funtion(context, q):
 
         Nrrd255Path = join(UserProjectDir, f"{Preffix}_Image3D255.nrrd")
 
-        DcmInfo["Nrrd255Path"] = RelPath(Nrrd255Path)
+        DcmInfo["Nrrd255Path"] = utils.RelPath(Nrrd255Path)
 
         ###Set info in Image3D metadata:
         Image3D.SetSpacing(Sp)
@@ -312,10 +309,10 @@ def Load_Dicom_funtion(context, q):
         MaxSp = max(Vector(Sp))
         if MaxSp < 0.25:
             SampleRatio = round(MaxSp / 0.25, 2)
-            Image3D_255 = ResizeImage(sitkImage=Image3D_255, Ratio=SampleRatio)
+            Image3D_255 = utils.ResizeImage(sitkImage=Image3D_255, Ratio=SampleRatio)
             DcmInfo["RenderSz"] = Image3D_255.GetSize()
             DcmInfo["RenderSp"] = Image3D_255.GetSpacing()
-            print(sample_ratio)
+            print(SampleRatio)
 
         Array = sitk.GetArrayFromImage(Image3D_255)
         slices = [np.flipud(Array[i, :, :]) for i in range(Array.shape[0])]
@@ -343,7 +340,7 @@ def Load_Dicom_funtion(context, q):
         print(INTACT_Props.DcmInfo)
         DcmInfoDict[Preffix] = DcmInfo
         INTACT_Props.DcmInfo = str(DcmInfoDict)
-        INTACT_Props.UserProjectDir = RelPath(INTACT_Props.UserProjectDir)
+        INTACT_Props.UserProjectDir = utils.RelPath(INTACT_Props.UserProjectDir)
         bpy.ops.wm.save_mainfile()
 
 
@@ -354,7 +351,7 @@ def Load_Dicom_funtion(context, q):
         # q.put(message)
         #############################################################################################
         message = ["DICOM loaded successfully. "]
-        ShowMessageBox(message=message, icon="COLORSET_03_VEC")
+        utils.ShowMessageBox(message=message, icon="COLORSET_03_VEC")
 
         #Remove Blenders default objects.
         if 'Camera' in bpy.data.objects:
@@ -379,26 +376,26 @@ def Load_Tiff_function(context, q):
     start = Tcounter()
     ################################################################################################
     INTACT_Props = context.scene.INTACT_Props
-    UserProjectDir = AbsPath(INTACT_Props.UserProjectDir)
-    UserTiffDir = AbsPath(INTACT_Props.UserTiffDir)
+    UserProjectDir = utils.AbsPath(INTACT_Props.UserProjectDir)
+    UserTiffDir = utils.AbsPath(INTACT_Props.UserTiffDir)
 
     ################################################################################################
 
     if not exists(UserProjectDir):
 
         message = ["The Selected Project Directory Path is not valid ! "]
-        ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+        utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
         return {"CANCELLED"}
 
     elif not exists(UserTiffDir):
 
         message = [" The Selected Tiff Directory Path is not valid ! "]
-        ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+        utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
         return {"CANCELLED"}
 
     elif not os.listdir(UserTiffDir):
         message = ["No valid TIFF Stack found in DICOM Folder ! "]
-        ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+        utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
         return {"CANCELLED"}
 
     else:
@@ -439,7 +436,7 @@ def Load_Tiff_function(context, q):
         reader.SetImageIO('TIFFImageIO')
         reader.SetFileName(TiffSerie[0])
         reader.LoadPrivateTagsOn()
-        TiffSerie = [os.path.join(UserTiffDir,s) for s in TiffSerie]
+        TiffSerie = [join(UserTiffDir,s) for s in TiffSerie]
 
         Image3D = sitk.ReadImage(TiffSerie, imageIO='TIFFImageIO')
 
@@ -507,7 +504,7 @@ def Load_Tiff_function(context, q):
 
 
         DcmInfo = {
-            "UserProjectDir": RelPath(UserProjectDir),
+            "UserProjectDir": utils.RelPath(UserProjectDir),
             "Preffix": Preffix,
             "RenderSz": Sz,
             "RenderSp": Sp,
@@ -537,7 +534,7 @@ def Load_Tiff_function(context, q):
         SlicesDir = join(UserProjectDir, "Slices")
         if not exists(SlicesDir):
             os.makedirs(SlicesDir)
-        DcmInfo["SlicesDir"] = RelPath(SlicesDir)
+        DcmInfo["SlicesDir"] = utils.RelPath(SlicesDir)
 
         PngDir = join(UserProjectDir, "PNG")
         if not exists(PngDir):
@@ -545,7 +542,7 @@ def Load_Tiff_function(context, q):
 
         Nrrd255Path = join(UserProjectDir, f"{Preffix}_Image3D255.nrrd")
 
-        DcmInfo["Nrrd255Path"] = RelPath(Nrrd255Path)
+        DcmInfo["Nrrd255Path"] = utils.RelPath(Nrrd255Path)
 
         ###Set info in Image3D metadata:
         Image3D.SetSpacing(Sp)
@@ -618,7 +615,7 @@ def Load_Tiff_function(context, q):
         DcmInfoDict = eval(INTACT_Props.DcmInfo)
         DcmInfoDict[Preffix] = DcmInfo
         INTACT_Props.DcmInfo = str(DcmInfoDict)
-        INTACT_Props.UserProjectDir = RelPath(INTACT_Props.UserProjectDir)
+        INTACT_Props.UserProjectDir = utils.RelPath(INTACT_Props.UserProjectDir)
         bpy.ops.wm.save_mainfile()
 
 
@@ -629,7 +626,7 @@ def Load_Tiff_function(context, q):
         # q.put(message)
         #############################################################################################
         message = ["DICOM loaded successfully. "]
-        ShowMessageBox(message=message, icon="COLORSET_03_VEC")
+        utils.ShowMessageBox(message=message, icon="COLORSET_03_VEC")
 
         #Remove Blenders default objects.
         if 'Camera' in bpy.data.objects:
@@ -656,21 +653,21 @@ def Load_Tiff_function(context, q):
 def Load_3DImage_function(context, q):
 
     INTACT_Props = context.scene.INTACT_Props
-    UserProjectDir = AbsPath(INTACT_Props.UserProjectDir)
-    UserImageFile = AbsPath(INTACT_Props.UserImageFile)
+    UserProjectDir = utils.AbsPath(INTACT_Props.UserProjectDir)
+    UserImageFile = utils.AbsPath(INTACT_Props.UserImageFile)
 
     #######################################################################################
 
     if not exists(UserProjectDir):
 
         message = ["The Selected Project Directory Path is not valid ! "]
-        ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+        utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
         return {"CANCELLED"}
 
     if not exists(UserImageFile):
         message = [" The Selected Image File Path is not valid ! "]
 
-        ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+        utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
         return {"CANCELLED"}
 
     reader = sitk.ImageFileReader()
@@ -681,7 +678,7 @@ def Load_3DImage_function(context, q):
         message = [
             f"{FileExt} files are not Supported! for more info about supported files please refer to Addon wiki "
         ]
-        ShowMessageBox(message=message, icon="COLORSET_01_VEC")
+        utils.ShowMessageBox(message=message, icon="COLORSET_01_VEC")
         return {"CANCELLED"}
 
     Image3D = sitk.ReadImage(UserImageFile)
@@ -693,7 +690,7 @@ def Load_3DImage_function(context, q):
             "for more info about supported files,",
             "please refer to Addon wiki",
         ]
-        ShowMessageBox(message=message, icon="COLORSET_01_VEC")
+        utils.ShowMessageBox(message=message, icon="COLORSET_01_VEC")
         return {"CANCELLED"}
 
     ImgFileName = os.path.split(UserImageFile)[1]
@@ -710,7 +707,7 @@ def Load_3DImage_function(context, q):
         message = [
             "Only Images with Hunsfield data or INTACT nrrd images are supported !"
         ]
-        ShowMessageBox(message=message, icon="COLORSET_01_VEC")
+        utils.ShowMessageBox(message=message, icon="COLORSET_01_VEC")
         return {"CANCELLED"}
     ###########################################################################################################
 
@@ -804,7 +801,7 @@ def Load_3DImage_function(context, q):
         # Set DcmInfo :
 
         DcmInfo = {
-            "UserProjectDir": RelPath(UserProjectDir),
+            "UserProjectDir": utils.RelPath(UserProjectDir),
             "Preffix": Preffix,
             "RenderSz": Sz,
             "RenderSp": Sp,
@@ -848,7 +845,7 @@ def Load_3DImage_function(context, q):
         SlicesDir = join(UserProjectDir, "Slices")
         if not exists(SlicesDir):
             os.makedirs(SlicesDir)
-        DcmInfo["SlicesDir"] = RelPath(SlicesDir)
+        DcmInfo["SlicesDir"] = utils.RelPath(SlicesDir)
 
         PngDir = join(UserProjectDir, "PNG")
         if not exists(PngDir):
@@ -856,7 +853,7 @@ def Load_3DImage_function(context, q):
 
         Nrrd255Path = join(UserProjectDir, f"{Preffix}_Image3D255.nrrd")
 
-        DcmInfo["Nrrd255Path"] = RelPath(Nrrd255Path)
+        DcmInfo["Nrrd255Path"] = utils.RelPath(Nrrd255Path)
         ###Set info in Image3D metadata:
         Image3D.SetSpacing(Sp)
         Image3D.SetDirection(D)
@@ -904,7 +901,7 @@ def Load_3DImage_function(context, q):
         MaxSp = max(Vector(Sp))
         if MaxSp < 0.25:
             SampleRatio = round(MaxSp / 0.25, 2)
-            Image3D_255 = ResizeImage(sitkImage=Image3D_255, Ratio=SampleRatio)
+            Image3D_255 = utils.ResizeImage(sitkImage=Image3D_255, Ratio=SampleRatio)
             DcmInfo["RenderSz"] = Image3D_255.GetSize()
             DcmInfo["RenderSp"] = Image3D_255.GetSpacing()
 
@@ -935,7 +932,7 @@ def Load_3DImage_function(context, q):
         DcmInfoDict = eval(INTACT_Props.DcmInfo)
         DcmInfoDict[Preffix] = DcmInfo
         INTACT_Props.DcmInfo = str(DcmInfoDict)
-        INTACT_Props.UserProjectDir = RelPath(INTACT_Props.UserProjectDir)
+        INTACT_Props.UserProjectDir = utils.RelPath(INTACT_Props.UserProjectDir)
         bpy.ops.wm.save_mainfile()
 
         #############################################################################################
@@ -990,14 +987,14 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
         if DataType == "NRRD File":
             DcmInfo = Load_3DImage_function(context, self.q)
 
-        UserProjectDir = AbsPath(INTACT_Props.UserProjectDir)
+        UserProjectDir = utils.AbsPath(INTACT_Props.UserProjectDir)
         Preffix = DcmInfo["Preffix"]
         Wmin = INTACT_Props.Wmin
         Wmax = INTACT_Props.Wmax
         # PngDir = AbsPath(INTACT_Props.PngDir)
         print("\n##########################\n")
         print("Voxel Rendering START...")
-        VolumeRender(DcmInfo, GpShader, ShadersBlendFile)
+        utils.VolumeRender(DcmInfo, GpShader, ShadersBlendFile)
         scn = bpy.context.scene
         scn.render.engine = "BLENDER_EEVEE"
         INTACT_Props.GroupNodeName = GpShader
@@ -1044,7 +1041,7 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         INTACT_Props = context.scene.INTACT_Props
 
         #UserProjectDir = AbsPath(INTACT_Props.UserProjectDir)
-        UserOBjDir = AbsPath(INTACT_Props.UserObjDir)
+        UserOBjDir = utils.AbsPath(INTACT_Props.UserObjDir)
         print("\n##########################\n")
         print("Loading Surface scan...")
         
@@ -1127,9 +1124,9 @@ def register():
             bpy.app.handlers.depsgraph_update_post.remove(h)
 
     handlers_To_Add = [
-        AxialSliceUpdate,
-        CoronalSliceUpdate,
-        SagitalSliceUpdate,
+        utils.AxialSliceUpdate,
+        utils.CoronalSliceUpdate,
+        utils.SagitalSliceUpdate,
     ]
     for h in handlers_To_Add:
         post_handlers.append(h)
