@@ -181,7 +181,7 @@ def read_tiff_image(user_tiff_dir, resolution):
     reader.SetImageIO('TIFFImageIO')
     reader.SetFileName(TiffSerie[0])
     reader.LoadPrivateTagsOn()
-    TiffSerie = [join(user_tiff_dir,s) for s in TiffSerie]
+    TiffSerie = [join(user_tiff_dir, s) for s in TiffSerie]
 
     Image3D = sitk.ReadImage(TiffSerie, imageIO='TIFFImageIO')
 
@@ -222,6 +222,11 @@ def get_min_max(Image3D):
     Wmin = minmax.GetMinimum()
 
     return Wmin, Wmax
+
+
+def flatten_matrix(matrix):
+    dim = len(matrix)
+    return [matrix[j][i] for i in range(dim) for j in range(dim)]
 
 
 def get_matrices(Origin, Direction, VCenter):
@@ -278,30 +283,33 @@ def create_image_info(UserProjectDir, Image3D, Spacing, Size,
 
     Nrrd255Path = join(UserProjectDir, f"{Prefix}_Image3D255.nrrd")
 
-    # Set ImageInfo :
-    ImageInfo = {
-        "UserProjectDir": utils.RelPath(UserProjectDir),
-        "Prefix": Prefix,
-        "RenderSz": Size,
-        "RenderSp": Spacing,
-        "PixelType": Image3D.GetPixelIDTypeAsString(),
-        "Wmin": Wmin,
-        "Wmax": Wmax,
-        "Size": Size,
-        "Dims": Image3D.GetDimension(),
-        "Spacing": Spacing,
-        "Origin": Origin,
-        "Direction": Direction,
-        "TransformMatrix": TransformMatrix,
-        "DirectionMatrix_4x4": DirectionMatrix_4x4,
-        "TransMatrix_4x4": TransMatrix_4x4,
-        "VtkTransform_4x4": VtkTransform_4x4,
-        "VolumeCenter": VCenter,
-        "SlicesDir": utils.RelPath(SlicesDir),
-        "Nrrd255Path": utils.RelPath(Nrrd255Path)
-    }
+    image = INTACT_Props.Images.add()
+    image.name = Prefix
+    image.UserProjectDir = utils.RelPath(UserProjectDir)
+    image.Prefix = Prefix
+    image.RenderSz = Size
+    image.RenderSp = Spacing
+    image.PixelType = Image3D.GetPixelIDTypeAsString()
+    image.Wmin = Wmin
+    image.Wmax = Wmax
+    image.Size = Size
+    image.Dims = Image3D.GetDimension()
+    image.Spacing = Spacing
+    image.Origin = Origin
+    image.Direction = Direction
+    image.TransformMatrix = flatten_matrix(TransformMatrix)
+    image.DirectionMatrix_4x4 = flatten_matrix(DirectionMatrix_4x4)
+    image.TransMatrix_4x4 = flatten_matrix(TransMatrix_4x4)
+    image.VtkTransform_4x4 = flatten_matrix(VtkTransform_4x4)
+    image.VolumeCenter = VCenter
+    image.SlicesDir = utils.RelPath(SlicesDir)
+    image.Nrrd255Path = utils.RelPath(Nrrd255Path)
 
-    return ImageInfo
+    INTACT_Props.UserProjectDir = utils.RelPath(INTACT_Props.UserProjectDir)
+    bpy.ops.wm.save_mainfile()
+
+    return image
+
 
 def write_image(UserProjectDir, Image3D, ImageInfo, INTACT_Props, rescale=True):
     # Set info in Image3D metadata:
@@ -314,8 +322,8 @@ def write_image(UserProjectDir, Image3D, ImageInfo, INTACT_Props, rescale=True):
         Image3D_255 = sitk.Cast(
             sitk.IntensityWindowing(
                 Image3D,
-                windowMinimum=Wmin,
-                windowMaximum=Wmax,
+                windowMinimum=ImageInfo.Wmin,
+                windowMaximum=ImageInfo.Wmax,
                 outputMinimum=0.0,
                 outputMaximum=255.0,
             ),
@@ -329,14 +337,14 @@ def write_image(UserProjectDir, Image3D, ImageInfo, INTACT_Props, rescale=True):
     INTACT_Props.Wmax = Wmax
 
     # Convert Dicom to nrrd file :
-    sitk.WriteImage(Image3D_255, ImageInfo.Nrrd255Path)
+    sitk.WriteImage(Image3D_255, utils.AbsPath(ImageInfo.Nrrd255Path))
 
     MaxSp = max(Vector(ImageInfo.Spacing))
     if MaxSp < 0.25:
         SampleRatio = round(MaxSp / 0.25, 2)
         Image3D_255 = utils.ResizeImage(sitkImage=Image3D_255, Ratio=SampleRatio)
-        ImageInfo["RenderSz"] = Image3D_255.GetSize()
-        ImageInfo["RenderSp"] = Image3D_255.GetSpacing()
+        ImageInfo.RenderSz = Image3D_255.GetSize()
+        ImageInfo.RenderSp = Image3D_255.GetSpacing()
 
     PngDir = join(UserProjectDir, "PNG")
     if not exists(PngDir):
@@ -372,15 +380,6 @@ def Image3DToPNG(i, slices, PngDir, Prefix):
     image = bpy.data.images.load(image_path)
     image.pack()
     # print(f"{img_Name} was processed...")
-
-
-def set_image_info(ImageInfo, INTACT_Props):
-    # Set ImageInfo property :
-    ImageInfoDict = eval(INTACT_Props.ImageInfo)
-    ImageInfoDict[ImageInfo.Prefix] = ImageInfo
-    INTACT_Props.ImageInfo = str(ImageInfoDict)
-    INTACT_Props.UserProjectDir = utils.RelPath(INTACT_Props.UserProjectDir)
-    bpy.ops.wm.save_mainfile()
 
 
 def set_blender_properties():
@@ -422,14 +421,14 @@ def load_image_function(context, q, imageType, imagePath):
     if not all_files_exist(UserProjectDir, UserImagePath, imageType):
         return {"CANCELLED"}
     else:
-        save_blend_file()
+        save_blend_file(UserProjectDir)
         rescale = True
 
         if imageType == "DICOM":
             (Image3D, 
             Spacing, 
             Size,
-            Origin) = read_dicom_image(UserImagePath, INTACT_Props)
+            Origin) = read_dicom_image(UserImagePath)
             
             VCenter = calculate_vcenter(Image3D, Size)
             Direction = (1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0)
@@ -438,15 +437,15 @@ def load_image_function(context, q, imageType, imagePath):
             (Image3D, 
             Spacing, 
             Size,
-            Origin) = read_tiff_image(UserImagePath, INTACT_Props)
-            VCenter = (0.0,0.0,0.0)
+            Origin) = read_tiff_image(UserImagePath, INTACT_Props.Resolution)
+            VCenter = (0.0, 0.0, 0.0)
             Direction = (1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0)
         
         elif imageType == "NRRD" and is_image_supported(UserImagePath):
             (Image3D, 
             Spacing, 
             Size,
-            Origin) = read_nrrd_image(UserImagePath, INTACT_Props)
+            Origin) = read_nrrd_image(UserImagePath)
 
             VCenter = calculate_vcenter(Image3D, Size)
             Direction = Image3D.GetDirection()
@@ -459,9 +458,7 @@ def load_image_function(context, q, imageType, imagePath):
         ImageInfo = create_image_info(UserProjectDir, Image3D, Spacing, Size, 
                                   Origin, Direction, VCenter, INTACT_Props)
         write_image(UserProjectDir, Image3D, ImageInfo, INTACT_Props, rescale)
-        ImageInfo["CT_Loaded"] = True
-
-        set_image_info(ImageInfo, INTACT_Props)
+        ImageInfo.CT_Loaded = True
 
         finishTime = Tcounter()
         message = f"Data Loaded in {finishTime-startTime} seconds"
@@ -500,7 +497,7 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
         DataType = INTACT_Props.DataType
         if DataType == "TIFF Stack":
             ImageInfo = load_image_function(context, self.q, "TIFF", 
-                                            INTACT_Props.UserDcmDir)
+                                            INTACT_Props.UserTiffDir)
         if DataType == "DICOM Series":
             ImageInfo = load_image_function(context, self.q, "DICOM", 
                                             INTACT_Props.UserDcmDir)
@@ -537,12 +534,12 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
             if obj.name.startswith("IT") and obj.name.endswith("_CTVolume"):
                 INTACT_Props.CT_Vol = obj
 
-
         Finish = Tcounter()
 
         print(f"Finished (Time : {Finish-Start}")
 
         return {"FINISHED"}
+
 
 class INTACT_OT_Surface_Render(bpy.types.Operator):
     """ Surface scan Render """
@@ -559,7 +556,6 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
 
         INTACT_Props = context.scene.INTACT_Props
 
-        #UserProjectDir = AbsPath(INTACT_Props.UserProjectDir)
         UserOBjDir = utils.AbsPath(INTACT_Props.UserObjDir)
         print("\n##########################\n")
         print("Loading Surface scan...")

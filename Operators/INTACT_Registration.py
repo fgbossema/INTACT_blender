@@ -271,9 +271,9 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
         INTACT_Props = bpy.context.scene.INTACT_Props
         UserProjectDir = AbsPath(INTACT_Props.UserProjectDir)
         ImageInfo = self.ImageInfo
-        Origin = ImageInfo["Origin"]
-        VtkTransform_4x4 = ImageInfo["VtkTransform_4x4"]
-        TransformMatrix = ImageInfo["TransformMatrix"]
+        Origin = ImageInfo.Origin
+        VtkTransform_4x4 = ImageInfo.VtkTransform_4x4
+        TransformMatrix = ImageInfo.TransformMatrix
         VtkMatrix_4x4 = (
             self.Vol.matrix_world @ TransformMatrix.inverted() @ VtkTransform_4x4
         )
@@ -288,7 +288,7 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
         SegmentStlPath = join(UserProjectDir, f"{Segment}_SEGMENTATION.stl")
 
         # Convert Hu treshold value to 0-255 UINT8 :
-        #Treshold255 = HuTo255(Hu=SegmentTreshold, Wmin=ImageInfo["Wmin"], Wmax=ImageInfo["Wmax"])
+        #Treshold255 = HuTo255(Hu=SegmentTreshold, Wmin=ImageInfo.Wmin, Wmax=ImageInfo.Wmax)
 
         Treshold255 = SegmentThreshold
         if Treshold255 == 0:
@@ -398,9 +398,8 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
 
                     self.Vol = Active_Obj
                     self.Prefix = self.Vol.name[:5]
-                    ImageInfoDict = eval(INTACT_Props.ImageInfo)
-                    self.ImageInfo = ImageInfoDict[self.Prefix]
-                    self.Nrrd255Path = AbsPath(self.ImageInfo["Nrrd255Path"])
+                    self.ImageInfo = INTACT_Props.images[self.Prefix]
+                    self.Nrrd255Path = AbsPath(self.ImageInfo.Nrrd255Path)
                     self.q = Queue()
                     self.Exported = Queue()
 
@@ -425,7 +424,7 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
                         print(Imin, Imax)
 
 
-                        Sp = self.ImageInfo["Spacing"]
+                        Sp = self.ImageInfo.Spacing
                         print('Resolution', Sp)
                         MaxSp = max(Vector(Sp))
                         if MaxSp < 0.3:
@@ -512,9 +511,8 @@ class INTACT_OT_ResetCtVolumePosition(bpy.types.Operator):
         INTACT_Props = bpy.context.scene.INTACT_Props
         ct_vol = INTACT_Props.CT_Vol
         Prefix = ct_vol.name[:5]
-        ImageInfoDict = eval(INTACT_Props.ImageInfo)
-        ImageInfo = ImageInfoDict[Prefix]
-        TransformMatrix = ImageInfo["TransformMatrix"]
+        ImageInfo = INTACT_Props.images[Prefix]
+        TransformMatrix = ImageInfo.TransformMatrix
         ct_vol.matrix_world = TransformMatrix
 
         return {"FINISHED"}
@@ -532,15 +530,15 @@ class INTACT_OT_CTVolumeOrientation(bpy.types.Operator):
         ct_vol = INTACT_Props.CT_Vol
         Active_Obj = ct_vol
         Prefix = Active_Obj.name[:5]
-        ImageInfo = eval(INTACT_Props.ImageInfo)
-        if not "Frankfort" in ImageInfo[Prefix].keys():
+        ImageInfo = INTACT_Props.images[Prefix]
+        if not "Frankfort" in ImageInfo.keys():
             message = ["CTVOLUME Orientation : ",
                         "Please Add Reference Planes before CTVOLUME Orientation ! ",]
             ShowMessageBox(message=message, icon="COLORSET_02_VEC")
             return {"CANCELLED"}
         else:
             Frankfort_Plane = bpy.data.objects.get(
-                  ImageInfo[Prefix]["Frankfort"])
+                  ImageInfo.Frankfort)
 
             if not Frankfort_Plane:
                  message = [

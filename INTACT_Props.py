@@ -3,7 +3,6 @@ import os
 from .Operators import INTACT_Visualisation
 from .Operators import INTACT_ImagesOutput
 from .Operators import INTACT_Utils
-from mathutils import Matrix, Vector, Euler, kdtree
 
 from bpy.props import (
     StringProperty,
@@ -109,6 +108,155 @@ def make_path_absolute(key):
         props[key] = sane_path(props[key])
 
 
+class ImageInfo(bpy.types.PropertyGroup):
+    """Group of properties representing metadata of a loaded image"""
+
+    name: bpy.props.StringProperty(
+        name="name", 
+        description="Name used to access this image - equal to the Prefix", 
+        default=""
+    )
+
+    UserProjectDir: bpy.props.StringProperty(
+        name="User project directory", 
+        description="User project directory", 
+        default=""
+    )
+
+    Prefix: bpy.props.StringProperty(
+        name="Prefix",
+        description="Filename prefix",
+        default=""
+    )
+
+    RenderSz: bpy.props.IntVectorProperty(
+        name="Render Size",
+        description="Render Size",
+        default=(0, 0, 0),
+        min = 0,
+        size=3
+    )
+
+    RenderSp: bpy.props.FloatVectorProperty(
+        name="Render Spacing",
+        description="Render Spacing",
+        default=(1.0, 1.0, 1.0),
+        min = 0.0,
+        size=3
+    )
+
+    PixelType: bpy.props.StringProperty(
+        name="Pixel type",
+        description="Pixel type",
+        default=""
+    )
+
+    Wmin: bpy.props.FloatProperty(
+        name="W min",
+        description="W min",
+        default=0.0
+    )
+
+    Wmax: bpy.props.FloatProperty(
+        name="W max",
+        description="W max",
+        default=0.0
+    )
+
+    Size: bpy.props.IntVectorProperty(
+        name="Size",
+        description="Size",
+        default=(0, 0, 0),
+        min = 0,
+        size=3
+    )
+
+    Dims: bpy.props.IntProperty(
+        name="Number of dimensions",
+        description="Number of dimensions",
+        default=3
+    )
+
+    Spacing: bpy.props.FloatVectorProperty(
+        name="Spacing",
+        description="Image Spacing (i.e. resolution)",
+        default=(1.0, 1.0, 1.0),
+        min = 0.0,
+        size=3
+    )
+
+    Origin: bpy.props.FloatVectorProperty(
+        name="Origin",
+        description="Image origin",
+        default=(0.0, 0.0, 0.0),
+        size=3
+    )
+
+    Direction: bpy.props.FloatVectorProperty(
+        name="Direction",
+        description="Image direction",
+        default=(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+        size=9
+    )
+
+    TransformMatrix: bpy.props.FloatVectorProperty(
+        name="Transform Matrix",
+        description="Transform Matrix",
+        default=(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+        size=16,
+        subtype="MATRIX"
+    )
+
+    DirectionMatrix_4x4: bpy.props.FloatVectorProperty(
+        name="Direction Matrix 4x4",
+        description="Direction Matrix 4x4",
+        default=(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+        size=16,
+        subtype="MATRIX"
+    )
+
+    TransMatrix_4x4: bpy.props.FloatVectorProperty(
+        name="Trans Matrix 4x4",
+        description="Trans Matrix 4x4",
+        default=(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+        size=16,
+        subtype="MATRIX"
+    )
+
+    VtkTransform_4x4: bpy.props.FloatVectorProperty(
+        name="Vtk Transform 4x4",
+        description="Vtk Transform 4x4",
+        default=(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+        size=16,
+        subtype="MATRIX"
+    )
+
+    VolumeCenter: bpy.props.FloatVectorProperty(
+        name="Volume Center",
+        description="Volume Center",
+        default=(0.0, 0.0, 0.0),
+        size=3
+    )
+
+    SlicesDir: bpy.props.StringProperty(
+        name="Slices directory",
+        description="Slices directory",
+        default=""
+    )
+
+    Nrrd255Path: bpy.props.StringProperty(
+        name="Nrrd 255 Path",
+        description="Nrrd 255 Path",
+        default=""
+    )
+
+    CT_Loaded: bpy.props.BoolProperty(
+        name="CT data loaded",
+        description="CT data loaded",
+        default=False
+    )
+
+
 class INTACT_Props(bpy.types.PropertyGroup):
 
     #####################
@@ -177,11 +325,12 @@ class INTACT_Props(bpy.types.PropertyGroup):
 
     #######################
 
-    ImageInfo: StringProperty(
-        name="(str) DicomInfo",
-        default="{'Deffault': None}",
-        description="Dicom series files list",
+    Images: bpy.props.CollectionProperty(
+        type=ImageInfo,
+        name="Images",
+        description="Metadata of currently loaded images",
     )
+
     #######################
 
     PngDir: StringProperty(
@@ -441,6 +590,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
 #################################################################################################
 
 classes = [
+    ImageInfo,
     INTACT_Props,
 ]
 

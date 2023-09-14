@@ -469,13 +469,13 @@ def VolumeRender(ImageInfo, GpShader, ShadersBlendFile):
     CtVolumeList = [
         obj for obj in bpy.context.scene.objects if "INTACT_CTVolume_" in obj.name
     ]
-    Prefix = ImageInfo["Prefix"]
+    Prefix = ImageInfo.Prefix
 
-    Sp = Spacing = ImageInfo["RenderSp"]
-    Sz = Size = ImageInfo["RenderSz"]
-    Origin = ImageInfo["Origin"]
-    Direction = ImageInfo["Direction"]
-    TransformMatrix = ImageInfo["TransformMatrix"]
+    Sp = Spacing = ImageInfo.RenderSp
+    Sz = Size = ImageInfo.RenderSz
+    Origin = ImageInfo.Origin
+    Direction = ImageInfo.Direction
+    TransformMatrix = ImageInfo.TransformMatrix
     DimX, DimY, DimZ = (Sz[0] * Sp[0], Sz[1] * Sp[1], Sz[2] * Sp[2])
     Offset = Sp[2]
     # ImagesList = sorted(os.listdir(PngDir))
@@ -690,9 +690,8 @@ def SlicesUpdate(scene, slice_index):
         if Condition1:
 
             Plane = [obj for obj in Planes if Prefix in obj.name][0]
-            ImageInfoDict = eval(INTACT_Props.ImageInfo)
-            ImageInfo = ImageInfoDict[Prefix]
-            ImageData = AbsPath(ImageInfo["Nrrd255Path"])
+            ImageInfo = INTACT_Props.images[Prefix]
+            ImageData = AbsPath(ImageInfo.Nrrd255Path)
 
             Condition = exists(ImageData)
 
@@ -701,8 +700,8 @@ def SlicesUpdate(scene, slice_index):
                 CTVolume = bpy.data.objects.get(f"{Prefix}_CTVolume")
                 TransformMatrix = CTVolume.matrix_world
 
-                SlicesDir = AbsPath(ImageInfo["SlicesDir"])
-                # TransformMatrix = ImageInfo["TransformMatrix"]
+                SlicesDir = AbsPath(ImageInfo.SlicesDir)
+                # TransformMatrix = ImageInfo.TransformMatrix
                 ImageName = f"{Plane.name}.png"
                 ImagePath = join(SlicesDir, ImageName)
 
@@ -871,11 +870,11 @@ def AddSlice(slice_index, Prefix, ImageInfo):
     CTVolume = bpy.data.objects.get(f"{Prefix}_CTVolume")
 
     Sp, Sz, Origin, Direction, VC = (
-        ImageInfo["Spacing"],
-        ImageInfo["Size"],
-        ImageInfo["Origin"],
-        ImageInfo["Direction"],
-        ImageInfo["VolumeCenter"],
+        ImageInfo.Spacing,
+        ImageInfo.Size,
+        ImageInfo.Origin,
+        ImageInfo.Direction,
+        ImageInfo.VolumeCenter,
     )
 
     DimX, DimY, DimZ = (Sz[0] * Sp[0], Sz[1] * Sp[1], Sz[2] * Sp[2])
@@ -927,7 +926,7 @@ def AddSlice(slice_index, Prefix, ImageInfo):
     for node in nodes:
         if node.type != "OUTPUT_MATERIAL":
             nodes.remove(node)
-    SlicesDir = AbsPath(ImageInfo["SlicesDir"])
+    SlicesDir = AbsPath(ImageInfo.SlicesDir)
     ImageName = f"{name}.png"
     ImagePath = join(SlicesDir, ImageName)
 
