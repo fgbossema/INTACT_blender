@@ -1,5 +1,4 @@
 from os.path import join, dirname, exists, abspath
-
 import bpy
 
 ADDON_DIR = dirname(abspath(__file__))
@@ -35,7 +34,6 @@ class INTACT_PT_MainPanel(bpy.types.Panel):
 
         # Draw Addon UI :
         layout = self.layout
-        INTACT_Props = context.scene.INTACT_Props
 
         box = layout.box()
 
@@ -63,7 +61,6 @@ class INTACT_PT_MainPanel(bpy.types.Panel):
         row = box.row()
         row.alignment = "LEFT"
         row.label(text="The plugin can be used and adjusted freely, if used for an article or other publication we would appreciate if you would cite above mentioned article and Github repository.'")
-
 
         row = box.row()
         row.alignment = "LEFT"
@@ -117,6 +114,7 @@ class INTACT_PT_MainPanel(bpy.types.Panel):
         row.alignment = "LEFT"
         row.label(text="See: https://3d-operators.com/")
 
+
 class INTACT_WorkingDIR(bpy.types.Panel):
 
     """ INTACT Workin dir"""
@@ -141,6 +139,7 @@ class INTACT_WorkingDIR(bpy.types.Panel):
         col = split.column()
         col.prop(INTACT_Props, "UserProjectDir", text="")
 
+
 class INTACT_PT_ScanPanel(bpy.types.Panel):
     """ INTACT CT load"""
 
@@ -158,11 +157,10 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
         # Draw Addon UI :
         layout = self.layout
 
-
         if not INTACT_Props.UserProjectDir:
             row = layout.row()
             row.alignment = "LEFT"
-            row.label(text = "Please select working directory in INTACT panel.")
+            row.label(text="Please select working directory in INTACT panel.")
 
         if INTACT_Props.UserProjectDir:
 
@@ -182,13 +180,13 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                 col = split.column()
                 col.prop(INTACT_Props, "UserTiffDir", text="")
 
-                #input for resolution
+                # input for resolution
                 row = layout.row()
                 split = row.split()
                 col = split.column()
                 col.label(text="Resolution (voxel size in mm) :")
                 col = split.column()
-                col.prop(INTACT_Props, "Resolution", text = "")
+                col.prop(INTACT_Props, "Resolution", text="")
 
                 if INTACT_Props.UserTiffDir:
                     Box = layout.box()
@@ -238,22 +236,21 @@ class INTACT_PT_ScanPanel(bpy.types.Panel):
                 row = layout.row()
                 split = row.split()
                 col = split.column()
-                col.label(text = "Color of volume render:")
+                col.label(text="Color of volume render:")
                 col = split.column()
                 col.prop(INTACT_Props, "CTcolor", text="")
 
                 row = layout.row()
                 split = row.split()
                 col = split.column()
-                col.label(text = "Shading of volume render:")
+                col.label(text="Shading of volume render:")
                 col = split.column()
                 col.prop(INTACT_Props, "ColorPos", text="", slider=True)
 
                 row = layout.row()
-                row.label(text=f"Threshold:")
+                row.label(text="Threshold:")
                 row = layout.row()
                 row.prop(INTACT_Props, "Threshold", text="THRESHOLD", slider=True)
-
 
 
 class INTACT_PT_SurfacePanel(bpy.types.Panel):
@@ -268,28 +265,29 @@ class INTACT_PT_SurfacePanel(bpy.types.Panel):
 
     def draw(self, context):
 
-       INTACT_Props = context.scene.INTACT_Props
+        INTACT_Props = context.scene.INTACT_Props
         # Draw Addon UI :
-       layout = self.layout
+        layout = self.layout
 
-       if not INTACT_Props.UserProjectDir:
-           row = layout.row()
-           row.alignment = "LEFT"
-           row.label(text = "Please select working directory in INTACT panel.")
-       else:
-           row = layout.row()
-           split = row.split()
-           col = split.column()
-           col.label(text="Surface scan directory (.obj file) :")
-           col = split.column()
-           col.prop(INTACT_Props, "UserObjDir", text="")
+        if not INTACT_Props.UserProjectDir:
+            row = layout.row()
+            row.alignment = "LEFT"
+            row.label(text="Please select working directory in INTACT panel.")
+        else:
+            row = layout.row()
+            split = row.split()
+            col = split.column()
+            col.label(text="Surface scan directory (.obj file) :")
+            col = split.column()
+            col.prop(INTACT_Props, "UserObjDir", text="")
 
-       if INTACT_Props.UserObjDir:
-           Box = layout.box()
-           row = Box.row()
-           row.alignment = "CENTER"
-           row.scale_y = 2
-           row.operator("intact.obj_render", icon="IMPORT")
+        if INTACT_Props.UserObjDir:
+            Box = layout.box()
+            row = Box.row()
+            row.alignment = "CENTER"
+            row.scale_y = 2
+            row.operator("intact.obj_render", icon="IMPORT")
+
 
 class INTACT_PT_CTmeshPanel(bpy.types.Panel):
     bl_category = "INTACT"
@@ -308,7 +306,7 @@ class INTACT_PT_CTmeshPanel(bpy.types.Panel):
         for obj in context.scene.objects:
             if obj.name.endswith("CTVolume"):
                 condition_CT = True
-                
+
         if not condition_CT:
             row = layout.row()
             row.label(text="Please load your CT data first.")
@@ -340,7 +338,7 @@ class INTACT_PT_CTmeshPanel(bpy.types.Panel):
             row = layout.row()
             split = row.split()
             col = split.column()
-            col.label(text = "Color of segmentation:")
+            col.label(text="Color of segmentation:")
             col = split.column()
 
             col.prop(INTACT_Props, "Thres1SegmentColor", text="")
@@ -370,14 +368,13 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
         condition_CT = False
         condition_surface = False
 
-
         for obj in context.scene.objects:
             if obj.name.endswith("CTVolume"):
                 condition_CT = True
             if obj.name.startswith("IT_surface"):
                 condition_surface = True
             if obj.name.endswith("SEGMENTATION"):
-                 condition_seg = True
+                condition_seg = True
         if not (condition_CT or condition_surface):
             row = layout.row()
             row.label(text="Please load your data first.")
@@ -417,16 +414,15 @@ class OBJECT_PT_ICP_panel(bpy.types.Panel):
             col = split.column()
             col.prop(INTACT_Props, "Seg", text="")
 
-
-        #fine alignment panel
-            layout.label(text = "ICP Alignment")
-            layout.label(text = "Manually move the surface scan for a rough alignment first.")
-            layout.label(text = "Check the boxes below to allow scaling of the surface scan or to use only selected vertices.")
-            layout.prop(context.scene, "allowScaling", text = "Allow Scaling")
-            layout.prop(context.scene, "vertexSelect", text = "Use Vertex Selections")
-            layout.prop(context.scene, "iterations", text = "Iterations")
-            layout.prop(context.scene, "outlierPerc", text = "Outlier %")
-            layout.prop(context.scene, "downsamplingPerc", text = "Downsampling %")
+        # fine alignment panel
+            layout.label(text="ICP Alignment")
+            layout.label(text="Manually move the surface scan for a rough alignment first.")
+            layout.label(text="Check the boxes below to allow scaling of the surface scan or to use only selected vertices.")
+            layout.prop(context.scene, "allowScaling", text="Allow Scaling")
+            layout.prop(context.scene, "vertexSelect", text="Use Vertex Selections")
+            layout.prop(context.scene, "iterations", text="Iterations")
+            layout.prop(context.scene, "outlierPerc", text="Outlier %")
+            layout.prop(context.scene, "downsamplingPerc", text="Downsampling %")
             Box = layout.box()
             row = Box.row()
             row.alignment = "CENTER"
@@ -446,13 +442,11 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         row = layout.row()
-        scene = context.scene
 
         INTACT_Props = context.scene.INTACT_Props
 
         condition_CT = False
         condition_surface = False
-
 
         for obj in context.scene.objects:
             if obj.name.endswith("CTVolume"):
@@ -502,8 +496,6 @@ class OBJECT_PT_Visualisation_Panel(bpy.types.Panel):
             row = layout.row()
             row.prop(INTACT_Props, "Slice_max", text="Maximum value", slider=True)
 
-
-
         if (condition_CT or condition_surface):
             layout.label(text="Make cropping cube:")
             layout.operator("intact.cropping_cube_creation", text="Create Cropping Cube")
@@ -541,18 +533,16 @@ class OBJECT_PT_Image_Panel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         row = layout.row()
-        scene = context.scene
         INTACT_Props = context.scene.INTACT_Props
 
         condition_CT = False
         condition_surface = False
 
-
         for obj in context.scene.objects:
             if obj.name.endswith("CTVolume"):
                 condition_CT = True
             if obj.name.startswith("IT_surface"):
-                 condition_surface = True
+                condition_surface = True
         if not (condition_CT and condition_surface):
             row = layout.row()
             row.label(text="Please load your data first.")
@@ -618,29 +608,31 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
-    #icp panel
+    # icp panel
     bpy.types.Scene.allowScaling = bpy.props.BoolProperty(
-        default = False,
-        description = "Allow uniform scaling of the moving object")
+        default=False,
+        description="Allow uniform scaling of the moving object")
     bpy.types.Scene.vertexSelect = bpy.props.BoolProperty(
-        default = False,
-        description = "Use only selected vertices for registration")
+        default=False,
+        description="Use only selected vertices for registration")
     bpy.types.Scene.iterations = bpy.props.IntProperty(
-        default = 50, min = 1,
-        description = "Number of iterations")
+        default=50, min=1,
+        description="Number of iterations")
     bpy.types.Scene.outlierPerc = bpy.props.IntProperty(
-        default = 20, min = 0, max = 99,
-        description = "Outlier percentage")
+        default=20, min=0, max=99,
+        description="Outlier percentage")
     bpy.types.Scene.downsamplingPerc = bpy.props.IntProperty(
-        default = 0, min = 0, max = 99,
-        description = "Downsampling percentage")
+        default=0, min=0, max=99,
+        description="Downsampling percentage")
 
-    #export transformations panel
+    # export transformations panel
     bpy.types.Scene.exportTransformation = bpy.props.EnumProperty(
-        name = "Export Transformation",
-        items = [("combined", "Combined Transformation", "Export the combined initial and ICP transformation"),
+        name="Export Transformation",
+        items=[
+            ("combined", "Combined Transformation", "Export the combined initial and ICP transformation"),
             ("roughAlignment", "Initial Transformation", "Export only the initial transformation"),
-            ("fineAlignment", "ICP Transformation", "Export only the ICP transformation")])
+            ("fineAlignment", "ICP Transformation", "Export only the ICP transformation")
+            ])
 
 
 def unregister():

@@ -1,5 +1,8 @@
 import bpy
-import stat, os, threading, shutil
+import stat
+import os
+import threading
+import shutil
 import numpy as np
 from time import perf_counter as Tcounter
 from os.path import split, join, exists, abspath, dirname
@@ -82,7 +85,7 @@ def all_files_exist(user_project_dir, user_image_path, image_type):
         message = [f"No valid {image_type} stack found in folder ! "]
         utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
         return False
-    
+
     return True
 
 
@@ -119,7 +122,7 @@ def is_image_supported(UserImageFile):
         return False
 
     INTACT_nrrd = is_intact_nrrd(UserImageFile)
-    
+
     HU_Image = False
     if Image3D.GetPixelIDTypeAsString() in [
         "32-bit signed integer",
@@ -133,7 +136,7 @@ def is_image_supported(UserImageFile):
         ]
         utils.ShowMessageBox(message=message, icon="COLORSET_01_VEC")
         return False
-    
+
     return True
 
 
@@ -190,13 +193,13 @@ def read_tiff_image(user_tiff_dir, resolution):
     Size = Image3D.GetSize()
 
     Origin = (
-        -(Size[0]-1)/2*Spacing[0], 
-        (Size[1]-1)/2*Spacing[1], 
+        -(Size[0]-1)/2*Spacing[0],
+        (Size[1]-1)/2*Spacing[1],
         (Size[2]-1)/2*Spacing[2]
         )
-    
+
     Image3D = sitk.Cast(Image3D, sitk.sitkFloat32)
-    
+
     return Image3D, Spacing, Size, Origin
 
 
@@ -258,24 +261,24 @@ def get_matrices(Origin, Direction, VCenter):
             (Direction[6], Direction[7], Direction[8], VCenter[2]),
             (0.0, 0.0, 0.0, 1.0),
         ))
-    
+
     return TransformMatrix, DirectionMatrix_4x4, TransMatrix_4x4, VtkTransform_4x4
 
 
-def create_image_info(UserProjectDir, Image3D, Spacing, Size, 
-                    Origin, Direction, VCenter, INTACT_Props):
+def create_image_info(UserProjectDir, Image3D, Spacing, Size,
+                      Origin, Direction, VCenter, INTACT_Props):
 
     INTACT_Props.CT_ID = INTACT_Props.CT_ID + 1
     Prefix = f"IT{INTACT_Props.CT_ID:03}"
-    
+
     Wmin, Wmax = get_min_max(Image3D)
 
     Direction = (1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0)
-    (TransformMatrix, 
-     DirectionMatrix_4x4, 
-     TransMatrix_4x4, 
+    (TransformMatrix,
+     DirectionMatrix_4x4,
+     TransMatrix_4x4,
      VtkTransform_4x4) = get_matrices(Origin, Direction, VCenter)
-    
+
     # Add directories :
     SlicesDir = join(UserProjectDir, "Slices")
     if not exists(SlicesDir):
@@ -425,38 +428,38 @@ def load_image_function(context, q, imageType, imagePath):
         rescale = True
 
         if imageType == "DICOM":
-            (Image3D, 
-            Spacing, 
-            Size,
-            Origin) = read_dicom_image(UserImagePath)
-            
+            (Image3D,
+             Spacing,
+             Size,
+             Origin) = read_dicom_image(UserImagePath)
+
             VCenter = calculate_vcenter(Image3D, Size)
             Direction = (1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0)
 
         elif imageType == "TIFF":
-            (Image3D, 
-            Spacing, 
-            Size,
-            Origin) = read_tiff_image(UserImagePath, INTACT_Props.Resolution)
+            (Image3D,
+             Spacing,
+             Size,
+             Origin) = read_tiff_image(UserImagePath, INTACT_Props.Resolution)
             VCenter = (0.0, 0.0, 0.0)
             Direction = (1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0)
-        
+
         elif imageType == "NRRD" and is_image_supported(UserImagePath):
-            (Image3D, 
-            Spacing, 
-            Size,
-            Origin) = read_nrrd_image(UserImagePath)
+            (Image3D,
+             Spacing,
+             Size,
+             Origin) = read_nrrd_image(UserImagePath)
 
             VCenter = calculate_vcenter(Image3D, Size)
             Direction = Image3D.GetDirection()
             if is_intact_nrrd(UserImagePath):
                 rescale = False
-            
+
         else:
             return {"CANCELLED"}
-        
-        ImageInfo = create_image_info(UserProjectDir, Image3D, Spacing, Size, 
-                                  Origin, Direction, VCenter, INTACT_Props)
+
+        ImageInfo = create_image_info(UserProjectDir, Image3D, Spacing, Size,
+                                      Origin, Direction, VCenter, INTACT_Props)
         write_image(UserProjectDir, Image3D, ImageInfo, INTACT_Props, rescale)
         ImageInfo.CT_Loaded = True
 
@@ -490,19 +493,20 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
         GpShader = "VGS_INTACT"
         GpThreshold = "VGS_Threshold"
         addon_dir = dirname(dirname(abspath(__file__)))
-        ShadersBlendFile = join(addon_dir, "Resources", "BlendData", "INTACT_BlendData.blend")
+        ShadersBlendFile = join(addon_dir, "Resources", "BlendData",
+                                "INTACT_BlendData.blend")
 
         INTACT_Props = context.scene.INTACT_Props
 
         DataType = INTACT_Props.DataType
         if DataType == "TIFF Stack":
-            ImageInfo = load_image_function(context, self.q, "TIFF", 
+            ImageInfo = load_image_function(context, self.q, "TIFF",
                                             INTACT_Props.UserTiffDir)
         if DataType == "DICOM Series":
-            ImageInfo = load_image_function(context, self.q, "DICOM", 
+            ImageInfo = load_image_function(context, self.q, "DICOM",
                                             INTACT_Props.UserDcmDir)
         if DataType == "NRRD File":
-            ImageInfo = load_image_function(context, self.q, "NRRD", 
+            ImageInfo = load_image_function(context, self.q, "NRRD",
                                             INTACT_Props.UserImageFile)
 
         Wmin = INTACT_Props.Wmin
@@ -556,27 +560,23 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
 
         INTACT_Props = context.scene.INTACT_Props
 
-        UserOBjDir = utils.AbsPath(INTACT_Props.UserObjDir)
         print("\n##########################\n")
         print("Loading Surface scan...")
 
         set_blender_properties()
-           
+
         if 'Surface' not in bpy.data.collections:
             print('Make surface collection')
             bpy.data.collections.new('Surface')
             coll = bpy.data.collections.get('Surface')
             context.collection.children.link(coll)
-        
 
-        imported_object = bpy.ops.import_scene.obj(filepath=UserOBjDir, filter_glob="*.obj;*.mtl")
         obj_object = bpy.context.selected_objects[0]
         obj_object.name = "IT_surface_" + obj_object.name
 
         bpy.data.collections['Surface'].objects.link(obj_object)
         bpy.context.scene.collection.objects.unlink(obj_object)
 
-        #INTACT_Props.Surface_Rendered = True
         bpy.context.scene.unit_settings.scale_length = 0.001
         bpy.context.scene.unit_settings.length_unit = "MILLIMETERS"
         bpy.ops.view3d.view_selected(use_all_regions=False)
@@ -590,7 +590,6 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         print(f"Finished (Time : {Finish-Start}")
 
         return {"FINISHED"}
-
 
 
 #################################################################################################
@@ -629,7 +628,6 @@ def register():
         post_handlers.append(h)
 
 
-
 def unregister():
 
     post_handlers = bpy.app.handlers.depsgraph_update_post
@@ -646,4 +644,3 @@ def unregister():
 
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
-
