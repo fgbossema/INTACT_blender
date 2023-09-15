@@ -422,7 +422,7 @@ class INTACT_OT_AddSlices(bpy.types.Operator):
         else:
             Vol = INTACT_Props.CT_Vol
             Prefix = Vol.name[:5]
-            ImageInfo = INTACT_Props.images[Prefix]
+            ImageInfo = INTACT_Props.Images[Prefix]
 
             AxialPlane = utils.AddSlice(0, Prefix, ImageInfo)
             utils.MoveToCollection(obj=AxialPlane, CollName="SLICES")

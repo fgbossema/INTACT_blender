@@ -522,6 +522,9 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
             ImageInfo = load_image_function(context, self.q, "NRRD",
                                             INTACT_Props.UserImageFile)
 
+        if ImageInfo == {"CANCELLED"}:
+            return {"CANCELLED"}
+
         Wmin = INTACT_Props.Wmin
         Wmax = INTACT_Props.Wmax
 
@@ -569,6 +572,7 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         print("Data Loading START...")
 
         INTACT_Props = context.scene.INTACT_Props
+        UserOBjDir = utils.AbsPath(INTACT_Props.UserObjDir)
 
         print("\n##########################\n")
         print("Loading Surface scan...")
@@ -581,6 +585,7 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
             coll = bpy.data.collections.get('Surface')
             context.collection.children.link(coll)
 
+        bpy.ops.import_scene.obj(filepath=UserOBjDir, filter_glob="*.obj;*.mtl")
         obj_object = bpy.context.selected_objects[0]
         obj_object.name = "IT_surface_" + obj_object.name
 

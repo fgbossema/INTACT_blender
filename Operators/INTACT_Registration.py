@@ -398,7 +398,7 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
 
                     self.Vol = Active_Obj
                     self.Prefix = self.Vol.name[:5]
-                    self.ImageInfo = INTACT_Props.images[self.Prefix]
+                    self.ImageInfo = INTACT_Props.Images[self.Prefix]
                     self.Nrrd255Path = utils.AbsPath(self.ImageInfo.Nrrd255Path)
                     self.q = Queue()
                     self.Exported = Queue()
@@ -507,7 +507,7 @@ class INTACT_OT_ResetCtVolumePosition(bpy.types.Operator):
         INTACT_Props = bpy.context.scene.INTACT_Props
         ct_vol = INTACT_Props.CT_Vol
         Prefix = ct_vol.name[:5]
-        ImageInfo = INTACT_Props.images[Prefix]
+        ImageInfo = INTACT_Props.Images[Prefix]
         TransformMatrix = ImageInfo.TransformMatrix
         ct_vol.matrix_world = TransformMatrix
 
@@ -526,7 +526,7 @@ class INTACT_OT_CTVolumeOrientation(bpy.types.Operator):
         ct_vol = INTACT_Props.CT_Vol
         Active_Obj = ct_vol
         Prefix = Active_Obj.name[:5]
-        ImageInfo = INTACT_Props.images[Prefix]
+        ImageInfo = INTACT_Props.Images[Prefix]
         if "Frankfort" not in ImageInfo.keys():
             message = ["CTVOLUME Orientation : ",
                        "Please Add Reference Planes before CTVOLUME Orientation ! "]

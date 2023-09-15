@@ -626,7 +626,7 @@ def SlicesUpdate(scene, slice_index):
         if Condition1:
 
             Plane = [obj for obj in Planes if Prefix in obj.name][0]
-            ImageInfo = INTACT_Props.images[Prefix]
+            ImageInfo = INTACT_Props.Images[Prefix]
             ImageData = AbsPath(ImageInfo.Nrrd255Path)
 
             Condition = exists(ImageData)
