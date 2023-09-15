@@ -28,9 +28,7 @@ class CroppingCubeCreation(bpy.types.Operator):
             to_add_boolean.append(surf_3d)
 
         for obj in to_add_boolean:
-            obj_bool = obj.modifiers.new(type="BOOLEAN", name="Cropping Cube")
-            obj_bool.operation = 'DIFFERENCE'
-            obj_bool.object = cropping_cube
+            create_boolean(obj, "Cropping Cube", "DIFFERENCE", cropping_cube)
 
         print("\nBoolean modifiers applied")
 
@@ -116,10 +114,15 @@ class CroppingCubeCreation(bpy.types.Operator):
         return {'FINISHED'}
 
 
-def add_cube_boolean(obj, cropping_cube, cube_boolean_name):
-    cube_bool = obj.modifiers.new(type="BOOLEAN", name=cube_boolean_name)
-    cube_bool.operation = 'INTERSECT'
-    cube_bool.object = cropping_cube
+def create_boolean(obj, name, operation, object):
+    bool = obj.modifiers.new(type="BOOLEAN", name=name)
+    bool.operation = operation
+    bool.object = object
+
+    if bpy.app.version >= (2, 91, 0):
+        bool.solver = "FAST"
+
+    return bool
 
 
 def set_modifier_visibility(obj, modifier_names, is_visible):
@@ -158,13 +161,13 @@ def enable_surf3d_slice(context):
     # Add boolean modifier. If it already exists, just enable it in viewport and render
     for slice in slices:
         if mesh_boolean_name not in slice.modifiers and cube_boolean_name not in slice.modifiers:
-            mesh_bool = slice.modifiers.new(type="BOOLEAN", name=mesh_boolean_name)
-            mesh_bool.operation = 'INTERSECT'
-            mesh_bool.object = surf_copy
+            mesh_bool = create_boolean(slice, mesh_boolean_name, "INTERSECT", surf_copy)
 
             # Move to top of modifier stack
-            bpy.ops.object.modifier_move_to_index({'object': slice}, modifier=mesh_bool.name, index=0)
-            add_cube_boolean(slice, INTACT_Props.Cropping_Cube, cube_boolean_name)
+            bpy.ops.object.modifier_move_to_index({'object': slice},
+                                                  modifier=mesh_bool.name,
+                                                  index=0)
+            create_boolean(slice, cube_boolean_name, "INTERSECT", INTACT_Props.Cropping_Cube)
         else:
             set_modifier_visibility(slice, [mesh_boolean_name, cube_boolean_name], True)
 
@@ -229,7 +232,7 @@ def enable_ct_alpha_slice(context):
 
             slice.material_slots[0].material = alpha_material
 
-            add_cube_boolean(slice, INTACT_Props.Cropping_Cube, cube_boolean_name)
+            create_boolean(slice, cube_boolean_name, "INTERSECT", INTACT_Props.Cropping_Cube)
 
         else:
             slice.material_slots[0].material = bpy.data.materials[alpha_material_name]
