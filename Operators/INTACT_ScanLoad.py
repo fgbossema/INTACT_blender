@@ -273,7 +273,6 @@ def create_image_info(UserProjectDir, Image3D, Spacing, Size,
 
     Wmin, Wmax = get_min_max(Image3D)
 
-    Direction = (1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0)
     (TransformMatrix,
      DirectionMatrix_4x4,
      TransMatrix_4x4,
@@ -314,13 +313,14 @@ def create_image_info(UserProjectDir, Image3D, Spacing, Size,
     return image
 
 
-def write_image(UserProjectDir, Image3D, ImageInfo, INTACT_Props, rescale=True):
+def write_image(UserProjectDir, Image3D, ImageInfo, INTACT_Props,
+                rescale_intensity=True, resize_image=True):
     # Set info in Image3D metadata:
     Image3D.SetSpacing(ImageInfo.Spacing)
     Image3D.SetDirection(ImageInfo.Direction)
     Image3D.SetOrigin(ImageInfo.Origin)
 
-    if rescale:
+    if rescale_intensity:
         # set IntensityWindowing  :
         Image3D_255 = sitk.Cast(
             sitk.IntensityWindowing(
@@ -334,6 +334,7 @@ def write_image(UserProjectDir, Image3D, ImageInfo, INTACT_Props, rescale=True):
         )
     else:
         Image3D_255 = Image3D
+        print('Not rescaled')
 
     Wmin, Wmax = get_min_max(Image3D_255)
     INTACT_Props.Wmin = Wmin
@@ -342,12 +343,14 @@ def write_image(UserProjectDir, Image3D, ImageInfo, INTACT_Props, rescale=True):
     # Convert Dicom to nrrd file :
     sitk.WriteImage(Image3D_255, utils.AbsPath(ImageInfo.Nrrd255Path))
 
-    MaxSp = max(Vector(ImageInfo.Spacing))
-    if MaxSp < 0.25:
-        SampleRatio = round(MaxSp / 0.25, 2)
-        Image3D_255 = utils.ResizeImage(sitkImage=Image3D_255, Ratio=SampleRatio)
-        ImageInfo.RenderSz = Image3D_255.GetSize()
-        ImageInfo.RenderSp = Image3D_255.GetSpacing()
+    if resize_image:
+        MaxSp = max(Vector(ImageInfo.Spacing))
+        if MaxSp < 0.25:
+            SampleRatio = round(MaxSp / 0.25, 2)
+            Image3D_255 = utils.ResizeImage(sitkImage=Image3D_255,
+                                            Ratio=SampleRatio)
+            ImageInfo.RenderSz = Image3D_255.GetSize()
+            ImageInfo.RenderSp = Image3D_255.GetSpacing()
 
     PngDir = join(UserProjectDir, "PNG")
     if not exists(PngDir):
@@ -415,7 +418,6 @@ def calculate_vcenter(Image3D, Size):
 
 
 def load_image_function(context, q, imageType, imagePath):
-    startTime = Tcounter()
 
     INTACT_Props = context.scene.INTACT_Props
     UserProjectDir = utils.AbsPath(INTACT_Props.UserProjectDir)
@@ -424,8 +426,10 @@ def load_image_function(context, q, imageType, imagePath):
     if not all_files_exist(UserProjectDir, UserImagePath, imageType):
         return {"CANCELLED"}
     else:
+        startTime = Tcounter()
         save_blend_file(UserProjectDir)
-        rescale = True
+        rescale_intensity = True
+        resize_image = True
 
         if imageType == "DICOM":
             (Image3D,
@@ -443,6 +447,7 @@ def load_image_function(context, q, imageType, imagePath):
              Origin) = read_tiff_image(UserImagePath, INTACT_Props.Resolution)
             VCenter = (0.0, 0.0, 0.0)
             Direction = (1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0)
+            resize_image = False
 
         elif imageType == "NRRD" and is_image_supported(UserImagePath):
             (Image3D,
@@ -453,14 +458,15 @@ def load_image_function(context, q, imageType, imagePath):
             VCenter = calculate_vcenter(Image3D, Size)
             Direction = Image3D.GetDirection()
             if is_intact_nrrd(UserImagePath):
-                rescale = False
+                rescale_intensity = False
 
         else:
             return {"CANCELLED"}
 
         ImageInfo = create_image_info(UserProjectDir, Image3D, Spacing, Size,
                                       Origin, Direction, VCenter, INTACT_Props)
-        write_image(UserProjectDir, Image3D, ImageInfo, INTACT_Props, rescale)
+        write_image(UserProjectDir, Image3D, ImageInfo, INTACT_Props,
+                    rescale_intensity, resize_image)
         ImageInfo.CT_Loaded = True
 
         finishTime = Tcounter()
@@ -475,6 +481,13 @@ def load_image_function(context, q, imageType, imagePath):
         set_blender_properties()
 
         return ImageInfo
+
+
+def set_scale_mm():
+    bpy.context.scene.unit_settings.scale_length = 0.001
+    bpy.context.scene.unit_settings.length_unit = "MILLIMETERS"
+    bpy.ops.view3d.view_selected(use_all_regions=False)
+    bpy.ops.wm.save_mainfile()
 
 
 class INTACT_OT_Volume_Render(bpy.types.Operator):
@@ -511,7 +524,7 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
 
         Wmin = INTACT_Props.Wmin
         Wmax = INTACT_Props.Wmax
-        # PngDir = AbsPath(INTACT_Props.PngDir)
+
         print("\n##########################\n")
         print("Voxel Rendering START...")
         utils.VolumeRender(ImageInfo, GpShader, ShadersBlendFile)
@@ -529,10 +542,7 @@ class INTACT_OT_Volume_Render(bpy.types.Operator):
         WmaxNode.default_value = Wmax
 
         INTACT_Props.CT_Rendered = True
-        bpy.context.scene.unit_settings.scale_length = 0.001
-        bpy.context.scene.unit_settings.length_unit = "MILLIMETERS"
-        bpy.ops.view3d.view_selected(use_all_regions=False)
-        bpy.ops.wm.save_mainfile()
+        set_scale_mm()
 
         for obj in bpy.context.scene.objects:
             if obj.name.startswith("IT") and obj.name.endswith("_CTVolume"):
@@ -577,10 +587,7 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
         bpy.data.collections['Surface'].objects.link(obj_object)
         bpy.context.scene.collection.objects.unlink(obj_object)
 
-        bpy.context.scene.unit_settings.scale_length = 0.001
-        bpy.context.scene.unit_settings.length_unit = "MILLIMETERS"
-        bpy.ops.view3d.view_selected(use_all_regions=False)
-        bpy.ops.wm.save_mainfile()
+        set_scale_mm()
 
         Finish = Tcounter()
         for obj in bpy.context.scene.objects:
