@@ -24,6 +24,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+dependencies/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -94,6 +95,9 @@ ENV/
 
 #Pycharm settings
 .idea/
+
+#VScode settings
+.vscode/
 
 # Rope project settings
 .ropeproject

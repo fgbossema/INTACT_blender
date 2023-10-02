@@ -1,9 +1,12 @@
 # Python imports :
-import sys, os, bpy, socket, shutil
+import sys
+import os
+import bpy
+import socket
+import shutil
 from dataclasses import dataclass
-from importlib import import_module
-from os.path import dirname, join, realpath, abspath, exists
-from subprocess import run, SubprocessError, CalledProcessError, PIPE
+from os.path import dirname, join, abspath
+from subprocess import run, CalledProcessError, PIPE
 
 
 @dataclass
@@ -71,8 +74,8 @@ def ReqInternetInstall(path, modules):
 #############################################################
 def ReqInstall(req_list, req_zip_dir, req_installation_dir):
     Pkgs = [x.package_name for x in req_list]
-    Preffix = sys.platform
-    ZippedModuleFiles = [f"{Preffix}_{Pkg}.zip" for Pkg in Pkgs]
+    Prefix = sys.platform
+    ZippedModuleFiles = [f"{Prefix}_{Pkg}.zip" for Pkg in Pkgs]
     condition = all([(mod in os.listdir(req_zip_dir)) for mod in ZippedModuleFiles])
 
     if condition:

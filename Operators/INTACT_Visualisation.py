@@ -1,8 +1,6 @@
 import bpy
-from . import INTACT_Utils
-from bpy.app.handlers import persistent
-
-from .INTACT_Utils import *
+from . import INTACT_Utils as utils
+import numpy as np
 
 # ---------------------------------------------------------------------------
 #          Operators
@@ -30,9 +28,7 @@ class CroppingCubeCreation(bpy.types.Operator):
             to_add_boolean.append(surf_3d)
 
         for obj in to_add_boolean:
-            obj_bool = obj.modifiers.new(type="BOOLEAN", name="Cropping Cube")
-            obj_bool.operation = 'DIFFERENCE'
-            obj_bool.object = cropping_cube
+            create_boolean(obj, "Cropping Cube", "DIFFERENCE", cropping_cube)
 
         print("\nBoolean modifiers applied")
 
@@ -45,7 +41,7 @@ class CroppingCubeCreation(bpy.types.Operator):
 
         if not ct_vol:
             message = [" Please define your CT Volume first at the top of this fold-out tab."]
-            INTACT_Utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+            utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
             return {"CANCELLED"}
 
         cropping_cube = context.scene.objects.get(cropping_cube_name)
@@ -112,16 +108,21 @@ class CroppingCubeCreation(bpy.types.Operator):
 
             # select ct volume, so it's easy to carry on with further operations (with all deselected the ui
             # says 'please load data first')
-            #bpy.ops.object.select_all(action="DESELECT")
-            #ct_vol.select_set(True)
+            # bpy.ops.object.select_all(action="DESELECT")
+            # ct_vol.select_set(True)
 
         return {'FINISHED'}
 
 
-def add_cube_boolean(obj, cropping_cube, cube_boolean_name):
-    cube_bool = obj.modifiers.new(type="BOOLEAN", name=cube_boolean_name)
-    cube_bool.operation = 'INTERSECT'
-    cube_bool.object = cropping_cube
+def create_boolean(obj, name, operation, object):
+    bool = obj.modifiers.new(type="BOOLEAN", name=name)
+    bool.operation = operation
+    bool.object = object
+
+    if bpy.app.version >= (2, 91, 0):
+        bool.solver = "FAST"
+
+    return bool
 
 
 def set_modifier_visibility(obj, modifier_names, is_visible):
@@ -160,13 +161,13 @@ def enable_surf3d_slice(context):
     # Add boolean modifier. If it already exists, just enable it in viewport and render
     for slice in slices:
         if mesh_boolean_name not in slice.modifiers and cube_boolean_name not in slice.modifiers:
-            mesh_bool = slice.modifiers.new(type="BOOLEAN", name=mesh_boolean_name)
-            mesh_bool.operation = 'INTERSECT'
-            mesh_bool.object = surf_copy
+            mesh_bool = create_boolean(slice, mesh_boolean_name, "INTERSECT", surf_copy)
 
             # Move to top of modifier stack
-            bpy.ops.object.modifier_move_to_index({'object': slice}, modifier=mesh_bool.name, index=0)
-            add_cube_boolean(slice, INTACT_Props.Cropping_Cube, cube_boolean_name)
+            bpy.ops.object.modifier_move_to_index({'object': slice},
+                                                  modifier=mesh_bool.name,
+                                                  index=0)
+            create_boolean(slice, cube_boolean_name, "INTERSECT", INTACT_Props.Cropping_Cube)
         else:
             set_modifier_visibility(slice, [mesh_boolean_name, cube_boolean_name], True)
 
@@ -231,11 +232,11 @@ def enable_ct_alpha_slice(context):
 
             slice.material_slots[0].material = alpha_material
 
-            add_cube_boolean(slice, INTACT_Props.Cropping_Cube, cube_boolean_name)
+            create_boolean(slice, cube_boolean_name, "INTERSECT", INTACT_Props.Cropping_Cube)
 
         else:
-                slice.material_slots[0].material = bpy.data.materials[alpha_material_name]
-                set_modifier_visibility(slice, ["Cropping Cube"], True)
+            slice.material_slots[0].material = bpy.data.materials[alpha_material_name]
+            set_modifier_visibility(slice, ["Cropping Cube"], True)
 
 
 def enable_boolean_slice(context):
@@ -315,9 +316,9 @@ def enable_track_slices_to_cropping_cube(context):
     slices = [sagital_slice, coronal_slice, axial_slice]
 
     # reset position/rotation of all
-    INTACT_Utils.set_slice_orientation(ct_vol, slices[0], 2)
-    INTACT_Utils.set_slice_orientation(ct_vol, slices[1], 1)
-    INTACT_Utils.set_slice_orientation(ct_vol, slices[2], 0)
+    utils.set_slice_orientation(ct_vol, slices[0], 2)
+    utils.set_slice_orientation(ct_vol, slices[1], 1)
+    utils.set_slice_orientation(ct_vol, slices[2], 0)
 
     for i in range(len(transforms)):
         location_driver = slices[i].driver_add("location", i)
@@ -407,6 +408,7 @@ def slice_thickness(self, context):
         if slice and (solidify_modifier_name in slice.modifiers):
             slice.modifiers[solidify_modifier_name].thickness = self.Slice_thickness
 
+
 class INTACT_OT_AddSlices(bpy.types.Operator):
     """ Add Volume Slices """
 
@@ -418,24 +420,23 @@ class INTACT_OT_AddSlices(bpy.types.Operator):
 
         if not INTACT_Props.CT_Vol:
             message = [" Please input CT Volume first "]
-            ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+            utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
             return {"CANCELLED"}
         else:
             Vol = INTACT_Props.CT_Vol
-            Preffix = Vol.name[:5]
-            DcmInfoDict = eval(INTACT_Props.DcmInfo)
-            DcmInfo = DcmInfoDict[Preffix]
+            Prefix = Vol.name[:5]
+            ImageInfo = INTACT_Props.Images[Prefix]
 
-            AxialPlane = AddSlice(0, Preffix, DcmInfo)
-            MoveToCollection(obj=AxialPlane, CollName="SLICES")
+            AxialPlane = utils.AddSlice(0, Prefix, ImageInfo)
+            utils.MoveToCollection(obj=AxialPlane, CollName="SLICES")
             INTACT_Props.Axial_Slice = AxialPlane
 
-            CoronalPlane = AddSlice(1, Preffix, DcmInfo)
-            MoveToCollection(obj=CoronalPlane, CollName="SLICES")
+            CoronalPlane = utils.AddSlice(1, Prefix, ImageInfo)
+            utils.MoveToCollection(obj=CoronalPlane, CollName="SLICES")
             INTACT_Props.Coronal_Slice = CoronalPlane
 
-            SagitalPlane = AddSlice(2, Preffix, DcmInfo)
-            MoveToCollection(obj=SagitalPlane, CollName="SLICES")
+            SagitalPlane = utils.AddSlice(2, Prefix, ImageInfo)
+            utils.MoveToCollection(obj=SagitalPlane, CollName="SLICES")
             INTACT_Props.Sagital_Slice = SagitalPlane
 
             # Add Cameras :
@@ -448,31 +449,31 @@ class INTACT_OT_AddSlices(bpy.types.Operator):
                 for cam in bpy.data.cameras
                 if f"{AxialPlane.name}_CAM" in cam.name
             ]
-            AxialCam = Add_Cam_To_Plane(AxialPlane, CamDistance=100, ClipOffset=1)
-            MoveToCollection(obj=AxialCam, CollName="SLICES-CAMERAS")
+            AxialCam = utils.Add_Cam_To_Plane(AxialPlane, CamDistance=100, ClipOffset=1)
+            utils.MoveToCollection(obj=AxialCam, CollName="SLICES-CAMERAS")
 
             [
                 bpy.data.cameras.remove(cam)
                 for cam in bpy.data.cameras
                 if f"{CoronalPlane.name}_CAM" in cam.name
             ]
-            CoronalCam = Add_Cam_To_Plane(
+            CoronalCam = utils.Add_Cam_To_Plane(
                 CoronalPlane, CamDistance=100, ClipOffset=1
             )
-            MoveToCollection(obj=CoronalCam, CollName="SLICES-CAMERAS")
+            utils.MoveToCollection(obj=CoronalCam, CollName="SLICES-CAMERAS")
 
             [
                 bpy.data.cameras.remove(cam)
                 for cam in bpy.data.cameras
                 if f"{SagitalPlane.name}_CAM" in cam.name
             ]
-            SagitalCam = Add_Cam_To_Plane(
+            SagitalCam = utils.Add_Cam_To_Plane(
                 SagitalPlane, CamDistance=100, ClipOffset=1
             )
-            MoveToCollection(obj=SagitalCam, CollName="SLICES-CAMERAS")
+            utils.MoveToCollection(obj=SagitalCam, CollName="SLICES-CAMERAS")
 
             for obj in bpy.data.objects:
-                if obj.name == f"{Preffix}_SLICES_POINTER":
+                if obj.name == f"{Prefix}_SLICES_POINTER":
                     bpy.data.objects.remove(obj)
 
             bpy.ops.object.empty_add(
@@ -485,9 +486,9 @@ class INTACT_OT_AddSlices(bpy.types.Operator):
             SLICES_POINTER.empty_display_size = 20
             SLICES_POINTER.show_name = True
             SLICES_POINTER.show_in_front = True
-            SLICES_POINTER.name = f"{Preffix}_SLICES_POINTER"
+            SLICES_POINTER.name = f"{Prefix}_SLICES_POINTER"
 
-            Override, _, _ = CtxOverride(bpy.context)
+            Override, _, _ = utils.CtxOverride(bpy.context)
 
             bpy.ops.object.select_all(Override, action="DESELECT")
             AxialPlane.select_set(True)
@@ -505,9 +506,10 @@ class INTACT_OT_AddSlices(bpy.types.Operator):
             bpy.ops.object.select_all(Override, action="DESELECT")
             SLICES_POINTER.select_set(True)
             bpy.context.view_layer.objects.active = SLICES_POINTER
-            MoveToCollection(obj=SLICES_POINTER, CollName="SLICES_POINTERS")
+            utils.MoveToCollection(obj=SLICES_POINTER, CollName="SLICES_POINTERS")
 
             return {"FINISHED"}
+
 
 class INTACT_OT_MultiView(bpy.types.Operator):
     """ MultiView Toggle """
@@ -525,15 +527,15 @@ class INTACT_OT_MultiView(bpy.types.Operator):
 
         if not Vol:
             message = [" Please input CT Volume first "]
-            ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+            utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
             return {"CANCELLED"}
         elif not AxialPlane or not CoronalPlane or not SagitalPlane:
             message = [" Please click 'Slice Volume' first "]
-            ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+            utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
             return {"CANCELLED"}
         else:
-            Preffix = INTACT_Props.CT_Vol.name[:5]
-            SLICES_POINTER = bpy.data.objects.get(f"{Preffix}_SLICES_POINTER")
+            Prefix = INTACT_Props.CT_Vol.name[:5]
+            SLICES_POINTER = bpy.data.objects.get(f"{Prefix}_SLICES_POINTER")
 
             bpy.context.scene.unit_settings.scale_length = 0.001
             bpy.context.scene.unit_settings.length_unit = "MILLIMETERS"
@@ -546,7 +548,7 @@ class INTACT_OT_MultiView(bpy.types.Operator):
                 CORONAL,
                 SAGITAL,
                 VIEW_3D,
-            ) = INTACT_MultiView_Toggle(Preffix)
+            ) = utils.INTACT_MultiView_Toggle(Prefix)
             MultiView_Screen = MultiView_Window.screen
             AXIAL_Space3D = [
                 Space for Space in AXIAL.spaces if Space.type == "VIEW_3D"
@@ -614,7 +616,6 @@ class INTACT_OT_MultiView(bpy.types.Operator):
             bpy.ops.object.select_all(Override, action="DESELECT")
             SLICES_POINTER.select_set(True)
             bpy.context.view_layer.objects.active = SLICES_POINTER
-            
 
         return {"FINISHED"}
 
@@ -622,9 +623,10 @@ class INTACT_OT_MultiView(bpy.types.Operator):
 #          Registration
 # ---------------------------------------------------------------------------
 
+
 classes = [INTACT_OT_AddSlices,
-    INTACT_OT_MultiView,
-    CroppingCubeCreation]
+           INTACT_OT_MultiView,
+           CroppingCubeCreation]
 
 
 def register():

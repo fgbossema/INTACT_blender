@@ -1,19 +1,19 @@
 # Python imports :
-import os, sys, shutil, threading
-from os.path import join, dirname, exists, abspath
+import os
+import sys
+import shutil
+from os.path import join, exists, abspath
 
-from math import degrees, radians, pi
+from math import pi
 import numpy as np
 from time import sleep, perf_counter as Tcounter
-from queue import Queue
 from importlib import reload
 from bpy.app.handlers import persistent
 
 # Blender Imports :
 import bpy
 import bmesh
-import mathutils
-from mathutils import Matrix, Vector, Euler, kdtree, geometry as Geo
+from mathutils import Matrix, Vector, Euler, geometry as Geo
 
 import SimpleITK as sitk
 import cv2
@@ -56,8 +56,7 @@ def get_all_addons(display=False):
 
     """
     import bpy as _bpy
-    from addon_utils import check, paths, enable
-    import sys
+    from addon_utils import check, paths
 
     # RELEASE SCRIPTS: official scripts distributed in Blender releases
     paths_list = paths()
@@ -87,7 +86,7 @@ def Addon_Enable(AddonName, Enable=True):
     is_enabled, is_loaded = AU.check(AddonName)
 
 
-def CleanScanData(Preffix):
+def CleanScanData(Prefix):
     D = bpy.data
     Objects = D.objects
     Meshes = D.meshes
@@ -96,29 +95,35 @@ def CleanScanData(Preffix):
     NodeGroups = D.node_groups
 
     # Remove Voxel data :
-    [Meshes.remove(m) for m in Meshes if f"{Preffix}_PLANE_" in m.name]
-    [Images.remove(img) for img in Images if f"{Preffix}_img" in img.name]
+    [Meshes.remove(m) for m in Meshes if f"{Prefix}_PLANE_" in m.name]
+    [Images.remove(img) for img in Images if f"{Prefix}_img" in img.name]
     [Materials.remove(mat) for mat in Materials if "IT001_Voxelmat_" in mat.name]
     [NodeGroups.remove(NG) for NG in NodeGroups if "IT001_VGS_" in NG.name]
 
     # Remove old Slices :
-    SlicePlanes = [
+    # Slice Planes
+    [
         Objects.remove(obj)
         for obj in Objects
-        if Preffix in obj.name and "SLICE" in obj.name
+        if Prefix in obj.name and "SLICE" in obj.name
     ]
-    SliceMeshes = [
-        Meshes.remove(m) for m in Meshes if Preffix in m.name and "SLICE" in m.name
+    # Slice meshes
+    [
+        Meshes.remove(m)
+        for m in Meshes
+        if Prefix in m.name and "SLICE" in m.name
     ]
-    SliceMats = [
+    # Slice materials
+    [
         Materials.remove(mat)
         for mat in Materials
-        if Preffix in mat.name and "SLICE" in mat.name
+        if Prefix in mat.name and "SLICE" in mat.name
     ]
-    SliceImages = [
+    # Slice images
+    [
         Images.remove(img)
         for img in Images
-        if Preffix in img.name and "SLICE" in img.name
+        if Prefix in img.name and "SLICE" in img.name
     ]
 
 
@@ -153,7 +158,7 @@ def RelPath(P):
 def make_directory(Root, DirName):
 
     DirPath = join(Root, DirName)
-    if not DirName in os.listdir(Root):
+    if DirName not in os.listdir(Root):
         os.mkdir(DirPath)
     return DirPath
 
@@ -202,10 +207,10 @@ def AddBooleanCube(DimX, DimY, DimZ):
         scale=(1, 1, 1),
     )
 
-    VOI = VolumeOfInterst = bpy.context.object
-    VOI.name = "VOI"
-    VOI.display_type = "WIRE"
-    return VOI
+    VolumeOfInterest = bpy.context.object
+    VolumeOfInterest.name = "VOI"
+    VolumeOfInterest.display_type = "WIRE"
+    return VolumeOfInterest
 
 
 def AddNode(nodes, type, name):
@@ -224,7 +229,7 @@ def AddFrankfortPoint(PointsList, color, CollName):
         return P
     if PointsList:
         CurrentPointsNames = [P.name for P in PointsList]
-        P_Names = [P for P in FrankfortPointsNames if not P in CurrentPointsNames]
+        P_Names = [P for P in FrankfortPointsNames if P not in CurrentPointsNames]
         if P_Names:
             P = AddMarkupPoint(P_Names[0], color, CollName)
             return P
@@ -298,7 +303,7 @@ def PointsToFrankfortPlane(ctx, Model, CurrentPointsList, color, CollName=None):
     FrankfortPlane.name = name
     FrankfortPlane.data.name = f"{name}_Mesh"
     FrankfortPlane.matrix_world = FrankMtx
-    matName = f"RefPlane_Mat"
+    matName = "RefPlane_Mat"
     mat = bpy.data.materials.get(matName) or bpy.data.materials.new(matName)
     mat.diffuse_color = color
     mat.use_nodes = False
@@ -375,15 +380,13 @@ def PointsToOcclusalPlane(ctx, Model, R_pt, A_pt, L_pt, color, subdiv):
 
 
 ##############################################
-def TriPlanes_Point_Intersect(P1, P2, P3, CrossLenght):
+def TriPlanes_Point_Intersect(P1, P2, P3, CrossLength):
 
     P1N = P1.matrix_world.to_3x3() @ P1.data.polygons[0].normal
     P2N = P2.matrix_world.to_3x3() @ P2.data.polygons[0].normal
     P3N = P3.matrix_world.to_3x3() @ P3.data.polygons[0].normal
 
     Condition = np.dot(np.array(P1N), np.cross(np.array(P2N), np.array(P3N))) != 0
-
-    C1, C2, C3 = P1.location, P2.location, P3.location
 
     F1 = sum(list(P1.location * P1N))
     F2 = sum(list(P2.location * P2N))
@@ -394,13 +397,13 @@ def TriPlanes_Point_Intersect(P1, P2, P3, CrossLenght):
 
         P_Intersect = Matrix((P1N, P2N, P3N)).inverted() @ Vector((F1, F2, F3))
         P1P2_Vec = (
-            Vector(np.cross(np.array(P1N), np.array(P2N))).normalized() * CrossLenght
+            Vector(np.cross(np.array(P1N), np.array(P2N))).normalized() * CrossLength
         )
         P2P3_Vec = (
-            Vector(np.cross(np.array(P2N), np.array(P3N))).normalized() * CrossLenght
+            Vector(np.cross(np.array(P2N), np.array(P3N))).normalized() * CrossLength
         )
         P1P3_Vec = (
-            Vector(np.cross(np.array(P1N), np.array(P3N))).normalized() * CrossLenght
+            Vector(np.cross(np.array(P1N), np.array(P3N))).normalized() * CrossLength
         )
 
         P1P2 = [P_Intersect + P1P2_Vec, P_Intersect - P1P2_Vec]
@@ -412,7 +415,6 @@ def TriPlanes_Point_Intersect(P1, P2, P3, CrossLenght):
         return None
 
 
-###########################################################
 def AddPlaneMesh(DimX, DimY, Name):
     x = DimX / 2
     y = DimY / 2
@@ -440,10 +442,10 @@ def AddPlaneObject(Name, mesh, CollName):
     if not MyColl:
         MyColl = bpy.data.collections.new(CollName)
 
-    if not MyColl in bpy.context.scene.collection.children[:]:
+    if MyColl not in bpy.context.scene.collection.children[:]:
         bpy.context.scene.collection.children.link(MyColl)
 
-    if not Plane_obj in MyColl.objects[:]:
+    if Plane_obj not in MyColl.objects[:]:
         MyColl.objects.link(Plane_obj)
 
     return Plane_obj
@@ -456,7 +458,7 @@ def MoveToCollection(obj, CollName):
     if not NewColl:
         NewColl = bpy.data.collections.new(CollName)
         bpy.context.scene.collection.children.link(NewColl)
-    if not obj in NewColl.objects[:]:
+    if obj not in NewColl.objects[:]:
         NewColl.objects.link(obj)  # link obj to scene
     if OldColl:
         for Coll in OldColl:  # unlink from all  precedent obj collections
@@ -464,93 +466,46 @@ def MoveToCollection(obj, CollName):
                 Coll.objects.unlink(obj)
 
 
-def VolumeRender(DcmInfo, GpShader, ShadersBlendFile):
+def VolumeRender(ImageInfo, GpShader, ShadersBlendFile):
 
-    INTACT_Props = bpy.context.scene.INTACT_Props
+    Prefix = ImageInfo.Prefix
 
-    CtVolumeList = [
-        obj for obj in bpy.context.scene.objects if "INTACT_CTVolume_" in obj.name
-    ]
-    Preffix = DcmInfo["Preffix"]
+    Sp = Spacing = ImageInfo.RenderSp
+    Sz = Size = ImageInfo.RenderSz
 
-    Sp = Spacing = DcmInfo["RenderSp"]
-    Sz = Size = DcmInfo["RenderSz"]
-    Origin = DcmInfo["Origin"]
-    Direction = DcmInfo["Direction"]
-    TransformMatrix = DcmInfo["TransformMatrix"]
+    TransformMatrix = ImageInfo.TransformMatrix
     DimX, DimY, DimZ = (Sz[0] * Sp[0], Sz[1] * Sp[1], Sz[2] * Sp[2])
     Offset = Sp[2]
-    # ImagesList = sorted(os.listdir(PngDir))
+
     ImagesNamesList = sorted(
-        [img.name for img in bpy.data.images if img.name.startswith(Preffix)]
+        [img.name for img in bpy.data.images if img.name.startswith(Prefix)]
     )
     ImagesList = [bpy.data.images[Name] for Name in ImagesNamesList]
-    #################################################################################
+
     Start = Tcounter()
-    #################################################################################
-    # ///////////////////////////////////////////////////////////////////////////#
-    ######################## Set Render settings : #############################
+
+    # Set Render settings:
     Scene_Settings()
-    ###################### Change to ORTHO persp with nice view angle :##########
-    # ViewMatrix = Matrix(
-    #     (
-    #         (0.8435, -0.5371, -0.0000, 1.2269),
-    #         (0.2497, 0.3923, 0.8853, -15.1467),
-    #         (-0.4755, -0.7468, 0.4650, -55.2801),
-    #         (0.0000, 0.0000, 0.0000, 1.0000),
-    #     )
-    # )
-    ViewMatrix = Matrix(
-        (
-            (0.8677, -0.4971, 0.0000, 4.0023),
-            (0.4080, 0.7123, 0.5711, -14.1835),
-            (-0.2839, -0.4956, 0.8209, -94.0148),
-            (0.0000, 0.0000, 0.0000, 1.0000),
-        )
-    )
-    for scr in bpy.data.screens:
-        # if scr.name in ["Layout", "Scripting", "Shading"]:
-        for area in [ar for ar in scr.areas if ar.type == "VIEW_3D"]:
-            for space in [sp for sp in area.spaces if sp.type == "VIEW_3D"]:
-                r3d = space.region_3d
-                r3d.view_perspective = "ORTHO"
-                r3d.view_distance = 400
-                r3d.view_matrix = ViewMatrix
-                r3d.update()
 
-    ################### Load all PNG images : ###############################
-    # for ImagePNG in ImagesList:
-    #     image_path = join(PngDir, ImagePNG)
-    #     bpy.data.images.load(image_path)
-
-    # bpy.ops.file.pack_all()
-
-    ###############################################################################################
     # Add Planes with textured material :
-    ###############################################################################################
-    PlansList = []
-    ############################# START LOOP ##################################
+    PlanesList = []
 
     for i, ImageData in enumerate(ImagesList):
-        # # Add Plane :
-        # ##########################################
-        Name = f"{Preffix}_PLANE_{i}"
+        # Add Plane :
+        Name = f"{Prefix}_PLANE_{i}"
         mesh = AddPlaneMesh(DimX, DimY, Name)
         CollName = "CT_Voxel"
 
         obj = AddPlaneObject(Name, mesh, CollName)
         obj.location[2] = i * Offset
-        PlansList.append(obj)
+        PlanesList.append(obj)
 
         bpy.ops.object.select_all(action="DESELECT")
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
 
-
-
-        ##########################################
         # Add Material:
-        mat = bpy.data.materials.new(f"{Preffix}_Voxelmat_{i}")
+        mat = bpy.data.materials.new(f"{Prefix}_Voxelmat_{i}")
         mat.use_nodes = True
         node_tree = mat.node_tree
         nodes = node_tree.nodes
@@ -560,7 +515,6 @@ def VolumeRender(DcmInfo, GpShader, ShadersBlendFile):
             if node.type != "OUTPUT_MATERIAL":
                 nodes.remove(node)
 
-        # ImageData = bpy.data.images.get(ImagePNG)
         TextureCoord = AddNode(nodes, type="ShaderNodeTexCoord", name="TextureCoord")
         ImageTexture = AddNode(nodes, type="ShaderNodeTexImage", name="Image Texture")
 
@@ -593,14 +547,11 @@ def VolumeRender(DcmInfo, GpShader, ShadersBlendFile):
         mat.blend_method = "HASHED"
         mat.shadow_method = "HASHED"
 
-        # print(f"{ImagePNG} Processed ...")
-        # bpy.ops.wm.redraw_timer(type="DRAW_SWAP", iterations=3)  # --Work good but Slow down volume Render
-
-        ############################# END LOOP ##################################
+        # END LOOP ##################################
 
     # Join Planes Make Cube Voxel :
     bpy.ops.object.select_all(action="DESELECT")
-    for obj in PlansList:
+    for obj in PlanesList:
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
     bpy.context.view_layer.layer_collection.children["CT_Voxel"].hide_viewport = False
@@ -608,7 +559,7 @@ def VolumeRender(DcmInfo, GpShader, ShadersBlendFile):
 
     Voxel = bpy.context.object
 
-    Voxel.name = f"{Preffix}_CTVolume"
+    Voxel.name = f"{Prefix}_CTVolume"
     bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
     bpy.ops.object.origin_set(type="ORIGIN_GEOMETRY", center="MEDIAN")
 
@@ -618,14 +569,11 @@ def VolumeRender(DcmInfo, GpShader, ShadersBlendFile):
     bpy.ops.view3d.view_selected(Override, use_all_regions=False)
 
     for scr in bpy.data.screens:
-        # if scr.name in ["Layout", "Scripting", "Shading"]:
         for area in [ar for ar in scr.areas if ar.type == "VIEW_3D"]:
             for space in [sp for sp in area.spaces if sp.type == "VIEW_3D"]:
                 space.shading.type = "MATERIAL"
 
     for i in range(3):
-        # Voxel.lock_location[i] = True
-        # Voxel.lock_rotation[i] = True
         Voxel.lock_scale[i] = True
 
     Finish = Tcounter()
@@ -658,59 +606,42 @@ def Scene_Settings():
             break
 
 
-#################################################################################################
-# Add Slices :
-#################################################################################################
 def SlicesUpdate(scene, slice_index):
     """ Update slices when moved in UI. Slice index determines which slice to update 0 = axial, 1 = Coronal,
     2 = Sagital
     """
     INTACT_Props = bpy.context.scene.INTACT_Props
     slice_name_suffixes = ["_AXIAL_SLICE", "_CORONAL_SLICE", "_SAGITAL_SLICE"]
-    position_properties = ["Axial_Slice_Pos", "Coronal_Slice_Pos", "Sagital_Slice_Pos"]
-    rotation_properties = ["Axial_Slice_Rot", "Coronal_Slice_Rot", "Sagital_Slice_Rot"]
 
     Planes = [
         obj
         for obj in bpy.context.scene.objects
         if (obj.name[2:4] == "IT" and obj.name.endswith(slice_name_suffixes[slice_index]))
     ]
-    SLICES_POINTER = [
-        obj
-        for obj in bpy.context.scene.objects
-        if (obj.name.startswith("IT") and obj.name.endswith("_SLICES_POINTER"))
-    ]
 
     if Planes:
-        ActiveObject = bpy.context.view_layer.objects.active
-        position_property = position_properties[slice_index]
-        rotation_property = rotation_properties[slice_index]
-
         Condition1 = True
-        Preffix = Planes[0].name[2:7]
+        Prefix = Planes[0].name[2:7]
 
         if Condition1:
 
-            Plane = [obj for obj in Planes if Preffix in obj.name][0]
-            DcmInfoDict = eval(INTACT_Props.DcmInfo)
-            DcmInfo = DcmInfoDict[Preffix]
-            ImageData = AbsPath(DcmInfo["Nrrd255Path"])
+            Plane = [obj for obj in Planes if Prefix in obj.name][0]
+            ImageInfo = INTACT_Props.Images[Prefix]
+            ImageData = AbsPath(ImageInfo.Nrrd255Path)
 
             Condition = exists(ImageData)
 
             if Condition:
 
-                CTVolume = bpy.data.objects.get(f"{Preffix}_CTVolume")
+                CTVolume = bpy.data.objects.get(f"{Prefix}_CTVolume")
                 TransformMatrix = CTVolume.matrix_world
 
-                SlicesDir = AbsPath(DcmInfo["SlicesDir"])
-                # TransformMatrix = DcmInfo["TransformMatrix"]
+                SlicesDir = AbsPath(ImageInfo.SlicesDir)
+
                 ImageName = f"{Plane.name}.png"
                 ImagePath = join(SlicesDir, ImageName)
 
-                #########################################
-                #########################################
-                # Get ImageData Infos :
+                # Get ImageData Info :
                 Image3D_255 = sitk.ReadImage(ImageData)
                 Sp = Spacing = Image3D_255.GetSpacing()
                 Sz = Size = Image3D_255.GetSize()
@@ -734,7 +665,6 @@ def SlicesUpdate(scene, slice_index):
                 Out_Direction = Vector(np.identity(3).flatten())
                 Out_Spacing = Sp
 
-                ######################################
                 # Get Plane Orientation and location :
                 PlanMatrix = TransformMatrix.inverted() @ Plane.matrix_world
                 Rot = PlanMatrix.to_euler()
@@ -742,14 +672,12 @@ def SlicesUpdate(scene, slice_index):
                 Rvec = (Rot.x, Rot.y, Rot.z)
                 Tvec = Trans
 
-                ##########################################
                 # Euler3DTransform :
                 Euler3D = sitk.Euler3DTransform()
                 Euler3D.SetCenter((0, 0, 0))
                 Euler3D.SetRotation(Rvec[0], Rvec[1], Rvec[2])
                 Euler3D.SetTranslation(Tvec)
                 Euler3D.ComputeZYXOn()
-                #########################################
 
                 Image2D = sitk.Resample(
                     Image3D_255,
@@ -762,25 +690,24 @@ def SlicesUpdate(scene, slice_index):
                     0,
                 )
 
-                #Change contrast based on user input#
+                # Change contrast based on user input
                 Image2D = sitk.Cast(
-                sitk.IntensityWindowing(
-                Image2D,
-                windowMinimum=INTACT_Props.Slice_min,
-                windowMaximum=INTACT_Props.Slice_max,
-                outputMinimum=0.0,
-                outputMaximum=255.0,
-                ),
-                sitk.sitkUInt8,
+                    sitk.IntensityWindowing(
+                        Image2D,
+                        windowMinimum=INTACT_Props.Slice_min,
+                        windowMaximum=INTACT_Props.Slice_max,
+                        outputMinimum=0.0,
+                        outputMaximum=255.0,
+                    ),
+                    sitk.sitkUInt8,
                 )
 
-                #############################################
                 # Write Image :
                 Array = sitk.GetArrayFromImage(Image2D)
                 Flipped_Array = np.flipud(Array.reshape(Array.shape[1], Array.shape[2]))
 
                 cv2.imwrite(ImagePath, Flipped_Array)
-                ############################################
+
                 # Update Blender Image data :
                 BlenderImage = bpy.data.images.get(f"{Plane.name}.png")
                 if not BlenderImage:
@@ -811,14 +738,13 @@ def CoronalSliceUpdate(scene):
 def SagitalSliceUpdate(scene):
     SlicesUpdate(scene, 2)
 
+
 def SlicesUpdateAll(scene):
     SlicesUpdate(scene, 0)
     SlicesUpdate(scene, 1)
     SlicesUpdate(scene, 2)
 
 
-
-####################################################################
 def Add_Cam_To_Plane(Plane, CamDistance, ClipOffset):
     Override, _, _ = CtxOverride(bpy.context)
     bpy.ops.object.camera_add(Override)
@@ -847,14 +773,11 @@ def Add_Cam_To_Plane(Plane, CamDistance, ClipOffset):
     Cam.select_set(False)
     return Cam
 
-####################################################################
-
 
 def set_slice_orientation(ct_volume, slice, slice_index):
     """ Sets position/rotation of slices. Slice index determines which slice to set 0 = axial, 1 = Coronal,
     2 = Sagital"""
     if slice_index == 0:
-        # AxialPlane.location = VC
         slice.matrix_world = ct_volume.matrix_world
     elif slice_index == 1:
         rotation_euler = Euler((pi / 2, 0.0, 0.0), "XYZ")
@@ -866,30 +789,24 @@ def set_slice_orientation(ct_volume, slice, slice_index):
         slice.matrix_world = ct_volume.matrix_world @ RotMtx
 
 
-def AddSlice(slice_index, Preffix, DcmInfo):
+def AddSlice(slice_index, Prefix, ImageInfo):
     """ Add slices to the UI. Slice index determines which slice to add 0 = axial, 1 = Coronal,
         2 = Sagital
     """
-    CTVolume = bpy.data.objects.get(f"{Preffix}_CTVolume")
+    CTVolume = bpy.data.objects.get(f"{Prefix}_CTVolume")
 
-    Sp, Sz, Origin, Direction, VC = (
-        DcmInfo["Spacing"],
-        DcmInfo["Size"],
-        DcmInfo["Origin"],
-        DcmInfo["Direction"],
-        DcmInfo["VolumeCenter"],
-    )
+    Sp, Sz = (ImageInfo.Spacing, ImageInfo.Size)
 
     DimX, DimY, DimZ = (Sz[0] * Sp[0], Sz[1] * Sp[1], Sz[2] * Sp[2])
 
     if slice_index == 0:
-        name = f"1_{Preffix}_AXIAL_SLICE"
+        name = f"1_{Prefix}_AXIAL_SLICE"
         PlaneDims = Vector((DimX, DimY, 0.0))
     elif slice_index == 1:
-        name = f"2_{Preffix}_CORONAL_SLICE"
+        name = f"2_{Prefix}_CORONAL_SLICE"
         PlaneDims = Vector((DimX, DimZ, 0.0))
     elif slice_index == 2:
-        name = f"3_{Preffix}_SAGITAL_SLICE"
+        name = f"3_{Prefix}_SAGITAL_SLICE"
         PlaneDims = Vector((DimY, DimZ, 0.0))
 
     # Remove old Slices and their data meshs :
@@ -929,14 +846,13 @@ def AddSlice(slice_index, Preffix, DcmInfo):
     for node in nodes:
         if node.type != "OUTPUT_MATERIAL":
             nodes.remove(node)
-    SlicesDir = AbsPath(DcmInfo["SlicesDir"])
+    SlicesDir = AbsPath(ImageInfo.SlicesDir)
     ImageName = f"{name}.png"
     ImagePath = join(SlicesDir, ImageName)
 
     # write "name.png" to here ImagePath
     SlicesUpdate(bpy.context.scene, slice_index)
 
-    # BlenderImage = bpy.data.images.get(ImageName)
     BlenderImage = bpy.data.images.get(ImageName) or bpy.data.images.load(ImagePath)
 
     TextureCoord = AddNode(nodes, type="ShaderNodeTexCoord", name="TextureCoord")
@@ -1337,7 +1253,8 @@ def CV2_progress_bar(q, iter=100):
 
 def progress_bar(pourcentage, Uptxt, Lowtxt="", Title="INTACT", Delay=1):
 
-    X, Y = WindowWidth, WindowHeight = (500, 100)
+    # WindowWidth = X, WindowHeight = Y
+    X, Y = (500, 100)
     BackGround = np.ones((Y, X, 3), dtype=np.uint8) * 255
     # Progress bar Parameters :
     maxFill = X - 70
@@ -1415,11 +1332,8 @@ def progress_bar(pourcentage, Uptxt, Lowtxt="", Title="INTACT", Delay=1):
         cv2.destroyAllWindows()
 
 
-
-
-###########################################################################
-# Add INTACT MultiView :
-def INTACT_MultiView_Toggle(Preffix):
+def INTACT_MultiView_Toggle(Prefix):
+    """Add INTACT MultiView"""
 
     WM = bpy.context.window_manager
 
@@ -1589,11 +1503,17 @@ def INTACT_MultiView_Toggle(Preffix):
 
             MultiView_Space3D.show_region_header = False
 
-    OUTLINER = TopLeft = MultiView_Screen.areas[1]
-    PROPERTIES = DownLeft = MultiView_Screen.areas[5]
-    AXIAL = TopMiddle = MultiView_Screen.areas[3]
-    CORONAL = TopRight = MultiView_Screen.areas[0]
-    SAGITAL = DownRight = MultiView_Screen.areas[2]
-    VIEW_3D = DownMiddle = MultiView_Screen.areas[4]
+    # Top left
+    OUTLINER = MultiView_Screen.areas[1]
+    # Down left
+    PROPERTIES = MultiView_Screen.areas[5]
+    # Top middle
+    AXIAL = MultiView_Screen.areas[3]
+    # Top right
+    CORONAL = MultiView_Screen.areas[0]
+    # Down right
+    SAGITAL = MultiView_Screen.areas[2]
+    # Down middle
+    VIEW_3D = MultiView_Screen.areas[4]
 
     return MultiView_Window, OUTLINER, PROPERTIES, AXIAL, CORONAL, SAGITAL, VIEW_3D

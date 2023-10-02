@@ -3,62 +3,63 @@ import numpy as np
 import math as mt
 import mathutils as mu
 import copy
-import os
-import blf
+import threading
 from bpy_extras import view3d_utils
-
 from vtkmodules.vtkIOGeometry import vtkSTLWriter
+from time import sleep, perf_counter as Tcounter
+from . import INTACT_Utils as utils
+from os.path import join, exists
+from queue import Queue
+import SimpleITK as sitk
 
-from .INTACT_Utils import *
 
 def placeSeed(context, event):
-    #define selected objects
+    # define selected objects
     selectedObjects = bpy.context.selected_objects
 
-    #define boundary conditions
-    scene = context.scene
+    # define boundary conditions
     region = context.region
     rv3d = context.region_data
     mouseCoordinates = event.mouse_region_x, event.mouse_region_y
 
-    #convert cursor location and view direction
+    # convert cursor location and view direction
     viewVector = view3d_utils.region_2d_to_vector_3d(region, rv3d, mouseCoordinates)
     rayOrigin = view3d_utils.region_2d_to_origin_3d(region, rv3d, mouseCoordinates)
     rayTarget = rayOrigin + viewVector
 
-    #ray cast procedure for selected objects
+    # ray cast procedure for selected objects
     successArray = []
     hitLocationArray = []
     distanceArray = []
 
     for object in selectedObjects:
-        #convert to object space
+        # convert to object space
         matrixInverted = object.matrix_world.inverted()
         rayOriginObject = matrixInverted @ rayOrigin
         rayTargetObject = matrixInverted @ rayTarget
         rayVectorObject = rayTargetObject - rayOriginObject
 
-        #raycast procedure
+        # raycast procedure
         success, hitLocation, _, _ = object.ray_cast(rayOriginObject, rayVectorObject)
 
-        #store success, location and distance
+        # store success, location and distance
         successArray.append(success)
         hitLocationArray.append(hitLocation)
         distanceArray.append(np.linalg.norm(hitLocation - rayOriginObject))
 
-    #if raycast successful on both objects, take the one closest to viewer
+    # if raycast successful on both objects, take the one closest to viewer
     if np.all(successArray):
         object = selectedObjects[np.argmin(distanceArray)]
         hitLocation = hitLocationArray[np.argmin(distanceArray)]
-    #return nothing if no raycast hit
+    # return nothing if no raycast hit
     elif not np.any(successArray):
         return None, None
-    #in both other scenarios, only one object was hit
+    # in both other scenarios, only one object was hit
     else:
         object = selectedObjects[np.squeeze(np.where(successArray))]
         hitLocation = hitLocationArray[np.squeeze(np.where(successArray))]
 
-    #build kd tree to get closest vertex
+    # build kd tree to get closest vertex
     tree = []
     tree = mu.kdtree.KDTree(len(object.data.vertices))
     for i, v in enumerate(object.data.vertices):
@@ -74,8 +75,6 @@ class OBJECT_OT_ICP_operator(bpy.types.Operator):
     bl_idname = "object.icp"
     bl_label = "Perform Registration"
     bl_options = {'REGISTER', 'UNDO'}
-
-
 
     @classmethod
     def poll(cls, context):
@@ -96,60 +95,59 @@ class OBJECT_OT_ICP_operator(bpy.types.Operator):
         ct_seg.select_set(True)
         surf_3d.select_set(True)
 
-        #assign fixed object
+        # assign fixed object
         fixedObject = ct_seg
 
-        #vertex selections
+        # vertex selections
         if bpy.context.scene.vertexSelect:
             fixedVerts = [fixedObject.matrix_world @ v.co for v in fixedObject.data.vertices if v.select]
         else:
             fixedVerts = [fixedObject.matrix_world @ v.co for v in fixedObject.data.vertices]
 
-        #downsampling
+        # downsampling
         fixedDownsampleNumber = mt.ceil(((100 - bpy.context.scene.downsamplingPerc) / 100) * len(fixedVerts))
-        fixedDownsampleIndices = np.random.choice(range(len(fixedVerts)), fixedDownsampleNumber, replace = False)
+        fixedDownsampleIndices = np.random.choice(range(len(fixedVerts)), fixedDownsampleNumber, replace=False)
         fixedVerts = [fixedVerts[idx] for idx in fixedDownsampleIndices]
 
-        #build kdtree
+        # build kdtree
         fixedVertsTree = mu.kdtree.KDTree(len(fixedVerts))
         for fixedIndex, fixedVertex in enumerate(fixedVerts):
             fixedVertsTree.insert(fixedVertex, fixedIndex)
         fixedVertsTree.balance()
 
-        #assign moving object
+        # assign moving object
         movingObject = surf_3d
 
-
-        #vertex selections
+        # vertex selections
         if bpy.context.scene.vertexSelect:
             movingVertsCount = len([v for v in movingObject.data.vertices if v.select])
         else:
             movingVertsCount = len(movingObject.data.vertices)
 
-        #error message if no vertices are selected
+        # error message if no vertices are selected
         if len(fixedVerts) == 0 or movingVertsCount == 0:
             self.report({'ERROR'}, 'No vertices selected on one or both objects. Disable "Use Vertex Selections" or make a vertex selection in Edit Mode.')
             return {'FINISHED'}
 
-        #downsampling
+        # downsampling
         movingDownsampleNumber = mt.ceil(((100 - bpy.context.scene.downsamplingPerc) / 100) * movingVertsCount)
-        movingDownsampleIndices = np.random.choice(range(movingVertsCount), movingDownsampleNumber, replace = False)
+        movingDownsampleIndices = np.random.choice(range(movingVertsCount), movingDownsampleNumber, replace=False)
 
-        #copy T0 transformations
+        # copy T0 transformations
         transformationFineT0 = copy.deepcopy(movingObject.matrix_world)
 
-        #icp loop
+        # icp loop
         for iteration in range(bpy.context.scene.iterations):
-            #vertex selections
+            # vertex selections
             if bpy.context.scene.vertexSelect:
                 movingVerts = [movingObject.matrix_world @ v.co for v in movingObject.data.vertices if v.select]
             else:
                 movingVerts = [movingObject.matrix_world @ v.co for v in movingObject.data.vertices]
 
-            #downsampling
+            # downsampling
             movingVerts = [movingVerts[idx] for idx in movingDownsampleIndices]
 
-            #nearest neighbor search
+            # nearest neighbor search
             fixedPairIndices = []
             movingPairIndices = range(len(movingVerts))
             pairDistances = []
@@ -158,7 +156,7 @@ class OBJECT_OT_ICP_operator(bpy.types.Operator):
                 fixedPairIndices.append(minIndex)
                 pairDistances.append(minDist)
 
-            #select inliers
+            # select inliers
             pairDistancesSorted = np.argsort(pairDistances)
             pairInliers = pairDistancesSorted[range(mt.ceil((100 - bpy.context.scene.outlierPerc) / 100 * len(pairDistancesSorted)))]
             fixedPairIndices = [fixedPairIndices[idx] for idx in pairInliers]
@@ -166,15 +164,15 @@ class OBJECT_OT_ICP_operator(bpy.types.Operator):
             fixedPairVerts = [fixedVerts[idx] for idx in fixedPairIndices]
             movingPairVerts = [movingVerts[idx] for idx in movingPairIndices]
 
-            #calculate centroids
-            fixedCentroid = np.mean(fixedPairVerts, axis = 0)
-            movingCentroid = np.mean(movingPairVerts, axis = 0)
+            # calculate centroids
+            fixedCentroid = np.mean(fixedPairVerts, axis=0)
+            movingCentroid = np.mean(movingPairVerts, axis=0)
 
-            #normalize vertices
+            # normalize vertices
             fixedVertsNorm = fixedPairVerts - fixedCentroid
             movingVertsNorm = movingPairVerts - movingCentroid
 
-            #singular value decomposition
+            # singular value decomposition
             covMatrix = np.matrix.transpose(movingVertsNorm) @ fixedVertsNorm
             try:
                 U, _, Vt = np.linalg.svd(covMatrix)
@@ -183,45 +181,45 @@ class OBJECT_OT_ICP_operator(bpy.types.Operator):
                 movingObject.matrix_world = transformationFineT0
                 return {'FINISHED'}
 
-            #scaling
+            # scaling
             if bpy.context.scene.allowScaling:
                 scalingMatrix = np.eye(4)
                 scalingFactor = mt.sqrt(np.sum(fixedVertsNorm ** 2) / np.sum(movingVertsNorm ** 2))
                 for i in range(3):
-                    scalingMatrix[i,i] *= scalingFactor
+                    scalingMatrix[i, i] *= scalingFactor
                 normMatrix = np.eye(4)
-                normMatrix[0:3,3] = -np.matrix.transpose(movingCentroid)
+                normMatrix[0:3, 3] = -np.matrix.transpose(movingCentroid)
                 movingObject.matrix_world = mu.Matrix(normMatrix) @ movingObject.matrix_world
                 movingObject.matrix_world = mu.Matrix(scalingMatrix) @ movingObject.matrix_world
-                normMatrix[0:3,3] = -normMatrix[0:3,3]
+                normMatrix[0:3, 3] = -normMatrix[0:3, 3]
                 movingObject.matrix_world = mu.Matrix(normMatrix) @ movingObject.matrix_world
 
-            #rotation
+            # rotation
             rotation3x3 = np.matrix.transpose(Vt) @ np.matrix.transpose(U)
             rotationMatrix = np.eye(4)
-            rotationMatrix[0:3,0:3] = rotation3x3
+            rotationMatrix[0:3, 0:3] = rotation3x3
             movingObject.matrix_world = mu.Matrix(rotationMatrix) @ movingObject.matrix_world
 
-            #translation
+            # translation
             translationMatrix = np.eye(4)
-            translationMatrix[0:3,3] = np.matrix.transpose(fixedCentroid - rotation3x3 @ movingCentroid)
+            translationMatrix[0:3, 3] = np.matrix.transpose(fixedCentroid - rotation3x3 @ movingCentroid)
             movingObject.matrix_world = mu.Matrix(translationMatrix) @ movingObject.matrix_world
 
-            #redraw scene
-            bpy.ops.wm.redraw_timer(type = 'DRAW_WIN_SWAP', iterations = 1)
+            # redraw scene
+            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
-        #copy T1 transformations
+        # copy T1 transformations
         transformationFineT1 = copy.deepcopy(movingObject.matrix_world)
 
-        #compute transformation matrix
+        # compute transformation matrix
         globalVars.transformationFine = transformationFineT1 @ transformationFineT0.inverted_safe()
         ct_seg.select_set(False)
         surf_3d.select_set(False)
         return {'FINISHED'}
 
 
-###############################################################################
-####################### INTACT_FULL VOLUME to Mesh : ################################
+##############################################################################
+# ###################### INTACT_FULL VOLUME to Mesh : ########################
 ##############################################################################
 class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
     """ Add a mesh Segmentation using Treshold """
@@ -236,19 +234,19 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
         # import stl to blender scene :
         bpy.ops.import_mesh.stl(filepath=SegmentStlPath)
         obj = bpy.context.object
-        obj.name = f"{self.Preffix}_{Segment}_SEGMENTATION"
-        obj.data.name = f"{self.Preffix}_{Segment}_mesh"
+        obj.name = f"{self.Prefix}_{Segment}_SEGMENTATION"
+        obj.data.name = f"{self.Prefix}_{Segment}_mesh"
 
         bpy.ops.object.origin_set(type="ORIGIN_GEOMETRY", center="MEDIAN")
 
         self.step7 = Tcounter()
         self.TimingDict["Mesh Import"] = self.step7 - self.step6
 
-        ############### step 8 : Add material... #########################
+        # step 8 : Add material...
         mat = bpy.data.materials.get(obj.name) or bpy.data.materials.new(obj.name)
         mat.diffuse_color = SegmentColor
         obj.data.materials.append(mat)
-        MoveToCollection(obj=obj, CollName="SEGMENTS")
+        utils.MoveToCollection(obj=obj, CollName="SEGMENTS")
         bpy.ops.object.shade_smooth()
 
         bpy.ops.object.modifier_add(type="CORRECTIVE_SMOOTH")
@@ -266,29 +264,28 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
 
     def DicomToStl(self, Segment, Image3D):
         print(f"{Segment} processing ...")
-        # Load Infos :
-        #########################################################################
+
+        # Load Info :
         INTACT_Props = bpy.context.scene.INTACT_Props
-        UserProjectDir = AbsPath(INTACT_Props.UserProjectDir)
-        DcmInfo = self.DcmInfo
-        Origin = DcmInfo["Origin"]
-        VtkTransform_4x4 = DcmInfo["VtkTransform_4x4"]
-        TransformMatrix = DcmInfo["TransformMatrix"]
+        UserProjectDir = utils.AbsPath(INTACT_Props.UserProjectDir)
+        ImageInfo = self.ImageInfo
+
+        VtkTransform_4x4 = ImageInfo.VtkTransform_4x4
+        TransformMatrix = ImageInfo.TransformMatrix
         VtkMatrix_4x4 = (
             self.Vol.matrix_world @ TransformMatrix.inverted() @ VtkTransform_4x4
         )
 
         VtkMatrix = list(np.array(VtkMatrix_4x4).ravel())
-        print(self.DcmInfo)
-        SmoothIterations = SmthIter = 5
-        Thikness = 1
+        print(self.ImageInfo)
+        SmoothIterations = 5
 
         SegmentThreshold = self.SegmentsDict[Segment]["Threshold"]
         SegmentColor = self.SegmentsDict[Segment]["Color"]
         SegmentStlPath = join(UserProjectDir, f"{Segment}_SEGMENTATION.stl")
 
         # Convert Hu treshold value to 0-255 UINT8 :
-        #Treshold255 = HuTo255(Hu=SegmentTreshold, Wmin=DcmInfo["Wmin"], Wmax=DcmInfo["Wmax"])
+        # Treshold255 = HuTo255(Hu=SegmentTreshold, Wmin=ImageInfo.Wmin, Wmax=ImageInfo.Wmax)
 
         Treshold255 = SegmentThreshold
         if Treshold255 == 0:
@@ -297,11 +294,11 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
             Treshold255 = 254
         print(Treshold255)
 
-        ############### step 2 : Extracting mesh... #########################
+        # step 2 : Extracting mesh...
         # print("Extracting mesh...")
-        vtkImage = sitkTovtk(sitkImage=Image3D)
+        vtkImage = utils.sitkTovtk(sitkImage=Image3D)
 
-        ExtractedMesh = vtk_MC_Func(vtkImage=vtkImage, Treshold=Treshold255)
+        ExtractedMesh = utils.vtk_MC_Func(vtkImage=vtkImage, Treshold=Treshold255)
         Mesh = ExtractedMesh
 
         polysCount = Mesh.GetNumberOfPolys()
@@ -310,11 +307,12 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
         self.step2 = Tcounter()
         self.TimingDict["Mesh Extraction Time"] = self.step2 - self.step1
         print(f"{Segment} Mesh Extraction Finished")
-        ############### step 3 : mesh Reduction... #########################
+
+        # step 3 : mesh Reduction...
         if polysCount > polysLimit:
 
             Reduction = round(1 - (polysLimit / polysCount), 2)
-            ReductedMesh = vtkMeshReduction(
+            ReductedMesh = utils.vtkMeshReduction(
                 q=self.q,
                 mesh=Mesh,
                 reduction=Reduction,
@@ -327,11 +325,12 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
         self.step3 = Tcounter()
         self.TimingDict["Mesh Reduction Time"] = self.step3 - self.step2
         print(f"{Segment} Mesh Reduction Finished")
-        ############### step 4 : mesh Smoothing... #########################
-        SmoothedMesh = vtkSmoothMesh(
+
+        # step 4 : mesh Smoothing...
+        SmoothedMesh = utils.vtkSmoothMesh(
             q=self.q,
             mesh=Mesh,
-            Iterations=SmthIter,
+            Iterations=SmoothIterations,
             step="Mesh Smoothing",
             start=0.76,
             finish=0.78,
@@ -340,8 +339,9 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
         self.step4 = Tcounter()
         self.TimingDict["Mesh Smoothing Time"] = self.step4 - self.step3
         print(f"{Segment} Mesh Smoothing Finished")
-        ############### step 5 : Set mesh orientation... #########################
-        TransformedMesh = vtkTransformMesh(
+
+        # step 5 : Set mesh orientation...
+        TransformedMesh = utils.vtkTransformMesh(
             mesh=SmoothedMesh,
             Matrix=VtkMatrix,
         )
@@ -349,7 +349,8 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
         self.step5 = Tcounter()
         self.TimingDict["Mesh Orientation"] = self.step5 - self.step4
         print(f"{Segment} Mesh Orientation Finished")
-        ############### step 6 : exporting mesh stl... #########################
+
+        # step 6 : exporting mesh stl...
         writer = vtkSTLWriter()
         writer.SetInputData(TransformedMesh)
         writer.SetFileTypeToBinary()
@@ -371,7 +372,7 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
 
         if not Active_Obj:
             message = [" Please select CT VOLUME for segmentation! "]
-            ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+            utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
             return {"CANCELLED"}
         else:
             if Active_Obj:
@@ -381,7 +382,6 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
                 self.Threshold = INTACT_Props.Threshold
 
                 self.Thres1SegmentColor = INTACT_Props.Thres1SegmentColor
-
 
                 self.SegmentsDict = {
                     "Thres1": {
@@ -397,22 +397,21 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
                 if Active_Obj:
 
                     self.Vol = Active_Obj
-                    self.Preffix = self.Vol.name[:5]
-                    DcmInfoDict = eval(INTACT_Props.DcmInfo)
-                    self.DcmInfo = DcmInfoDict[self.Preffix]
-                    self.Nrrd255Path = AbsPath(self.DcmInfo["Nrrd255Path"])
+                    self.Prefix = self.Vol.name[:5]
+                    self.ImageInfo = INTACT_Props.Images[self.Prefix]
+                    self.Nrrd255Path = utils.AbsPath(self.ImageInfo.Nrrd255Path)
                     self.q = Queue()
                     self.Exported = Queue()
 
                     if not exists(self.Nrrd255Path):
 
                         message = [" Image File not Found in Project Folder ! "]
-                        ShowMessageBox(message=message, icon="COLORSET_01_VEC")
+                        utils.ShowMessageBox(message=message, icon="COLORSET_01_VEC")
                         return {"CANCELLED"}
 
                     else:
 
-                        ############### step 1 : Reading DICOM #########################
+                        # step 1 : Reading DICOM
                         self.step1 = Tcounter()
                         self.TimingDict["Read DICOM"] = self.step1 - self.counter_start
                         print(f"step 1 : Read DICOM ({self.step1-self.counter_start})")
@@ -424,19 +423,18 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
                         Imin = minmax.GetMinimum()
                         print(Imin, Imax)
 
-
-                        Sp = self.DcmInfo["Spacing"]
+                        Sp = self.ImageInfo.Spacing
                         print('Resolution', Sp)
-                        MaxSp = max(Vector(Sp))
+                        MaxSp = max(mu.Vector(Sp))
                         if MaxSp < 0.3:
                             SampleRatio = round(MaxSp / 0.3, 2)
-                            ResizedImage = ResizeImage(
+                            ResizedImage = utils.ResizeImage(
                                 sitkImage=Image3D, Ratio=SampleRatio
                             )
                             Image3D = ResizedImage
                             print(f"Image DOWN Sampled : SampleRatio = {SampleRatio}")
 
-                        ############### step 2 : Dicom To Stl Threads #########################
+                        # step 2 : Dicom To Stl Threads
 
                         self.MeshesCount = len(ActiveSegmentsList)
                         Imported_Meshes = []
@@ -499,9 +497,6 @@ class INTACT_OT_MultiTreshSegment(bpy.types.Operator):
                         return {"FINISHED"}
 
 
-
-
-
 class INTACT_OT_ResetCtVolumePosition(bpy.types.Operator):
     """ Reset the CtVolume to its original position """
 
@@ -511,10 +506,9 @@ class INTACT_OT_ResetCtVolumePosition(bpy.types.Operator):
     def execute(self, context):
         INTACT_Props = bpy.context.scene.INTACT_Props
         ct_vol = INTACT_Props.CT_Vol
-        Preffix = ct_vol.name[:5]
-        DcmInfoDict = eval(INTACT_Props.DcmInfo)
-        DcmInfo = DcmInfoDict[Preffix]
-        TransformMatrix = DcmInfo["TransformMatrix"]
+        Prefix = ct_vol.name[:5]
+        ImageInfo = INTACT_Props.Images[Prefix]
+        TransformMatrix = ImageInfo.TransformMatrix
         ct_vol.matrix_world = TransformMatrix
 
         return {"FINISHED"}
@@ -531,38 +525,35 @@ class INTACT_OT_CTVolumeOrientation(bpy.types.Operator):
         INTACT_Props = bpy.context.scene.INTACT_Props
         ct_vol = INTACT_Props.CT_Vol
         Active_Obj = ct_vol
-        Preffix = Active_Obj.name[:5]
-        DcmInfo = eval(INTACT_Props.DcmInfo)
-        if not "Frankfort" in DcmInfo[Preffix].keys():
+        Prefix = Active_Obj.name[:5]
+        ImageInfo = INTACT_Props.Images[Prefix]
+        if "Frankfort" not in ImageInfo.keys():
             message = ["CTVOLUME Orientation : ",
-                        "Please Add Reference Planes before CTVOLUME Orientation ! ",]
-            ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+                       "Please Add Reference Planes before CTVOLUME Orientation ! "]
+            utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
             return {"CANCELLED"}
         else:
             Frankfort_Plane = bpy.data.objects.get(
-                  DcmInfo[Preffix]["Frankfort"])
+                  ImageInfo.Frankfort)
 
             if not Frankfort_Plane:
-                 message = [
-                            "CTVOLUME Orientation : ",
-                            "Frankfort Reference Plane has been removed",
-                            "Please Add Reference Planes before CTVOLUME Orientation ! ",
-                        ]
-                 ShowMessageBox(message=message, icon="COLORSET_02_VEC")
-                 return {"CANCELLED"}
+                message = [
+                        "CTVOLUME Orientation : ",
+                        "Frankfort Reference Plane has been removed",
+                        "Please Add Reference Planes before CTVOLUME Orientation ! ",
+                    ]
+                utils.ShowMessageBox(message=message, icon="COLORSET_02_VEC")
+                return {"CANCELLED"}
             else:
-                 Active_Obj.matrix_world = (
-                      Frankfort_Plane.matrix_world.inverted()
-                      @ Active_Obj.matrix_world)
-                 bpy.ops.view3d.view_center_cursor()
-                 return {"FINISHED"}
-
-
+                Active_Obj.matrix_world = (
+                    Frankfort_Plane.matrix_world.inverted()
+                    @ Active_Obj.matrix_world)
+                bpy.ops.view3d.view_center_cursor()
+                return {"FINISHED"}
 
 
 class globalVars():
     pass
-
 
 
 classes = (
@@ -576,28 +567,28 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
-    #icp panel
+    # icp panel
     bpy.types.Scene.allowScaling = bpy.props.BoolProperty(
-        default = False,
-        description = "Allow uniform scaling of the moving object")
+        default=False,
+        description="Allow uniform scaling of the moving object")
     bpy.types.Scene.vertexSelect = bpy.props.BoolProperty(
-        default = False,
-        description = "Use only selected vertices for registration")
+        default=False,
+        description="Use only selected vertices for registration")
     bpy.types.Scene.iterations = bpy.props.IntProperty(
-        default = 50, min = 1,
-        description = "Number of iterations")
+        default=50, min=1,
+        description="Number of iterations")
     bpy.types.Scene.outlierPerc = bpy.props.IntProperty(
-        default = 20, min = 0, max = 99,
-        description = "Outlier percentage")
+        default=20, min=0, max=99,
+        description="Outlier percentage")
     bpy.types.Scene.downsamplingPerc = bpy.props.IntProperty(
-        default = 0, min = 0, max = 99,
-        description = "Downsampling percentage")
-
+        default=0, min=0, max=99,
+        description="Downsampling percentage")
 
 
 def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
+
 
 if __name__ == "__main__":
     register()

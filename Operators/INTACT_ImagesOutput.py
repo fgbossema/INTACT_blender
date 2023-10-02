@@ -106,7 +106,6 @@ class RenderImage(bpy.types.Operator):
         # Set up lighting
         setup_world_hdri(context)
 
-
         bpy.ops.render.render('INVOKE_DEFAULT')
         return {'FINISHED'}
 
@@ -245,12 +244,11 @@ def enable_camera_position(context):
         collection = bpy.data.collections.new("Camera")
         bpy.context.scene.collection.children.link(collection)
 
-    if not 'Camera' in bpy.data.collections['Camera'].all_objects:
+    if 'Camera' not in bpy.data.collections['Camera'].all_objects:
         camera_data = bpy.data.cameras.new(name='Camera')
         camera_object = bpy.data.objects.new('Camera', camera_data)
         context.scene.camera = camera_object
         collection.objects.link(camera_object)
-
 
     # Make sure camera has no parent, so it can move freely, this is necessary if e.g. it was previously being
     # controlled by a follow path constraint

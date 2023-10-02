@@ -3,7 +3,6 @@ import os
 from .Operators import INTACT_Visualisation
 from .Operators import INTACT_ImagesOutput
 from .Operators import INTACT_Utils
-from mathutils import Matrix, Vector, Euler, kdtree
 
 from bpy.props import (
     StringProperty,
@@ -14,6 +13,7 @@ from bpy.props import (
     BoolProperty,
     PointerProperty
 )
+
 
 def ColorUpdateFunction(self, context):
     INTACT_Props = context.scene.INTACT_Props
@@ -61,7 +61,7 @@ def text_body_update(self, context):
                 "UNDERLINE": props.underline_toggle_prop,
             }
             for key, value in dict_font_options.items():
-                if value == True:
+                if value:
                     bpy.ops.font.style_toggle(style=key)
 
             ob.name = ob.data.body
@@ -109,6 +109,167 @@ def make_path_absolute(key):
         props[key] = sane_path(props[key])
 
 
+class ImageInfo(bpy.types.PropertyGroup):
+    """Group of properties representing metadata of a loaded image"""
+
+    name: bpy.props.StringProperty(
+        name="name",
+        description="Name used to access this image - equal to the Prefix",
+        default=""
+    )
+
+    UserProjectDir: bpy.props.StringProperty(
+        name="User project directory",
+        description="User project directory",
+        default=""
+    )
+
+    Prefix: bpy.props.StringProperty(
+        name="Prefix",
+        description="Filename prefix",
+        default=""
+    )
+
+    RenderSz: bpy.props.IntVectorProperty(
+        name="Render Size",
+        description="Render Size",
+        default=(0, 0, 0),
+        min=0,
+        size=3
+    )
+
+    RenderSp: bpy.props.FloatVectorProperty(
+        name="Render Spacing",
+        description="Render Spacing",
+        default=(1.0, 1.0, 1.0),
+        min=0.0,
+        size=3
+    )
+
+    PixelType: bpy.props.StringProperty(
+        name="Pixel type",
+        description="Pixel type",
+        default=""
+    )
+
+    Wmin: bpy.props.FloatProperty(
+        name="W min",
+        description="W min",
+        default=0.0
+    )
+
+    Wmax: bpy.props.FloatProperty(
+        name="W max",
+        description="W max",
+        default=0.0
+    )
+
+    Size: bpy.props.IntVectorProperty(
+        name="Size",
+        description="Size",
+        default=(0, 0, 0),
+        min=0,
+        size=3
+    )
+
+    Dims: bpy.props.IntProperty(
+        name="Number of dimensions",
+        description="Number of dimensions",
+        default=3
+    )
+
+    Spacing: bpy.props.FloatVectorProperty(
+        name="Spacing",
+        description="Image Spacing (i.e. resolution)",
+        default=(1.0, 1.0, 1.0),
+        min=0.0,
+        size=3
+    )
+
+    Origin: bpy.props.FloatVectorProperty(
+        name="Origin",
+        description="Image origin",
+        default=(0.0, 0.0, 0.0),
+        size=3
+    )
+
+    Direction: bpy.props.FloatVectorProperty(
+        name="Direction",
+        description="Image direction",
+        default=(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+        size=9
+    )
+
+    TransformMatrix: bpy.props.FloatVectorProperty(
+        name="Transform Matrix",
+        description="Transform Matrix",
+        default=(0.0, 0.0, 0.0, 0.0,
+                 0.0, 0.0, 0.0, 0.0,
+                 0.0, 0.0, 0.0, 0.0,
+                 0.0, 0.0, 0.0, 0.0),
+        size=16,
+        subtype="MATRIX"
+    )
+
+    DirectionMatrix_4x4: bpy.props.FloatVectorProperty(
+        name="Direction Matrix 4x4",
+        description="Direction Matrix 4x4",
+        default=(0.0, 0.0, 0.0, 0.0,
+                 0.0, 0.0, 0.0, 0.0,
+                 0.0, 0.0, 0.0, 0.0,
+                 0.0, 0.0, 0.0, 0.0),
+        size=16,
+        subtype="MATRIX"
+    )
+
+    TransMatrix_4x4: bpy.props.FloatVectorProperty(
+        name="Trans Matrix 4x4",
+        description="Trans Matrix 4x4",
+        default=(0.0, 0.0, 0.0, 0.0,
+                 0.0, 0.0, 0.0, 0.0,
+                 0.0, 0.0, 0.0, 0.0,
+                 0.0, 0.0, 0.0, 0.0),
+        size=16,
+        subtype="MATRIX"
+    )
+
+    VtkTransform_4x4: bpy.props.FloatVectorProperty(
+        name="Vtk Transform 4x4",
+        description="Vtk Transform 4x4",
+        default=(0.0, 0.0, 0.0, 0.0,
+                 0.0, 0.0, 0.0, 0.0,
+                 0.0, 0.0, 0.0, 0.0,
+                 0.0, 0.0, 0.0, 0.0),
+        size=16,
+        subtype="MATRIX"
+    )
+
+    VolumeCenter: bpy.props.FloatVectorProperty(
+        name="Volume Center",
+        description="Volume Center",
+        default=(0.0, 0.0, 0.0),
+        size=3
+    )
+
+    SlicesDir: bpy.props.StringProperty(
+        name="Slices directory",
+        description="Slices directory",
+        default=""
+    )
+
+    Nrrd255Path: bpy.props.StringProperty(
+        name="Nrrd 255 Path",
+        description="Nrrd 255 Path",
+        default=""
+    )
+
+    CT_Loaded: bpy.props.BoolProperty(
+        name="CT data loaded",
+        description="CT data loaded",
+        default=False
+    )
+
+
 class INTACT_Props(bpy.types.PropertyGroup):
 
     #####################
@@ -129,7 +290,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
     UserDcmDir: StringProperty(
         name="DICOM Path",
         default="",
-        update = lambda s,c: make_path_absolute('UserDcmDir'),
+        update=lambda s, c: make_path_absolute('UserDcmDir'),
         description="DICOM Directory Path",
         subtype="DIR_PATH",
     )
@@ -137,7 +298,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
     UserTiffDir: StringProperty(
         name="TIFF Path",
         default="",
-        update = lambda s,c: make_path_absolute('UserTiffDir'),
+        update=lambda s, c: make_path_absolute('UserTiffDir'),
         description="TIFF Directory Path",
         subtype="DIR_PATH",
     )
@@ -145,17 +306,24 @@ class INTACT_Props(bpy.types.PropertyGroup):
     UserImageFile: StringProperty(
         name="User 3D Image File Path",
         default="",
-        update = lambda s,c: make_path_absolute('UserImageFile'),
+        update=lambda s, c: make_path_absolute('UserImageFile'),
         description="User Image File Path",
         subtype="FILE_PATH",
     )
 
     UserObjDir: StringProperty(
         name="OBJ Path",
-        update = lambda s,c: make_path_absolute('UserObjDir'),
+        update=lambda s, c: make_path_absolute('UserObjDir'),
         default="",
         description="OBJ Directory Path",
         subtype="FILE_PATH",
+    )
+
+    CT_ID: IntProperty(
+        name="CT ID",
+        description="ID of this CT stack - used in the filename prefix",
+        default=0,
+        min=0
     )
 
     #####################
@@ -170,17 +338,12 @@ class INTACT_Props(bpy.types.PropertyGroup):
 
     #######################
 
-    DcmInfo: StringProperty(
-        name="(str) DicomInfo",
-        default="{'Deffault': None}",
-        description="Dicom series files list",
+    Images: bpy.props.CollectionProperty(
+        type=ImageInfo,
+        name="Images",
+        description="Metadata of currently loaded images",
     )
 
-    TiffInfo: StringProperty(
-        name="(str) TiffInfo",
-        default="{'Deffault': None}",
-        description="Tiff stack files list",
-    )
     #######################
 
     PngDir: StringProperty(
@@ -196,7 +359,6 @@ class INTACT_Props(bpy.types.PropertyGroup):
         description="Slices PNG files Directory Path",
     )
     #######################
-
 
     Nrrd255Path: StringProperty(
         name="Nrrd255Path",
@@ -222,7 +384,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
         default=0,
         soft_min=0.0,
         soft_max=255.0,
-        update = SliceIntensityUpdate,
+        update=SliceIntensityUpdate,
     )
     Slice_max: FloatProperty(
         name="Slice min",
@@ -230,17 +392,16 @@ class INTACT_Props(bpy.types.PropertyGroup):
         default=255,
         soft_min=0.0,
         soft_max=255.0,
-        update = SliceIntensityUpdate,
+        update=SliceIntensityUpdate,
     )
 
     Resolution: FloatProperty(
         name="Resolution",
         default=1.0,
         description="Voxel resolution in mm",
-        precision = 4)
+        precision=4)
 
     #######################
-
 
     GroupNodeName: StringProperty(
         name="Group shader Name",
@@ -253,40 +414,39 @@ class INTACT_Props(bpy.types.PropertyGroup):
         description="Threshold node group Name",
     )
 
-    ####################### Intact_vis props
-    ct_vis : bpy.props.BoolProperty(
+    # Intact_vis props
+    ct_vis: bpy.props.BoolProperty(
         name="Enable CT-scan",
         description="Enable or Disable the visibility of the CT-Scan",
-        default = True
+        default=True
         )
-    surf_vis : bpy.props.BoolProperty(
+    surf_vis: bpy.props.BoolProperty(
         name="Enable Surface-scan",
         description="Enable or Disable the visibility of the 3D Surface Scan",
-        default = True
+        default=True
         )
-    axi_vis : bpy.props.BoolProperty(
+    axi_vis: bpy.props.BoolProperty(
         name="Enable Axial Slice",
         description="Enable or Disable the visibility of the Axial Slice",
-        default = False
+        default=False
         )
-    cor_vis : bpy.props.BoolProperty(
+    cor_vis: bpy.props.BoolProperty(
         name="Enable Coronal Slice",
         description="Enable or Disable the visibility of the Coronal Slice",
-        default = False
+        default=False
         )
-    sag_vis : bpy.props.BoolProperty(
+    sag_vis: bpy.props.BoolProperty(
         name="Enable Sagital Slice",
         description="Enable or Disable the visibility of the Sagital Slice",
-        default = False
+        default=False
         )
-    seg_vis : bpy.props.BoolProperty(
+    seg_vis: bpy.props.BoolProperty(
         name="Enable Segmentation",
         description="Enable or Disable the visibility of the CT Segmented Mesh",
-        default = False
+        default=False
         )
 
     #######################
-
 
     Progress_Bar: FloatProperty(
         name="Progress_Bar",
@@ -301,18 +461,16 @@ class INTACT_Props(bpy.types.PropertyGroup):
         precision=1,
     )
 
-
     Threshold: FloatProperty(
         name="Threshold 1",
         description="Threshold 1",
-        default = 100.0,
+        default=100.0,
         min=0.0,
         max=255.0,
         soft_min=0.0,
         soft_max=255.0,
         update=TresholdUpdateFunction,
     )
-
 
     Thres1Bool: BoolProperty(description="", default=True)
 
@@ -334,7 +492,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
         soft_max=1.0,
         size=4,
         subtype="COLOR",
-        update = ColorUpdateFunction,
+        update=ColorUpdateFunction,
     )
 
     ColorPos: FloatProperty(
@@ -343,7 +501,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
         max=10.0,
         soft_min=0.0,
         soft_max=1.0,
-        update = ShaderUpdateFunction,
+        update=ShaderUpdateFunction,
     )
 
     #######################
@@ -440,6 +598,7 @@ class INTACT_Props(bpy.types.PropertyGroup):
 #################################################################################################
 
 classes = [
+    ImageInfo,
     INTACT_Props,
 ]
 
@@ -458,5 +617,3 @@ def unregister():
         bpy.utils.unregister_class(cls)
 
     del bpy.types.Scene.INTACT_Props
-
-
