@@ -59,9 +59,9 @@ def ReqInternetInstall(path, modules):
     try:
         run(f'"{PythonPath}" -m ensurepip',
             shell=True, check=True, stderr=PIPE, text=True)
-        run(f'"{PythonPath}" -m pip install --upgrade pip',
+        run(f'"{PythonPath}" -m pip install --upgrade pip --user',
             shell=True, check=True, stderr=PIPE, text=True)
-        run(f'"{PythonPath}" -m pip install {" ".join(modules)} --target "{path}"',
+        run(f'"{PythonPath}" -m pip install {" ".join(modules)} --target "{path}" --prefer-binary',
             shell=True, check=True, stderr=PIPE, text=True)
     except CalledProcessError as e:
         raise RuntimeError(
