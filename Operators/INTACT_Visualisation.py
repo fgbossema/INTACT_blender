@@ -488,7 +488,7 @@ class INTACT_OT_AddSlices(bpy.types.Operator):
             SLICES_POINTER.show_in_front = True
             SLICES_POINTER.name = f"{Prefix}_SLICES_POINTER"
 
-            Override, _, _ = utils.CtxOverride(bpy.context)
+            Override = utils.CtxOverride(bpy.context)
 
             bpy.ops.object.select_all(Override, action="DESELECT")
             AxialPlane.select_set(True)

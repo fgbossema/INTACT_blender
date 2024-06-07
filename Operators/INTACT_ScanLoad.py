@@ -585,7 +585,10 @@ class INTACT_OT_Surface_Render(bpy.types.Operator):
             coll = bpy.data.collections.get('Surface')
             context.collection.children.link(coll)
 
-        bpy.ops.import_scene.obj(filepath=UserOBjDir, filter_glob="*.obj;*.mtl")
+        if bpy.app.version >= (4, 0, 0):
+            bpy.ops.wm.obj_import(filepath=UserOBjDir, filter_glob="*.obj;*.mtl")
+        else:
+            bpy.ops.import_scene.obj(filepath=UserOBjDir, filter_glob="*.obj;*.mtl")
         obj_object = bpy.context.selected_objects[0]
         obj_object.name = "IT_surface_" + obj_object.name
 
