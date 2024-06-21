@@ -137,7 +137,7 @@ def CtxOverride(context):
         space3D,
         region3D,
     )
-    return Override, area3D, space3D
+    return Override
 
 
 def AbsPath(P):
@@ -564,9 +564,13 @@ def VolumeRender(ImageInfo, GpShader, ShadersBlendFile):
     bpy.ops.object.origin_set(type="ORIGIN_GEOMETRY", center="MEDIAN")
 
     Voxel.matrix_world = TransformMatrix
-    Override, area3D, space3D = CtxOverride(bpy.context)
+    context_override = CtxOverride(bpy.context)
 
-    bpy.ops.view3d.view_selected(Override, use_all_regions=False)
+    if bpy.app.version >= (4, 0, 0):
+        with bpy.context.temp_override(**context_override):
+            bpy.ops.view3d.view_selected(use_all_regions=False)
+    else:
+        bpy.ops.view3d.view_selected(context_override, use_all_regions=False)
 
     for scr in bpy.data.screens:
         for area in [ar for ar in scr.areas if ar.type == "VIEW_3D"]:
@@ -593,7 +597,10 @@ def Scene_Settings():
     scn.eevee.shadow_cascade_size = "512"
     scn.eevee.use_soft_shadows = True
     scn.eevee.taa_samples = 16
-    scn.view_settings.look = "High Contrast"
+    if bpy.app.version >= (4, 0, 0):
+        scn.view_settings.look = "AgX - High Contrast"
+    else:
+        scn.view_settings.look = "High Contrast"
     scn.eevee.use_ssr = True
 
     # boost the near clip distance, to avoid z fighting of planes on boolean 3D mesh + the end clip distance
